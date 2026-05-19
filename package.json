@@ -8,6 +8,13 @@
     "test": "npm run test -w @openpbx/core",
     "test:watch": "npm run test:watch -w @openpbx/core",
     "test:gate": "npm run test -w @openpbx/core",
-    "test:roadmap": "npm run test -w @openpbx/core -- --reporter=verbose"
+    "test:roadmap": "npm run test -w @openpbx/core -- --reporter=verbose",
+    "harness": "bash scripts/harness-check.sh",
+    "harness:fast": "bash scripts/harness-fast.sh",
+    "check:static": "node scripts/check-denwa-static.mjs",
+    "prepare": "lefthook install || true"
+  },
+  "devDependencies": {
+    "lefthook": "^1.11.14"
   }
 }
