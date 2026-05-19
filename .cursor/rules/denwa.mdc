@@ -1,0 +1,57 @@
+---
+description: denwa OpenPBX TDD 再構築 — メニュー順・門番・計画書との対応・指示の出し方
+alwaysApply: true
+---
+
+# denwa（毎セッション）
+
+OpenPBX を **TDD で再構築**するリポ。契約の正本は `docs/TDD-REBUILD-PLAN.md`。legacy は `docs/LEGACY.md` → 隣 `../OpenPBX`（読取専用）。詳細手順は `.cursor/skills/denwa/SKILL.md` と `steps-denwa.md`。
+
+## メニュー 0→9（この順。harness/check は別番号にしない）
+
+| # | 内容 | 計画 Phase |
+|---|------|------------|
+| 0 | 基盤・フック（`npm install`、Hooks 有効、T-XXX 1 件選択） | 0 |
+| 1 | legacy + golden | golden + 読取 |
+| 2 | ドメイン `@openpbx/core` | 1〜2 |
+| 3 | 早期 asterisk/docker smoke | 2.5 |
+| 4 | `@openpbx/db` | 3 |
+| 5 | `@openpbx/infra`（書込・AMI・CDR） | 4〜5 |
+| 6 | API / Server Actions 40 本 | 6〜6.5 |
+| 7 | フロント（`docs/FRONTEND-PLAN.md`） | 7 |
+| 8 | 通話・WebRTC・Chrome・本番化 | 8〜10 |
+| 9 | commit / push・§check | 共有 |
+
+**0→9 を各1回やっただけでは計画完了にならない。** 各 Step 内で `docs/TDD-REBUILD-PLAN.md` §7 の `T-XXX-000` を **Red→Green し尽くす**こと。完了定義は計画書 **§1.4**（全 ID green、golden 一致、`docker compose` smoke、本番化チェック等）。
+
+## 門番（ユーザーが毎回 harness と打たなくてよい）
+
+| タイミング | 自動 |
+|------------|------|
+| Step 2〜8 で Write/Edit | pre/post → `npm run check:static` |
+| エージェント turn 終了 | stop → `npm run harness`（ソース変更時） |
+| `git commit` | pre-commit → static |
+| `git push` | pre-push → harness |
+| TDD 中にすぐテストだけ見たい | 手動 `npm run harness:fast` |
+
+## エージェントの進め方
+
+1. ユーザーが `/denwa` または番号（例 `2`）を言ったら、対応する `steps-denwa.md` の **§番号**を読んで従う。
+2. **1 turn = 原則 1 つの `T-XXX-000`**（Red→Green→Refactor）。§7 にない ID を作らない。
+3. **Red なし Green 禁止**。`it.skip` 禁止。domain は `@openpbx/core` のみ — `apps/web/src/lib` に検証・dialplan 生成を置かない。
+4. harness を手動で毎 edit 後に回さない（stop / pre-push に任せる）。赤なら修正してから push。
+5. legacy は **コピペ一括移植しない**。秘密・SQLite・録音を commit しない。
+
+## ユーザー向け指示例（そのまま送ってよい）
+
+**Step だけ**: `/denwa 2` + 「Phase 1 の T-EXT-001 から 1 ID ずつ TDD」
+
+**機能縦割り**: 「§6 の F01 を Domain→DB→Infra→API→UI まで。触る T-* を先にリスト」
+
+**進捗確認**: `/denwa 0` + 「§7 と現状テストを照合し todo/green 表と次の 1 ID」
+
+**PR 前**: `/denwa 9` + 「§9 check + harness」
+
+## 依存方向
+
+`pbx-core`（pure）→ `pbx-db` → `pbx-infra` → `apps/web` → `asterisk/` + compose
