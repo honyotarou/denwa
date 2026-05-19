@@ -1,0 +1,13 @@
+{
+  "name": "denwa",
+  "private": true,
+  "workspaces": [
+    "packages/pbx-core"
+  ],
+  "scripts": {
+    "test": "npm run test -w @openpbx/core",
+    "test:watch": "npm run test:watch -w @openpbx/core",
+    "test:gate": "npm run test -w @openpbx/core",
+    "test:roadmap": "npm run test -w @openpbx/core -- --reporter=verbose"
+  }
+}
