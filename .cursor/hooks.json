@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": ".cursor/hooks/denwa-pre-tool.sh",
+        "matcher": "Write|Edit|StrReplace|search_replace"
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": ".cursor/hooks/denwa-post-tool.sh",
+        "matcher": "Write|Edit|StrReplace|search_replace|Shell"
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": ".cursor/hooks/denwa-after-file-edit.sh"
+      }
+    ],
+    "afterTabFileEdit": [
+      {
+        "command": ".cursor/hooks/denwa-after-file-edit.sh"
+      }
+    ],
+    "stop": [
+      {
+        "command": ".cursor/hooks/denwa-stop-harness.sh",
+        "loop_limit": 2
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": ".cursor/hooks/denwa-block-secrets-commit.sh",
+        "matcher": "git commit"
+      }
+    ],
+    "sessionStart": [
+      {
+        "command": ".cursor/hooks/denwa-session-context.sh"
+      }
+    ]
+  }
+}
