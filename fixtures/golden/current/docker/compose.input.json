@@ -53,6 +53,7 @@
         "DIALPLAN_OUT_DIR",
         "INBOX_DIR",
         "INBOX_HMAC_SECRET",
+        "IP_ALLOW_CIDRS",
         "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY",
         "NODE_ENV",
         "PJSIP_OUT_DIR",

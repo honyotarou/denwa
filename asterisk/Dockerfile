@@ -3,10 +3,10 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # F-015: APT 版を pin（CVE 追随は意図的 bump + image rebuild）
-ARG ASTERISK_PKG_VERSION=1:18.20.4~dfsg-1ubuntu1
+# jammy universe（amd64 / arm64 共通。18.20.4 pin は ports で消えていた）
+ARG ASTERISK_PKG_VERSION=1:18.10.0~dfsg+~cs6.10.40431411-2
 
-# Ubuntu 22.04 main universe には asterisk (18.x) が含まれる。
-# bookworm-slim は arm64 で asterisk が取得できなかったので Ubuntu に切替。
+# Ubuntu 22.04 universe には asterisk 18.x が含まれる（Apple Silicon = arm64 対応）。
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       asterisk=${ASTERISK_PKG_VERSION} \

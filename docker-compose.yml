@@ -40,7 +40,8 @@ services:
 
   web:
     build:
-      context: ./apps/web
+      context: .
+      dockerfile: apps/web/Dockerfile
     container_name: command-room-web
     restart: unless-stopped
     ports:
@@ -56,6 +57,8 @@ services:
       - ./data/signals:/asterisk/signals
     environment:
       NODE_ENV: production
+      # 本番は狭い CIDR に絞る。デフォルト CIDR は packages/pbx-ops COMPOSE_WEB_LOCAL_IP_ALLOW_DEFAULT（T-SEC-IP-001）
+      IP_ALLOW_CIDRS: ${IP_ALLOW_CIDRS:-127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
       # Reverse proxy 前では 0（XFF 偽装無視）。nginx 等 1 段なら 1。
       TRUSTED_PROXY_COUNT: "0"
       DATABASE_PATH: /app/data/db/command-room.sqlite
