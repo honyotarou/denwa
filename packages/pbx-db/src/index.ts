@@ -21,4 +21,7 @@ export * from './repos/version-upgrades.js';
 export * from './repos/sip-trunks.js';
 export * from './repos/lists.js';
 export * from './repos/infra-load.js';
+export * from './repos/network-settings.js';
+export * from './repos/patients.js';
+export * from './repos/patient-records.js';
 export { runProdCheckDatabase } from './prod-check.js';

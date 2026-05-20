@@ -28,6 +28,8 @@ export const EXPECTED_TABLES = [
   'patient_records',
   'version_upgrades',
   'sip_trunks',
+  'account_extension_grants',
+  'click_to_call_tokens',
 ] as const;
 
 export const REQUIRED_INDEXES = [
@@ -42,6 +44,7 @@ export const REQUIRED_INDEXES = [
   'idx_patients_name',
   'idx_patient_records_pid',
   'idx_patient_records_date',
+  'idx_click_tokens_account',
 ] as const;
 
 export const REQUIRED_FK_TABLES = [

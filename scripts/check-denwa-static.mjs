@@ -133,6 +133,8 @@ const STAGED_SECRET_SCAN_SKIP = new Set([
   "scripts/check-denwa-static.mjs",
   "docs/TDD-REBUILD-PLAN.md",
   "docs/FRONTEND-PLAN.md",
+  "docs/OPENPBX-GAP-MIGRATION-TDD-PLAN.md",
+  "docs/OPENPBX-GAP-MIGRATION-NON-TDD-PLAN.md",
   "packages/pbx-core/forbidden-tracked-extension-passwords.json",
 ]);
 
