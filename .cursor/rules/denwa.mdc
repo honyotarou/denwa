@@ -1,63 +1,64 @@
 ---
-description: denwa OpenPBX TDD 再構築 — メニュー順・門番・層規律・計画書との対応
+description: denwa OpenPBX TDD 再構築 — メニュー・門番・services/use-case 層
 alwaysApply: true
 ---
 
 # denwa（毎セッション）
 
-OpenPBX を **TDD で再構築**するリポ。契約の正本は `docs/TDD-REBUILD-PLAN.md`。legacy は `docs/LEGACY.md` → 隣 `../OpenPBX`（読取専用）。詳細手順は `.cursor/skills/denwa/SKILL.md` と `steps-denwa.md`。
+契約: `docs/TDD-REBUILD-PLAN.md`。legacy: `docs/LEGACY.md` → `../OpenPBX`。手順: `.cursor/skills/denwa/SKILL.md` / `steps-denwa.md`。
 
-## メニュー 0→9（この順。harness/check は別番号にしない）
+## メニュー 0→9
 
-| # | 内容 | 計画 Phase |
-|---|------|------------|
-| 0 | 基盤・フック（`npm install`、Hooks 有効、T-XXX 1 件選択） | 0 |
-| 1 | legacy + golden | golden + 読取 |
-| 2 | ドメイン `@openpbx/core`（pure のみ） | 1〜2 |
-| 3 | 早期 asterisk/docker smoke | 2.5 |
-| 4 | `@openpbx/db`（repos） | 3 |
-| 5 | `@openpbx/infra`（書込・AMI・CDR） | 4〜5 |
-| 6 | API / Server Actions 40 本 | 6〜6.5 |
-| 7 | フロント（`docs/FRONTEND-PLAN.md`） | 7 |
-| 8 | `@openpbx/ops`・通話 smoke・`prod-check`・README | 8〜10 |
-| 9 | commit / push・§check | 共有 |
+| # | 内容 |
+|---|------|
+| 0 | 基盤・フック |
+| 1 | legacy + golden |
+| 2 | `@openpbx/core`（pure） |
+| 3 | asterisk/docker smoke |
+| 4 | `@openpbx/db` repos |
+| 5 | `@openpbx/infra` |
+| 6 | **services** + actions + API |
+| 7 | フロント |
+| 8 | `@openpbx/ops` / prod-check |
+| 9 | commit / push |
 
-**0→9 を各1回やっただけでは計画完了にならない。** 各 Step 内で §7 の `T-XXX-000` を **Red→Green し尽くす**（§1.4）。
+各 Step で §7 の `T-XXX-000` を Red→Green し尽くす（§1.4）。
 
-## 依存方向
+## 依存と web の形
 
 ```text
-pbx-core (pure) → pbx-ops (I/O) / pbx-db → pbx-infra → apps/web → asterisk + compose
+core ← ops, db, infra ← web
 ```
 
-| 層 | 責務 |
-|----|------|
-| core | 検証・dialplan・型。fs/SQLite 禁止（T-ARCH-001） |
-| ops | compose・conf 検査・inbox runner・prod/check |
-| db | SQL は `src/repos/*` |
-| web | orchestration。page は `getRequestContext()`（T-ARCH-002） |
+| web | 責務 |
+|-----|------|
+| `server/services/*` | validate → db → sync → audit（mutation 正本） |
+| `server/actions/*` | 薄い FormData ラッパ |
+| `server/page-data.ts` | 読取 view model |
+| `server/paths.ts` | env パス（page 禁止） |
+| `request-ip.ts` / `request-meta.ts` | Edge IP / API 文脈 |
 
 ## 門番
 
 | タイミング | 自動 |
 |------------|------|
-| Step 2〜8 で Write/Edit | pre → static / post → `harness:fast` |
-| turn 終了 | stop → `harness`（full） |
-| `git commit` | pre-commit → `harness:fast` |
-| `git push` | pre-push → harness |
-| TDD 中にすぐ core だけ | `harness:fast` |
+| Write/Edit | pre **static**（secrets + `denwa-architecture-gate`）/ post harness:fast |
+| turn 終了 | harness |
+| commit | harness:fast |
+| push | harness |
 
-## エージェントの進め方
+SOC・カプセル化は Skill 記述だけでなく **T-ARCH-*** を static で強制（Vitest と二重）。
 
-1. `/denwa` または番号 → **`steps-denwa.md` §N のみ Read**（§N 必読表の docs / legacy も）
-2. **1 turn = 原則 1 つの `T-XXX-000`**。§7 にない ID を作らない
-3. **Red なし Green 禁止**。domain は core — `apps/web/src/lib` に二重実装しない
-4. harness を毎 edit 後に手動で回さない（stop / pre-push に任せる）
-5. legacy は一括コピー禁止。秘密・SQLite・録音を commit しない
+## エージェント
+
+1. 番号 **N** → `steps-denwa.md` §N のみ Read
+2. **1 turn = 1 T-XXX-000**（§7 正本）
+3. **新 mutation** → services に足す（actions に DB+sync 直書き禁止）
+4. **新 SQL** → `pbx-db/repos` のみ
+5. legacy 一括コピー禁止・秘密 commit 禁止
 
 ## 指示例
 
-- `/denwa 2` + 「T-EXT-001 から 1 ID ずつ」
-- `/denwa 6` + 「F01 を page-data / actions 経由で。SQL は repo に」
-- `/denwa 8` + 「prod-check と README」
-- `/denwa 9` + 「§9 check + push」
+- `/denwa 6` + 「T-ACT-004 を services/ring-groups 経由で」
+- `/denwa 6` + 「API に buildContextFromRequest 足す」
+- `/denwa 9` + 「harness 確認して push」

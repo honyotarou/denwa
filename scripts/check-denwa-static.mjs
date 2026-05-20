@@ -7,6 +7,7 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { runArchitectureGate } from "./denwa-architecture-gate.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const targetArg = process.argv[2];
@@ -88,6 +89,10 @@ function checkSingleFile(abs) {
   if (abs.startsWith(webLib) && abs.endsWith(".ts")) {
     checkWebLibFile(abs);
   }
+  const rel = path.relative(ROOT, abs);
+  for (const line of runArchitectureGate(ROOT, { singleRel: rel })) {
+    failures.push(line);
+  }
 }
 
 // --- it.skip / it.todo / web lib (full tree or single file) ---
@@ -102,6 +107,9 @@ if (targetAbs) {
     for (const file of walk(webLib)) {
       checkWebLibFile(file);
     }
+  }
+  for (const line of runArchitectureGate(ROOT)) {
+    failures.push(line);
   }
 }
 
@@ -170,4 +178,4 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log("[denwa:static] OK");
+console.log("[denwa:static] OK (secrets + architecture SOC/encapsulation)");

@@ -28,6 +28,15 @@ const map = (r: Raw): PhonebookRow => ({
   updatedAt: r.updated_at,
 });
 
+export function listPhonebookEntries(db: Database.Database, limit = 500): PhonebookRow[] {
+  const rows = db
+    .prepare(
+      `SELECT id, name, number, category, note, updated_at FROM phonebook ORDER BY name LIMIT ?`,
+    )
+    .all(limit) as Raw[];
+  return rows.map(map);
+}
+
 export function searchPhonebook(db: Database.Database, q: string): PhonebookRow[] {
   const like = `%${q}%`;
   const rows = db
