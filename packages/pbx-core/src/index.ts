@@ -28,3 +28,4 @@ export * from './dialplan/filename.js';
 export * from './inbox/meta.js';
 export * from './docker/compose.js';
 export * from './prod/audit-actions.js';
+export * from './prod/findings.js';

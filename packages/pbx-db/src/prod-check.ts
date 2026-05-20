@@ -1,6 +1,6 @@
 import type Database from 'better-sqlite3';
 import { verifyPassword } from '@openpbx/core';
-import { fail, pass, type ProdCheckFinding } from '@openpbx/ops';
+import { fail, pass, type ProdCheckFinding } from '@openpbx/core';
 
 const DEFAULT_ADMIN_PASSWORD = ['admin', '-please', '-change'].join('');
 const DEFAULT_EXTENSION_SECRETS = [

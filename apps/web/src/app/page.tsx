@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { guardPage } from '@/lib/auth';
-import { getExtensions, countInbox } from '@/server/page-data';
-import path from 'node:path';
+import { getExtensions, countInboxSummary } from '@/server/page-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,8 +19,7 @@ function Card({ label, value, href, hint }: { label: string; value: string; href
 export default async function HomePage() {
   await guardPage('user');
   const exts = getExtensions();
-  const inboxDir = process.env.INBOX_DIR ?? path.join(process.cwd(), 'data/inbox');
-  const inbox = await countInbox(inboxDir);
+  const inbox = await countInboxSummary();
   return (
     <div className="space-y-6">
       <header>

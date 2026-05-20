@@ -1,4 +1,4 @@
-import { buildContext, sessionTokenFromCookieHeader } from '@/server/app-context';
+import { buildContextFromRequest } from '@/server/request-meta';
 import { handleRecordingGet } from '@/server/api-handlers';
 
 export const runtime = 'nodejs';
@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ file: string }> },
 ) {
   const { file } = await params;
-  const ctx = buildContext(sessionTokenFromCookieHeader(req.headers.get('cookie')));
+  const ctx = buildContextFromRequest(req);
   const r = await handleRecordingGet(ctx, decodeURIComponent(file));
   if (r.stream) {
     return new Response(r.stream as unknown as ReadableStream, {

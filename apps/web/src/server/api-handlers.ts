@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { validateExtensionDraft, normalizeExtensionDraft, validateOriginateRequest, buildInboxMeta } from '@openpbx/core';
+import { validateOriginateRequest, buildInboxMeta } from '@openpbx/core';
+import { maskSecret } from '@/lib/format';
 import {
   DuplicateError,
   getCdrRecord,
@@ -15,10 +16,7 @@ import { openRecordingReadStream, resolveRecordingPath, saveGuidanceWav } from '
 import { validateInboxMeta } from '@openpbx/infra';
 import type { AppContext } from './context';
 import { AuthError } from './auth';
-
-function maskSecret(role: string, secret: string): string {
-  return role === 'admin' ? secret : '***';
-}
+import { createExtensionWithSync } from './services/extensions';
 
 export async function handleHealthGet(): Promise<{ status: number; body: unknown }> {
   return { status: 200, body: { ok: true } };
@@ -90,26 +88,25 @@ export async function handleExtensionsPost(
   ctx: AppContext,
   body: Record<string, unknown>,
 ): Promise<{ status: number; body: unknown }> {
+  let me;
   try {
-    ctx.auth.requireMinRole(ctx.sessionToken, ctx.meta, 'user');
+    me = ctx.auth.requireMinRole(ctx.sessionToken, ctx.meta, 'user');
   } catch (e) {
     const err = e as AuthError;
     return { status: err.status, body: { error: err.message } };
   }
-  const draft = normalizeExtensionDraft({
-    number: String(body.number ?? ''),
-    secret: String(body.secret ?? ''),
-    displayName: typeof body.displayName === 'string' ? body.displayName : null,
-    webrtc: body.webrtc === true,
-  });
-  const errs = validateExtensionDraft(draft);
-  if (errs.length) return { status: 400, body: { error: errs.join('; ') } };
   try {
-    ctx.infra.extensions.create(draft);
-    await ctx.infra.syncPjsipExtensions();
+    await createExtensionWithSync(ctx, me, {
+      number: String(body.number ?? ''),
+      secret: String(body.secret ?? ''),
+      displayName: typeof body.displayName === 'string' ? body.displayName : null,
+      webrtc: body.webrtc === true,
+      note: null,
+    });
     return { status: 201, body: { ok: true } };
   } catch (e) {
     if (e instanceof DuplicateError) return { status: 400, body: { error: e.message } };
+    if (e instanceof Error) return { status: 400, body: { error: e.message } };
     throw e;
   }
 }
