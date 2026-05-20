@@ -36,7 +36,7 @@ case "$tool" in
     if denwa_is_source_path "$rel"; then
       denwa_mark_dirty "$ROOT"
       if ! out=$(denwa_run_static "$ROOT" "$rel" 2>&1); then
-        msg="denwa pre-check failed (check:static). Fix before this edit.\n${out}\nFull harness: agent stop or git push."
+        msg="denwa pre static failed (check:static). Fix before this edit.\n${out}\npostToolUse: harness:fast. Full harness: stop, pre-push, CI."
         jq -n --arg m "$msg" '{ permission: "deny", user_message: $m, agent_message: $m }'
         exit 0
       fi

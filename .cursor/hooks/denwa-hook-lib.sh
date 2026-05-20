@@ -59,6 +59,28 @@ denwa_run_static() {
   fi
 }
 
+# harness:fast — static + all workspace typechecks (debounced, default 30s)
+denwa_run_harness_fast() {
+  local root="$1"
+  local debounce="${2:-30}"
+  local lock="$root/.cursor/.denwa-harness-fast.lock"
+  local now
+  now=$(date +%s)
+  mkdir -p "$root/.cursor"
+  if [[ -f "$lock" ]]; then
+    local last
+    last=$(cat "$lock" 2>/dev/null || echo 0)
+    if (( now - last < debounce )); then
+      return 0
+    fi
+  fi
+  echo "$now" >"$lock"
+  # shellcheck source=scripts/harness-lib.sh
+  source "$root/scripts/harness-lib.sh"
+  HARNESS_ROOT="$root"
+  denwa_harness_fast
+}
+
 denwa_tool_path() {
   local input="$1"
   echo "$input" | jq -r '

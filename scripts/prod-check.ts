@@ -13,7 +13,7 @@ import {
   mergeProdCheckResults,
   prodCheckSecretsReady,
   runProdCheckFiles,
-} from '../packages/pbx-core/src/prod/check.js';
+} from '../packages/pbx-ops/src/prod/check.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);

@@ -12,6 +12,13 @@ export default async function IvrPage() {
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <form action={upsertIvrAction} className="flex flex-wrap gap-2">
           <input name="number" placeholder="8001" required className="rounded border px-2 py-1 font-mono" />
+          <input name="digit" placeholder="1" className="w-12 rounded border px-2 py-1 font-mono" />
+          <select name="action" className="rounded border px-2 py-1 text-sm">
+            <option value="goto_extension">goto_extension</option>
+            <option value="goto_ringgroup">goto_ringgroup</option>
+            <option value="hangup">hangup</option>
+          </select>
+          <input name="target" placeholder="9001" className="rounded border px-2 py-1 font-mono" />
           <button type="submit" className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white">保存</button>
         </form>
       </section>

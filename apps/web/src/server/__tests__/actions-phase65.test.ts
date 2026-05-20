@@ -110,7 +110,10 @@ describe('Phase 6.5 — Server Actions (T-ACT-001〜040)', () => {
 
   it('T-ACT-018: upsertIvr', async () => {
     const ctx = await authedCtx();
-    await upsertIvrActionImpl(ctx, fd({ number: '5000' }));
+    await upsertIvrActionImpl(
+      ctx,
+      fd({ number: '5000', digit: '1', action: 'goto_extension', target: '9001' }),
+    );
     await fs.access(path.join(ctx.infraDirs.dialplanDir, 'ivr.conf'));
   });
 

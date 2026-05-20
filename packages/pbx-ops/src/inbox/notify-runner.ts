@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { InboxKind } from './meta.js';
+import type { InboxKind } from '@openpbx/core';
 
 export type RunNotifyEventInput = Readonly<{
   scriptPath: string;

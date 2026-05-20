@@ -4,6 +4,7 @@ export * from './fs/dialplan.js';
 export * from './fs/pjsip.js';
 export * from './fs/guidance.js';
 export * from './fs/recording.js';
+export * from './fs/inbox-list.js';
 export * from './inbox/validate-meta.js';
 export * from './ami/parse.js';
 export * from './ami/device-map.js';

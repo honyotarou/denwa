@@ -78,6 +78,17 @@ describe('Phase 6 — middleware & API', () => {
     });
   });
 
+  describe('T-MW-007: middleware IP policy', () => {
+    it('Given blocked IP When middlewareDecision Then 403 json', () => {
+      const d = middlewareDecision({
+        pathname: '/extensions',
+        hasSession: true,
+        ipAllowed: false,
+      });
+      expect(d).toEqual({ kind: 'json', status: 403, body: { error: 'forbidden' } });
+    });
+  });
+
   describe('T-MW-006: insufficient role', () => {
     it('Given user When admin action Then 403', async () => {
       const ctx = await mkTmpCtx();

@@ -13,7 +13,7 @@ ROOT="$(denwa_root "$(pwd)" 2>/dev/null || true)"
 input=$(cat)
 tool=$(echo "$input" | jq -r '.tool_name // empty')
 
-post_static() {
+post_checks() {
   local rel="$1"
   if [[ "$rel" == "$ROOT"* ]]; then
     rel="${rel#"$ROOT"/}"
@@ -23,7 +23,12 @@ post_static() {
   fi
   denwa_mark_dirty "$ROOT"
   if ! out=$(denwa_run_static "$ROOT" "$rel" 2>&1); then
-    ctx="denwa post-check failed:\n${out}\nHarness (full) runs on agent **stop** and **git push**."
+    ctx="denwa post static failed:\n${out}\nFull harness: agent stop, git push, CI."
+    jq -n --arg c "$ctx" '{ additional_context: $c }'
+    exit 0
+  fi
+  if ! out=$(denwa_run_harness_fast "$ROOT" 2>&1); then
+    ctx="denwa post harness:fast failed:\n${out}\nFull harness (tests): agent stop, pre-push, CI."
     jq -n --arg c "$ctx" '{ additional_context: $c }'
     exit 0
   fi
@@ -32,12 +37,12 @@ post_static() {
 case "$tool" in
   Write|Edit|StrReplace|search_replace)
     rel=$(denwa_tool_path "$input")
-    [[ -n "$rel" ]] && post_static "$rel"
+    [[ -n "$rel" ]] && post_checks "$rel"
     ;;
   Shell)
     cmd=$(echo "$input" | jq -r '.tool_input.command // empty')
     if [[ "$cmd" =~ git[[:space:]]+push ]] && [[ ! "$cmd" =~ --no-verify ]]; then
-      jq -n '{ additional_context: "denwa: git push runs npm run harness (lefthook pre-push)." }'
+      jq -n '{ additional_context: "denwa: git commit → harness:fast (pre-commit). git push / CI → npm run harness (full)." }'
       exit 0
     fi
     ;;

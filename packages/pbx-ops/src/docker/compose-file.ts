@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { ComposeDraft, ComposeServiceDraft } from './compose.js';
+import type { ComposeDraft, ComposeServiceDraft } from '@openpbx/core';
 
 /** §10.2 Compose volume mapping（T-DOCKER-003） */
 export const COMPOSE_SECTION_10_VOLUME_PAIRS = [
