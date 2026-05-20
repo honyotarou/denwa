@@ -1,9 +1,9 @@
 import Database from 'better-sqlite3';
 import path from 'node:path';
 import { applySchema } from '@openpbx/db';
-import { createAuthService } from './auth.js';
-import { createInfraSync, type InfraDirs } from './infra-sync.js';
-import type { AppContext } from './context.js';
+import { createAuthService } from './auth';
+import { createInfraSync, type InfraDirs } from './infra-sync';
+import type { AppContext } from './context';
 
 let dbSingleton: Database.Database | null = null;
 

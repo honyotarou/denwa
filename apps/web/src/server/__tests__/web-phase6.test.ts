@@ -5,8 +5,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { buildInboxMeta, hashPassword } from '@openpbx/core';
 import { createAccount, listAudit, listLoginHistory, upsertIpAllow } from '@openpbx/db';
 import { validateInboxMeta } from '@openpbx/infra';
-import { createTestContext, loginAsAdmin } from '../context.js';
-import { middlewareDecision } from '../middleware-auth.js';
+import { createTestContext, loginAsAdmin } from '../context';
+import { middlewareDecision } from '../middleware-auth';
 import {
   handleCdrIngestPost,
   handleDevicesStreamGet,
@@ -18,8 +18,8 @@ import {
   handlePhonebookLookupGet,
   handleRecordingGet,
   ensureRecordingFixture,
-} from '../api-handlers.js';
-import { AuthError } from '../auth.js';
+} from '../api-handlers';
+import { AuthError } from '../auth';
 
 const tmpDirs: string[] = [];
 

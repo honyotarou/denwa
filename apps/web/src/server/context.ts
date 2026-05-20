@@ -1,7 +1,7 @@
 import type Database from 'better-sqlite3';
 import { createInMemoryDb, seedExtensions } from '@openpbx/db';
-import { createAuthService, type AuthService, type RequestMeta } from './auth.js';
-import { createInfraSync, type InfraDirs, type InfraSync } from './infra-sync.js';
+import { createAuthService, type AuthService, type RequestMeta } from './auth';
+import { createInfraSync, type InfraDirs, type InfraSync } from './infra-sync';
 
 export type Role = 'user' | 'supervisor' | 'admin';
 
