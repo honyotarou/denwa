@@ -1,0 +1,16 @@
+# pre-commit: check:static / pre-push: harness
+pre-commit:
+  commands:
+    static:
+      run: npm run check:static
+      glob:
+        - "packages/**/*"
+        - "apps/**/*"
+        - "scripts/**/*"
+        - "docs/**/*"
+        - "package.json"
+
+pre-push:
+  commands:
+    harness-full:
+      run: npm run harness

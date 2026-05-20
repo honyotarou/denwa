@@ -1,0 +1,31 @@
+---
+description: denwa TDD — Step 番号時は必読 docs+OpenPBX を Read。毎回全文自動参照はしない。
+alwaysApply: true
+---
+
+# denwa
+
+## Skill で番号指示したとき（重要）
+
+`/denwa 2` など **Step 番号**が来たら、実装前に必ず:
+
+1. `.cursor/skills/denwa/steps-denwa.md` の **§N と §N 必読**を Read
+2. 必読表の **docs** と **`../OpenPBX/...`** をすべて Read（無ければ報告）
+3. 読んだパスを短く列挙してから TDD
+
+**毎チャットで計画書全文・OpenPBX 全体を読む必要はない。** Skill の Step に入ったときだけ必読。
+
+## legacy
+
+- 位置: **`../OpenPBX`**（`docs/LEGACY.md`）
+- 読取専用・一括コピー禁止
+
+## メニュー 0→9
+
+0 基盤 → 1 legacy/golden → 2 core → 3 smoke → 4 db → 5 infra → 6 API → 7 UI → 8 runtime → 9 push
+
+契約正本: `docs/TDD-REBUILD-PLAN.md`
+
+## 門番
+
+編集: pre/post static | turn 末: harness | push: harness
