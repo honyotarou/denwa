@@ -4,7 +4,12 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./cdr/ingest": "./src/cdr/ingest.ts",
+    "./ami/device-map": "./src/ami/device-map.ts",
+    "./fs/guidance": "./src/fs/guidance.ts",
+    "./fs/recording": "./src/fs/recording.ts",
+    "./inbox/validate-meta": "./src/inbox/validate-meta.ts"
   },
   "scripts": {
     "test": "vitest run",

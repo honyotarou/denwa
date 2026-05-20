@@ -72,7 +72,7 @@ git clone https://github.com/tanimurahifukka/OpenPBX.git ../OpenPBX
 |------|-------------------------------|------------------|
 | DB | `apps/web/src/lib/db.ts` | `packages/pbx-db` |
 | ドメイン | `apps/web/src/lib/*.ts` | `packages/pbx-core` |
-| Actions | `apps/web/src/app/actions.ts` | `apps/web/src/server/actions/` |
+| Actions | `apps/web/src/app/actions.ts` | `app/actions/<domain>.ts` + `server/actions/` |
 | compose / conf 検査 | （散在） | `packages/pbx-ops` |
 
 `fixtures/golden/current/` に `T-GM-001`〜`009` を順に追加。
@@ -196,54 +196,68 @@ git clone https://github.com/tanimurahifukka/OpenPBX.git ../OpenPBX
 
 ## §6 API / Actions（apps/web · Phase 6〜6.5）
 
-**目的**: Route Handler、middleware、Server Actions 40 本（`T-MW-*`, `T-API-*`, `T-ACT-*`）。
+**目的**: Route Handler、middleware、Server Actions（`T-MW-*`, `T-API-*`, `T-ACT-*`）。  
+**SOC は Skill の強制マトリクス + `scripts/denwa-architecture-gate.mjs` で落とす。**
 
-### 3 層（変更時はこの順）
+### 4 層（変更時はこの順）
 
 ```text
-server/services/   use-case: validate → db → infra.sync → audit
-server/actions/    薄い *ActionImpl（FormData → service）
-app/api/           buildContextFromRequest(req) 必須（health 除く）
+server/services/        use-case 正本（AppContext: db + infra）
+server/actions/         *ActionImpl（FormData → service。ctx.db 禁止 T-ARCH-006）
+server/actions/forms/   field 名単一正本（T-FORM-001）
+app/actions/<domain>.ts Server Action 登録 + flash（barrel: app/actions.ts T-SOC-004）
+app/api/**/route.ts     buildContextFromRequest(req)（T-API-IP-001）
+server/api/handlers/    JSON 業務（withAuth T-API-AUTH-001、barrel: api-handlers.ts T-SOC-005）
 ```
 
 | 関心 | パス |
 |------|------|
-| **Use-case（正本）** | `server/services/extensions.ts` 他 domain 別 |
-| 検証ヘルパ | `server/services/validate.ts`（`throwIfInvalid`） |
-| Actions | `server/actions/*.ts` + `impl.ts`（barrel re-export） |
-| 登録 | `server/actions-handlers.ts` → `app/actions.ts` |
-| 読取 | `server/page-data.ts`（view model。SQL 禁止） |
-| パス | `server/paths.ts`（inbox/recordings。page から使わない） |
-| API 文脈 + IP | `server/request-meta.ts` |
-| Edge IP のみ | `server/request-ip.ts` |
-| Middleware | `middleware.ts` + `middleware-ip.ts`（`@openpbx/core/auth/policy`） |
-| infra 同期 | `server/infra-sync.ts`（trunk: `renderTrunksPjsipIfValid`） |
+| Use-case | `server/services/*.ts`（`auth-login`, `ivr`, `guidance`, …） |
+| audit | `server/audit.ts`（**services が actions を import しない** T-SOC-003） |
+| Action impl | `server/actions/*.ts` + `impl.ts` |
+| Form 契約 | `server/actions/forms/*.ts` |
+| Server Action UI | `app/actions/<domain>.ts` + `app/actions/_flash.ts` |
+| API 認可 | `server/api/with-auth.ts` |
+| API 実装 | `server/api/handlers/*.ts` |
+| 読取 | `server/page-data.ts` |
+| 認証 UC | `server/services/auth-login.ts` → `authenticateLogin`（T-ACT-021） |
 
-### 規律（必須）
+### コンテキスト
 
-- **mutation は services に1本化** — actions に `createX(ctx.db)` + `sync` を直書きしない
-- 各 service が **core の `validate*`** を呼ぶ（**T-ARCH-004**）
-- **`page.tsx`**: `getRequestContext()` / `page-data` のみ。`process.env`・`node:path`・`getAppDb` 禁止（**T-ARCH-002/003**）
-- **API route**: `buildContextFromRequest(req)`（**T-API-IP-001**）— cookie のみで `127.0.0.1` 固定にしない
-- Action の FormData key は計画・`T-ACT-*` と一致（勝手に変えない）
-- IVR は `validateIvrMenuDraft`（actions/ivr.ts 内で可。将来 services/ivr へ）
+- `ActionContext`: login / TOTP 等（db なし）
+- `AppContext`: services 用（`ActionContext` + db + infra）
+
+### 規律（門番で強制）
+
+| やること | 契約 ID |
+|----------|---------|
+| mutation は services のみ | T-ARCH-006 |
+| domain service は core `validate*` | T-ARCH-004 |
+| ログインは `authenticateLogin`（TOTP 含む） | T-ACT-021 |
+| API route は `buildContextFromRequest(req)` | T-API-IP-001 |
+| API handler は `withAuth` | T-API-AUTH-001（Vitest） |
+| `app/actions.ts` / `api-handlers.ts` は barrel のみ | T-SOC-004/005 |
+| actions/forms・api/handlers は db/infra **subpath** のみ | T-PKG-001 |
+| page は page-data のみ | T-ARCH-002/003 |
+
+FormData key を変えるときは **forms/ と page の input を同時**（T-FORM-001）。
 
 ### Middleware / IP
 
-- Edge: `IP_ALLOW_CIDRS`（env）+ `clientIpOptional`（`request-ip.ts`）
-- ログイン・API・Actions: DB `ip_allow_list` を `meta.ip` で再検証
+- Edge: `IP_ALLOW_CIDRS` + `clientIpOptional`（T-MW-007）
+- `@openpbx/core/auth/policy` サブパスのみ（T-MW-008）
 
-### 新規ドメイン追加チェックリスト
+### 新規ドメイン（TDD）
 
-- [ ] core: validate + テスト
-- [ ] db: repo
-- [ ] services: `*WithSync` + audit + sync
-- [ ] actions: 薄い wrapper
-- [ ] `import-boundaries.test.ts` が緑
+1. Red: core / `import-boundaries` / 必要なら `extension-form` 型の契約テスト
+2. Green: repo → **service** → thin action → `app/actions/<domain>.ts`
+3. API が要れば `api/handlers/<name>.ts` + route
+4. **`denwa-architecture-gate.mjs`** の `MUTATION_SERVICES` と `ACTIONS_SERVICE_ROUTED` にファイル名追加
+5. `npm run harness` 緑
 
 ### 門番
 
-§4 と同じ。
+§4 と同じ（pre static = architecture gate 含む）。
 
 **次: §7**
 
@@ -323,10 +337,12 @@ docker compose up            # 9001/9002 inbox 等
 - [ ] `npm run harness` 緑（push でも再実行される）
 - [ ] 触った §7 ID が Green または manual-only 記録
 - [ ] `TDD-REBUILD-PLAN.md` と実装のズレなし
-- [ ] `T-ARCH-001`〜`005` / `T-API-IP` / `T-INFRA-TRUNK-001` が緑
+- [ ] `npm run check:static` 緑（T-ARCH / T-SOC / T-PKG 含む）
+- [ ] `import-boundaries.test.ts` 緑（Vitest 二重門番）
 - [ ] secret / SQLite / 録音を commit していない
-- [ ] FRONTEND 変更時、Action・FormData key 不変
-- [ ] 新規 mutation は `server/services/*` に閉じている
+- [ ] FRONTEND 変更時、FormData key は `actions/forms/*` と page で一致
+- [ ] 新規 mutation は `server/services/*`（`app/actions.ts` に実装を書いていない）
+- [ ] 新 domain なら `denwa-architecture-gate.mjs` のリスト更新済み
 - [ ] 新規 SQL は `pbx-db/src/repos` のみ
 
 ### PR テンプレ
@@ -341,6 +357,7 @@ docker compose up            # 9001/9002 inbox 等
 
 ## 確認（自動門番含む）
 - [ ] Cursor stop / pre-push で harness 緑
+- [ ] check:static（architecture gate）通過
 - [ ] pre-commit harness:fast 通過
 - [ ] prod-check（本番化時）
 ```

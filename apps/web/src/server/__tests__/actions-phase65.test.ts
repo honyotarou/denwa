@@ -137,6 +137,23 @@ describe('Phase 6.5 — Server Actions (T-ACT-001〜040)', () => {
     expect(listLoginHistory(ctx.db, 1)[0]!.success).toBe(1);
   });
 
+  it('T-ACT-021b: login rejects bad totp when enabled', async () => {
+    const { generateSecret } = await import('@openpbx/core');
+    const ctx = createTestContext();
+    const secret = generateSecret();
+    const acct = createAccount(ctx.db, {
+      username: 'bob',
+      passwordHash: hashPassword('password12'),
+      role: 'user',
+    });
+    ctx.auth.setTotpSecret(acct.id, secret);
+    const r = await loginActionImpl(
+      ctx,
+      fd({ username: 'bob', password: 'password12', totp: '000000' }),
+    );
+    expect(r.ok).toBe(false);
+  });
+
   it('T-ACT-022: logout', async () => {
     const ctx = await authedCtx();
     await logoutActionImpl(ctx);
