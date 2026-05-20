@@ -20,6 +20,7 @@ const STATE_MAP: Record<string, DeviceState> = {
   RINGINUSE: 'ringinuse',
   ONHOLD: 'onhold',
   'Not in use': 'not_inuse',
+  'Not inuse': 'not_inuse',
   'In use': 'inuse',
   Busy: 'busy',
   Ringing: 'ringing',

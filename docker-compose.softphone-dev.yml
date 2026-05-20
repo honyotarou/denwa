@@ -1,0 +1,5 @@
+# dev のみ: ブラウザソフトフォン用 WSS 8089 をホスト公開（本番 compose には含めない）
+services:
+  asterisk:
+    ports:
+      - "8089:8089/tcp"

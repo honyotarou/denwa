@@ -17,7 +17,7 @@ type DeviceInfo = {
   extension: string | null;
   state: DeviceState;
   updatedAt?: string;
-  reachable?: boolean;
+  reachable?: boolean | null;
   contact?: string | null;
 };
 
