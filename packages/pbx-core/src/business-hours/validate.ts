@@ -26,5 +26,12 @@ export function validateTimeRuleDraft(draft: TimeRuleDraft): string[] {
   if (!DAYS_RE.test(draft.days)) errs.push('曜日指定が不正');
   if (!TIME_RE.test(draft.startTime)) errs.push('開始時刻は HH:MM');
   if (!TIME_RE.test(draft.endTime)) errs.push('終了時刻は HH:MM');
+  if (
+    TIME_RE.test(draft.startTime) &&
+    TIME_RE.test(draft.endTime) &&
+    draft.startTime >= draft.endTime
+  ) {
+    errs.push('開始時刻は終了より前');
+  }
   return errs;
 }

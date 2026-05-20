@@ -1,4 +1,5 @@
 import type { ExtensionDraft } from './extension.js';
+import { validateExtensionDraft } from './extension.js';
 
 /** Asterisk pjsip.d/extensions.conf 断片の純関数生成 */
 
@@ -33,4 +34,15 @@ export function renderPjsipExtensions(
     blocks.push('');
   }
   return blocks.join('\n');
+}
+
+/** T-PJSIP-005: いずれかが invalid なら conf を出力しない */
+export function renderPjsipExtensionsIfValid(
+  extensions: readonly ExtensionDraft[],
+  opts?: { updatedAt?: string },
+): string | null {
+  for (const e of extensions) {
+    if (validateExtensionDraft(e).length > 0) return null;
+  }
+  return renderPjsipExtensions(extensions, opts);
 }

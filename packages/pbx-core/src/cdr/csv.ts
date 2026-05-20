@@ -24,6 +24,17 @@ export const CDR_FIELD_NAMES = [
 export type CdrFieldName = (typeof CDR_FIELD_NAMES)[number];
 export type CdrCsvRow = Readonly<Record<CdrFieldName, string>>;
 
+/** ingest 向け: 秒数は数値、空の日時は null（legacy `cdr.ts` ingest と同型） */
+export type CdrParsedRow = Readonly<
+  Omit<CdrCsvRow, 'start' | 'answer' | 'end' | 'duration' | 'billsec'> & {
+    start: string | null;
+    answer: string | null;
+    end: string | null;
+    durationSec: number;
+    billsecSec: number;
+  }
+>;
+
 export function parseCdrCsvLine(line: string): string[] {
   const out: string[] = [];
   let cur = '';
@@ -62,4 +73,38 @@ export function cdrRowFromCsvLine(line: string): CdrCsvRow | null {
     row[CDR_FIELD_NAMES[i]] = cols[i] ?? '';
   }
   return row;
+}
+
+function cdrTimestampOrNull(value: string): string | null {
+  return value.trim() === '' ? null : value;
+}
+
+function cdrSecondsOrZero(value: string): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+export function cdrParsedRowFromCsvLine(line: string): CdrParsedRow | null {
+  const row = cdrRowFromCsvLine(line);
+  if (!row) return null;
+  return {
+    accountcode: row.accountcode,
+    src: row.src,
+    dst: row.dst,
+    dcontext: row.dcontext,
+    clid: row.clid,
+    channel: row.channel,
+    dstchannel: row.dstchannel,
+    lastapp: row.lastapp,
+    lastdata: row.lastdata,
+    start: cdrTimestampOrNull(row.start),
+    answer: cdrTimestampOrNull(row.answer),
+    end: cdrTimestampOrNull(row.end),
+    disposition: row.disposition,
+    amaflag: row.amaflag,
+    userfield: row.userfield,
+    uniqueid: row.uniqueid,
+    durationSec: cdrSecondsOrZero(row.duration),
+    billsecSec: cdrSecondsOrZero(row.billsec),
+  };
 }

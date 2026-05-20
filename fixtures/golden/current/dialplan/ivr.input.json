@@ -1,0 +1,20 @@
+{
+  "id": "T-GM-004",
+  "updatedAt": "2026-05-19T00:00:00.000Z",
+  "menus": [
+    {
+      "number": "5000",
+      "name": "Main",
+      "welcomePrompt": "welcome",
+      "menuPrompt": "menu",
+      "invalidPrompt": null,
+      "goodbyePrompt": "bye",
+      "maxRetries": 3,
+      "waitSeconds": 6,
+      "options": [
+        { "digit": "1", "action": "goto_extension", "target": "1001", "label": "内線" },
+        { "digit": "2", "action": "goto_ringgroup", "target": "6000", "label": "G" }
+      ]
+    }
+  ]
+}

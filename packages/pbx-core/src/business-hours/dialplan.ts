@@ -23,7 +23,8 @@ export function renderBusinessHoursDialplan(
   for (const h of holidays) {
     lines.push(` same => n,GotoIf($["${h.date}" = "\${TODAY}"]?closed)`);
   }
-  for (const r of rules) {
+  const sortedRules = [...rules].sort((a, b) => a.name.localeCompare(b.name));
+  for (const r of sortedRules) {
     lines.push(` same => n,GotoIfTime(${r.startTime}-${r.endTime},${r.days},*,*?open)`);
   }
   lines.push(
