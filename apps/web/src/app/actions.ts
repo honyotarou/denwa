@@ -1,6 +1,5 @@
-'use server';
-
 /** Barrel: pages may import from `@/app/actions` or domain `@/app/actions/<domain>`. */
+/** 各 `./actions/*` に `'use server'` があるため、このファイルには付けない（Next の export * 制約）。 */
 export * from './actions/auth';
 export * from './actions/extensions';
 export * from './actions/ring-groups';
@@ -12,3 +11,5 @@ export * from './actions/guidance';
 export * from './actions/me';
 export * from './actions/accounts';
 export * from './actions/admin';
+export * from './actions/network';
+export * from './actions/patients';

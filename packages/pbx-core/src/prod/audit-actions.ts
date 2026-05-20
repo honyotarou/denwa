@@ -43,6 +43,13 @@ export const SERVER_ACTION_AUDIT_ACTIONS = [
   'trunk.delete',
   'upgrade.schedule',
   'upgrade.delete',
+  'network.update',
+  'patient.upsert',
+  'patient.delete',
+  'patient.record.create',
+  'patient.record.delete',
+  'click2call.token.create',
+  'click2call.token.revoke',
 ] as const;
 
 export const API_AUDIT_ACTIONS = [

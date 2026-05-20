@@ -50,6 +50,18 @@ docker compose up --build
 
 手動 smoke（`manual-only` 可）: 内線 1001/1002 で相互発信、9001/9002 に発信して `data/inbox/` を確認。
 
+### OpenPBX 差分機能（移植済み）
+
+| URL | 内容 |
+|-----|------|
+| `/network` | Tailscale / NAT → `data/pbx-out/pjsip.d/transports.conf`（admin） |
+| `/patients` | 患者 CRUD・記録（個人情報は平文+監査。診断ツールではない） |
+| `/triage?patient=12345` | 問診フロー（受付補助）→ 患者記録 `kind=triage` |
+| `/softphone` | WebRTC UI（admin のみ credential。sip.js は次段） |
+| `chrome-extension/` | Click-to-call 雛形（Bearer token は `/me` 発行は次段） |
+
+計画: `docs/OPENPBX-GAP-MIGRATION-TDD-PLAN.md` / `docs/OPENPBX-GAP-MIGRATION-NON-TDD-PLAN.md`
+
 ### host-tts（開発のみ）
 
 カスタム IVR 音声の `say` 生成は **macOS 開発用**。legacy OpenPBX の `host-tts/` を参照。denwa リポには同梱しない。

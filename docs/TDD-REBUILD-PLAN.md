@@ -5,6 +5,8 @@
 **この文書の読者**: 人間・Codex などの実装エージェント。実装順・契約・完了条件の単一正本。  
 **注意**: 本文は計画とテスト仕様のみ。実装は別タスクで本計画に従って行う。フロントエンドの見た目・画面構成・UI実装ガイドは `docs/FRONTEND-PLAN.md` を参照するが、認可・API・Server Actions・永続化・副作用の契約は本書を優先する。
 
+**OpenPBX 差分移植**: `/network`、患者、問診、WebRTC ソフトフォン、Chrome 拡張の移植 TDD 詳細は `docs/OPENPBX-GAP-MIGRATION-TDD-PLAN.md` を参照する。
+
 ---
 
 ## 1. スコープ

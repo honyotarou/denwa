@@ -18,6 +18,11 @@ import {
   listSipTrunksForUi,
   listConcurrencySnapshots,
   getPasswordPolicy,
+  getNetworkSettings,
+  listPatients,
+  getPatient,
+  listPatientRecords,
+  listRecentPatientRecords,
 } from '@openpbx/db';
 import { listRecordingFiles, countInboxFiles } from '@openpbx/infra';
 import { getAppDb } from './app-context';
@@ -106,4 +111,24 @@ export function getLoginHistory(limit = 100) {
 
 export function getPasswordPolicyForUi() {
   return getPasswordPolicy(db());
+}
+
+export function getNetworkSettingsForUi() {
+  return getNetworkSettings(db());
+}
+
+export function listPatientsForUi(query?: string) {
+  return listPatients(db(), query);
+}
+
+export function getPatientForUi(id: string) {
+  return getPatient(db(), id);
+}
+
+export function listPatientRecordsForUi(patientId: string) {
+  return listPatientRecords(db(), patientId);
+}
+
+export function listRecentPatientRecordsForUi(limit = 20) {
+  return listRecentPatientRecords(db(), limit);
 }

@@ -3,6 +3,7 @@ import {
   normalizeExtensionDraft,
   toExtensionDraft,
   renderPjsipExtensions,
+  renderPjsipTransportsConf,
   renderRingGroupDialplan,
   renderPickupDialplan,
   renderIvrDialplan,
@@ -11,6 +12,7 @@ import {
   renderTrunksPjsipIfValid,
 } from '@openpbx/core';
 import {
+  getNetworkSettings,
   listExtensions,
   listRingGroupDrafts,
   listIvrMenuDrafts,
@@ -76,6 +78,20 @@ export function createInfraSync(db: Database.Database, dirs: InfraDirs) {
       }
       await writePjsipFile(dirs.pjsipDir, 'trunks.conf', pjsip);
       await writeDialplanFile(dirs.dialplanDir, 'trunks.conf', renderTrunksDialplan(trunks));
+      await signalAsteriskReload(dirs.signalDir);
+    },
+    async syncPjsipTransports() {
+      const row = getNetworkSettings(db);
+      const content = renderPjsipTransportsConf({
+        settings: {
+          externalIp: row.externalIp,
+          externalSignalingIp: row.externalSignalingIp,
+          localNet: row.localNet,
+        },
+        updatedAt: row.updatedAt || undefined,
+      });
+      if (!content) throw new Error('invalid network settings — refusing to write transports.conf');
+      await writePjsipFile(dirs.pjsipDir, 'transports.conf', content);
       await signalAsteriskReload(dirs.signalDir);
     },
   };

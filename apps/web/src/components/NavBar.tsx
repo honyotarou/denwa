@@ -25,7 +25,10 @@ export function NavBar({ me }: { me: Account | null }) {
       <Link className={linkCls} href="/cdr">履歴</Link>
       <Link className={linkCls} href="/recordings">録音</Link>
       <Link className={linkCls} href="/concurrency">同時通話</Link>
+      <Link className={linkCls} href="/triage">問診</Link>
+      <Link className={linkCls} href="/patients">患者</Link>
       <Link className={linkCls} href="/softphone">ソフトフォン</Link>
+      {adm && <Link className={linkCls} href="/network">ネットワーク</Link>}
       {sup && <Link className={linkCls} href="/billing">課金</Link>}
       {sup && <Link className={linkCls} href="/audit">監査</Link>}
       {adm && <Link className={linkCls} href="/accounts">アカウント</Link>}
