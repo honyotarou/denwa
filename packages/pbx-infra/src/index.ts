@@ -23,3 +23,5 @@ export * from './concurrency/online-count.js';
 export * from './concurrency/minute-at.js';
 export * from './concurrency/record-from-devices.js';
 export * from './inbox/list-entries.js';
+export * from './fs/inbox-media.js';
+export * from './fs/upgrade-signal.js';

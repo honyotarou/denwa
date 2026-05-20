@@ -15,6 +15,7 @@ import {
   listGuidanceNames,
   listCdrRecords,
   listBillingRatesForCost,
+  listDueUnappliedUpgrades,
   listIpAllowRows as listIpAllowRowsRepo,
   listSipTrunksForUi,
   listConcurrencySnapshots,
@@ -27,7 +28,7 @@ import {
   listClickToCallTokens,
   listGrantedExtensionNumbers,
 } from '@openpbx/db';
-import { enrichCdrRowsForUi, filterDueUpgrades, formatUpgradeRunCommands } from '@openpbx/core';
+import { enrichCdrRowsForUi, formatUpgradeRunCommands } from '@openpbx/core';
 import { listRecordingFiles, countInboxFiles, listInboxEntries } from '@openpbx/infra';
 import { getAppDb } from './app-context';
 import { inboxDirectory, recordingsDirectory } from './paths';
@@ -144,7 +145,7 @@ export function getVersionUpgrades() {
 export function getUpgradesForUi() {
   const scheduled = listVersionUpgrades(db());
   const nowIso = new Date().toISOString();
-  const due = filterDueUpgrades(scheduled, nowIso).map((row) => ({
+  const due = listDueUnappliedUpgrades(db(), nowIso).map((row) => ({
     ...row,
     commands: formatUpgradeRunCommands(row),
   }));

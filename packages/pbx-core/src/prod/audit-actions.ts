@@ -44,6 +44,8 @@ export const SERVER_ACTION_AUDIT_ACTIONS = [
   'upgrade.schedule',
   'upgrade.delete',
   'upgrade.due',
+  'upgrade.apply',
+  'upgrade.apply.failed',
   'network.update',
   'patient.upsert',
   'patient.delete',
@@ -58,6 +60,7 @@ export const SERVER_ACTION_AUDIT_ACTIONS = [
 export const API_AUDIT_ACTIONS = [
   'click2call',
   'recording.read',
+  'inbox.read',
   'phonebook.lookup',
   'devices.stream',
 ] as const;

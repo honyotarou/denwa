@@ -10,6 +10,8 @@ import {
   renderBusinessHoursDialplan,
   renderTrunksDialplan,
   renderTrunksPjsipIfValid,
+  renderEmptyTrunksPjsip,
+  renderEmptyTrunksDialplan,
 } from '@openpbx/core';
 import {
   getNetworkSettings,
@@ -74,6 +76,13 @@ export function createInfraSync(db: Database.Database, dirs: InfraDirs) {
     },
     async syncTrunks() {
       const trunks = listSipTrunksForInfra(db);
+      const stamp = new Date().toISOString();
+      if (trunks.length === 0) {
+        await writePjsipFile(dirs.pjsipDir, 'trunks.conf', renderEmptyTrunksPjsip(stamp));
+        await writeDialplanFile(dirs.dialplanDir, 'trunks.conf', renderEmptyTrunksDialplan(stamp));
+        await signalAsteriskReload(dirs.signalDir);
+        return;
+      }
       const pjsip = renderTrunksPjsipIfValid(trunks);
       if (!pjsip) {
         throw new Error('invalid trunk configuration — refusing to write pjsip');
