@@ -7,7 +7,7 @@ import {
   KIND_COLOR,
   type Recommendation,
   type FlowOption,
-} from '@openpbx/core';
+} from '@openpbx/core/triage/flow-graph';
 
 interface Step {
   nodeId: string;

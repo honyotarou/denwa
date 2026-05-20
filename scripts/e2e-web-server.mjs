@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /**
- * Playwright webServer: prepare isolated DB → next dev (port 3010).
- * Production build is blocked until client pages stop importing @openpbx/core barrel (node:crypto).
+ * Playwright webServer: prepare isolated DB → next build → next start (port 3010).
  */
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -21,7 +20,9 @@ run(process.execPath, [path.join(ROOT, 'scripts/e2e-prepare.mjs')]);
 const port = process.env.E2E_PORT ?? '3010';
 const env = { ...process.env, ...e2eWebProcessEnv(), PORT: port };
 
-const child = spawnSync('npx', ['next', 'dev', '-p', port], {
+run('npm', ['run', 'build', '-w', 'command-room-web'], { env });
+
+const child = spawnSync('npx', ['next', 'start', '-p', port], {
   cwd: WEB,
   env,
   stdio: 'inherit',

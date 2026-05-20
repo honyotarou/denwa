@@ -19,6 +19,9 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'on-first-retry',
+    extraHTTPHeaders: {
+      'X-Real-IP': '127.0.0.1',
+    },
     ...devices['Desktop Chrome'],
   },
   webServer: {
@@ -26,7 +29,7 @@ export default defineConfig({
     url: `${baseURL}/api/health`,
     /** Always use isolated data/e2e-run unless explicitly reusing (E2E_REUSE_SERVER=1). */
     reuseExistingServer: process.env.E2E_REUSE_SERVER === '1',
-    timeout: 180_000,
+    timeout: 240_000,
     cwd: ROOT,
   },
   projects: [
