@@ -68,7 +68,7 @@ description: >-
 | T-ARCH-006 | 移行済み `server/actions/*` が `ctx.db` / `ctx.infra.sync*` 直叩きしない | ✓ | ✓ |
 | T-API-IP-001 | API route が `buildContextFromRequest(req)`（health 除く） | ✓ | ✓ |
 | T-API-AUTH-001 | API handler が `withAuth` で認可（手書き try/catch 重複を避ける） | — | ✓ |
-| T-MW-007 | middleware が `clientIpOptional`（`ipAllowed=true` 固定禁止） | ✓ | ✓ |
+| T-MW-007 | middleware が `clientIpForMiddleware`（`ipAllowed=true` 固定禁止） | ✓ | ✓ |
 | T-MW-008 | middleware が `request-meta` / `app-context` / core バレルを import しない | ✓ | — |
 | T-INFRA-TRUNK-001 | `infra-sync` が `renderTrunksPjsipIfValid` | ✓ | ✓ |
 | T-SOC-001 | `infra-sync` に extensions CRUD ネスト禁止 | ✓ | — |

@@ -10,7 +10,9 @@ import {
   hashPassword,
   isForbiddenExtensionSecret,
   normalizeExtensionDraft,
+  normalizeNetworkSettingsDraft,
   renderPjsipExtensions,
+  renderPjsipTransportsConf,
   toExtensionDraft,
 } from '@openpbx/core';
 import { applySchema, createAccount, getExtension, listExtensions, updateExtension } from '@openpbx/db';
@@ -74,9 +76,20 @@ async function syncPjsip(): Promise<void> {
       }),
     ),
   );
-  const pjsipBody = renderPjsipExtensions(drafts, { updatedAt: new Date().toISOString() });
+  const stamp = new Date().toISOString();
+  const pjsipBody = renderPjsipExtensions(drafts, { updatedAt: stamp });
   await writePjsipFile(pjsipDir, 'extensions.conf', pjsipBody);
-  console.log('Synced', path.join(pjsipDir, 'extensions.conf'));
+  const transports = renderPjsipTransportsConf({
+    settings: normalizeNetworkSettingsDraft({}),
+    updatedAt: stamp,
+  });
+  if (!transports) throw new Error('renderPjsipTransportsConf failed');
+  await writePjsipFile(pjsipDir, 'transports.conf', transports);
+  const trunksPath = path.join(pjsipDir, 'trunks.conf');
+  if (!fs.existsSync(trunksPath)) {
+    fs.writeFileSync(trunksPath, '; AUTO-GENERATED placeholder\n');
+  }
+  console.log('Synced', path.join(pjsipDir, 'extensions.conf'), 'and transports.conf');
 }
 
 syncPjsip()
