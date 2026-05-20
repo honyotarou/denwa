@@ -1,3 +1,6 @@
+.cursor/.denwa-dirty
+.cursor/.denwa-static.lock
+
 node_modules/
 .next/
 .DS_Store
