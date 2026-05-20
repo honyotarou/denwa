@@ -13,3 +13,5 @@ export * from './actions/accounts';
 export * from './actions/admin';
 export * from './actions/network';
 export * from './actions/patients';
+export * from './actions/click-to-call';
+export * from './actions/extension-grants';

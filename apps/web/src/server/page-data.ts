@@ -23,6 +23,8 @@ import {
   getPatient,
   listPatientRecords,
   listRecentPatientRecords,
+  listClickToCallTokens,
+  listGrantedExtensionNumbers,
 } from '@openpbx/db';
 import { listRecordingFiles, countInboxFiles } from '@openpbx/infra';
 import { getAppDb } from './app-context';
@@ -34,6 +36,14 @@ function db() {
 
 export function listAccounts() {
   return listAccountsRepo(db());
+}
+
+export function listClickToCallTokensForAccount(accountId: number) {
+  return listClickToCallTokens(db(), accountId);
+}
+
+export function listExtensionGrantsForAccount(accountId: number) {
+  return listGrantedExtensionNumbers(db(), accountId);
 }
 
 export function listRingGroups() {

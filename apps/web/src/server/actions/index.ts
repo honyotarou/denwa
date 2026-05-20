@@ -7,3 +7,5 @@ export * from './ivr.js';
 export * from './guidance-auth.js';
 export * from './accounts.js';
 export * from './admin.js';
+export * from './click-to-call.js';
+export * from './extension-grants.js';

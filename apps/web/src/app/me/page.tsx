@@ -6,11 +6,15 @@ import {
   disableTotpAction,
 } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { ClickToCallSection } from './click-to-call-section';
+import { listClickToCallTokensForAccount, getExtensions } from '@/server/page-data';
 
 export const dynamic = 'force-dynamic';
 
 export default async function MePage() {
   const me = await requireAccount();
+  const tokens = listClickToCallTokensForAccount(me.id);
+  const extensionNumbers = getExtensions().map((e) => e.number);
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold">マイアカウント</h2>
@@ -62,6 +66,7 @@ export default async function MePage() {
           </form>
         )}
       </section>
+      <ClickToCallSection tokens={tokens} extensionNumbers={extensionNumbers} />
     </div>
   );
 }
