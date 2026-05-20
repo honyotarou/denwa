@@ -10,7 +10,9 @@ export type SessionCookieOptions = Readonly<{
 
 export function sessionCookieOptions(): SessionCookieOptions {
   const secure =
-    process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === '1';
+    process.env.COOKIE_SECURE === '0'
+      ? false
+      : process.env.COOKIE_SECURE === '1' || process.env.NODE_ENV === 'production';
   return {
     httpOnly: true,
     sameSite: 'lax',
