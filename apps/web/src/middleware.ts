@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { middlewareDecision } from '@/server/middleware-auth';
 import { resolveMiddlewareIpAllowed } from '@/server/middleware-ip';
-import { clientIpOptional } from '@/server/request-ip';
+import { clientIpForMiddleware } from '@/server/request-ip';
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = !!req.cookies.get('cr_session')?.value;
-  const ipAllowed = resolveMiddlewareIpAllowed(clientIpOptional(req.headers));
+  const ipAllowed = resolveMiddlewareIpAllowed(clientIpForMiddleware(req.headers));
   const decision = middlewareDecision({ pathname, hasSession, ipAllowed });
   if (decision.kind === 'next') return NextResponse.next();
   if (decision.kind === 'json') {

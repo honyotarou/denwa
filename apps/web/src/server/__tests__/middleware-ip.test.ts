@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { clientIpForMiddleware } from '../request-ip';
 import { resolveMiddlewareIpAllowed } from '../middleware-ip';
 
 describe('T-SEC-IP-001: middleware-ip adapter (F-008)', () => {
@@ -26,5 +27,16 @@ describe('T-SEC-IP-001: middleware-ip adapter (F-008)', () => {
     process.env = { ...prevEnv, NODE_ENV: 'development' };
     delete process.env.IP_ALLOW_CIDRS;
     expect(resolveMiddlewareIpAllowed('10.0.0.1')).toBe(true);
+  });
+
+  it('Given production CIDR and TRUSTED_PROXY_COUNT=0 When fromHeaders Then allow loopback (docker)', () => {
+    process.env = {
+      ...prevEnv,
+      NODE_ENV: 'production',
+      TRUSTED_PROXY_COUNT: '0',
+      IP_ALLOW_CIDRS: '127.0.0.0/8,172.16.0.0/12',
+    };
+    const ip = clientIpForMiddleware(new Headers());
+    expect(resolveMiddlewareIpAllowed(ip)).toBe(true);
   });
 });

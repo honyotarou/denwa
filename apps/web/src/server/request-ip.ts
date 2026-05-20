@@ -41,3 +41,8 @@ export function clientIpOptional(headers: Headers, trusted = trustedProxyCountFr
 export function clientIpFromHeaders(headers: Headers, trusted = trustedProxyCountFromEnv()): string {
   return clientIpOptional(headers, trusted) ?? '127.0.0.1';
 }
+
+/** Edge middleware 用（T-MW-007）: Node と同じ既定 IP。TRUSTED_PROXY_COUNT=0 でも docker/localhost が通る。 */
+export function clientIpForMiddleware(headers: Headers, trusted = trustedProxyCountFromEnv()): string {
+  return clientIpFromHeaders(headers, trusted);
+}

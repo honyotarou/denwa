@@ -8,7 +8,7 @@ export type MiddlewareIpPolicyInput = Readonly<{
 
 /**
  * Edge middleware: 本番で IP_ALLOW_CIDRS 未設定なら deny（F-008 / T-SEC-IP-001）。
- * 開発 compose は true（サーバー側 DB allowlist に委譲）。
+ * Edge は `clientIpFromHeaders` と同型の IP を渡す（TRUSTED_PROXY_COUNT=0 時は 127.0.0.1 既定）。
  */
 export function resolveMiddlewareIpAllowed(input: MiddlewareIpPolicyInput): boolean {
   const cidrs = input.envCidrs.filter(Boolean);
