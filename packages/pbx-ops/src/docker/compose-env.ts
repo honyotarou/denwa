@@ -1,4 +1,4 @@
-import type { ComposeDraft } from './compose.js';
+import type { ComposeDraft } from '@openpbx/core';
 
 /** docker-compose web.environment（T-DOCKER-004, §10） */
 export const WEB_REQUIRED_ENV_KEYS = [

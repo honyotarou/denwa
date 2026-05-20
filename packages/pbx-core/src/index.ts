@@ -27,8 +27,4 @@ export * from './originate/ami.js';
 export * from './dialplan/filename.js';
 export * from './inbox/meta.js';
 export * from './docker/compose.js';
-export * from './docker/compose-env.js';
-export * from './asterisk/conf-inspect.js';
-export * from './prod/check.js';
 export * from './prod/audit-actions.js';
-export * from './inbox/notify-runner.js';

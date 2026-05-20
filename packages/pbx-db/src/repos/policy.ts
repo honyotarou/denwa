@@ -33,3 +33,12 @@ export function listIpAllow(db: Database.Database): string[] {
     (r) => r.cidr,
   );
 }
+
+export function updatePasswordPolicy(
+  db: Database.Database,
+  input: { minLength: number; requireDigit: boolean },
+): void {
+  db.prepare(
+    `UPDATE password_policies SET min_length = ?, require_digit = ?, updated_at = datetime('now') WHERE id = 1`,
+  ).run(input.minLength, input.requireDigit ? 1 : 0);
+}

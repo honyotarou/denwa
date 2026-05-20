@@ -1,5 +1,6 @@
 .cursor/.denwa-dirty
 .cursor/.denwa-static.lock
+.cursor/.denwa-harness-fast.lock
 
 node_modules/
 .next/

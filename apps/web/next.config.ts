@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@openpbx/core', '@openpbx/db', '@openpbx/infra'],
+  transpilePackages: ['@openpbx/core', '@openpbx/db', '@openpbx/infra', '@openpbx/ops'],
   serverExternalPackages: ['better-sqlite3'],
   webpack: (config) => {
     // workspace packages use TS ESM paths (*.js → *.ts); Webpack needs this alias

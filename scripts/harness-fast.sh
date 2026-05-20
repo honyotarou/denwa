@@ -1,18 +1,12 @@
 #!/usr/bin/env bash
-# Fast harness for TDD inner loop + pre-commit (~数秒〜十数秒).
-# See .cursor/skills/denwa/SKILL.md
+# Fast gate: static + all workspace typechecks (no Vitest).
+# Used by: npm run harness:fast, lefthook pre-commit, Cursor postToolUse hook.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=scripts/harness-lib.sh
+source "$ROOT/scripts/harness-lib.sh"
+HARNESS_ROOT="$ROOT"
 
-echo "== denwa harness:fast: static =="
-node scripts/check-denwa-static.mjs
-
-if [ -d packages/pbx-core ]; then
-  echo "== denwa harness:fast: @openpbx/core typecheck =="
-  npm run typecheck -w @openpbx/core
-  echo "== denwa harness:fast: @openpbx/core test =="
-  npm test -w @openpbx/core
-fi
-
+denwa_harness_fast
 echo "== denwa harness:fast: OK =="

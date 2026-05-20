@@ -1,24 +1,12 @@
 #!/usr/bin/env bash
-# Full merge gate: static + all workspaces in test:gate.
-# See docs/TDD-REBUILD-PLAN.md §12.1
+# Full merge gate: static + all workspace typechecks + test:gate.
+# Used by: npm run harness, lefthook pre-push, GitHub Actions CI, Cursor stop hook.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=scripts/harness-lib.sh
+source "$ROOT/scripts/harness-lib.sh"
+HARNESS_ROOT="$ROOT"
 
-echo "== denwa harness: static =="
-node scripts/check-denwa-static.mjs
-
-for ws in packages/pbx-core packages/pbx-db packages/pbx-infra apps/web; do
-  if [ -f "$ws/package.json" ]; then
-    name=$(node -p "require('./$ws/package.json').name")
-    if node -e "const s=require('./$ws/package.json').scripts||{}; process.exit(s.typecheck?0:1)"; then
-      echo "== denwa harness: $name typecheck =="
-      npm run typecheck -w "$name"
-    fi
-  fi
-done
-
-echo "== denwa harness: test:gate =="
-npm run test:gate
-
+denwa_harness_full
 echo "== denwa harness: OK =="

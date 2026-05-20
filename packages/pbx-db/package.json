@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@openpbx/core": "*",
+    "@openpbx/ops": "*",
     "better-sqlite3": "^11.8.1"
   },
   "devDependencies": {
