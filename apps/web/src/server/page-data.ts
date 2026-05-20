@@ -14,6 +14,7 @@ import {
   listIvrMenusForUi,
   listGuidanceNames,
   listCdrRecords,
+  listBillingRatesForCost,
   listIpAllowRows as listIpAllowRowsRepo,
   listSipTrunksForUi,
   listConcurrencySnapshots,
@@ -26,9 +27,11 @@ import {
   listClickToCallTokens,
   listGrantedExtensionNumbers,
 } from '@openpbx/db';
-import { listRecordingFiles, countInboxFiles } from '@openpbx/infra';
+import { enrichCdrRowsForUi, filterDueUpgrades, formatUpgradeRunCommands } from '@openpbx/core';
+import { listRecordingFiles, countInboxFiles, listInboxEntries } from '@openpbx/infra';
 import { getAppDb } from './app-context';
 import { inboxDirectory, recordingsDirectory } from './paths';
+import { getDashboardOnlineCount } from './services/dashboard';
 
 function db() {
   return getAppDb();
@@ -70,6 +73,16 @@ export function listCdr(limit = 200) {
   return listCdrRecords(db(), limit);
 }
 
+export function listCdrForUi(limit = 200) {
+  const rows = listCdrRecords(db(), limit);
+  const rates = listBillingRatesForCost(db()).map((r) => ({
+    prefix: r.prefix,
+    perMin: r.perMin,
+    setupFee: r.setupFee,
+  }));
+  return enrichCdrRowsForUi(rows, rates);
+}
+
 export function listIpAllowRows() {
   return listIpAllowRowsRepo(db());
 }
@@ -84,6 +97,23 @@ export function listConcurrency(limit = 48) {
 
 export async function countInboxSummary() {
   return countInboxFiles(inboxDirectory());
+}
+
+export async function listInboxForUi(limit = 50) {
+  return listInboxEntries(inboxDirectory(), limit);
+}
+
+export async function getHomeSummary() {
+  const { getAmiDeviceSession } = await import('./ports/ami-devices');
+  const exts = getExtensions();
+  const inbox = await countInboxSummary();
+  const onlineDevices = getDashboardOnlineCount(getAmiDeviceSession());
+  return {
+    extensionCount: exts.length,
+    extensions: exts,
+    inbox,
+    onlineDevices,
+  };
 }
 
 export async function listRecordingsForUi() {
@@ -109,6 +139,16 @@ export function getBillingRates() {
 
 export function getVersionUpgrades() {
   return listVersionUpgrades(db());
+}
+
+export function getUpgradesForUi() {
+  const scheduled = listVersionUpgrades(db());
+  const nowIso = new Date().toISOString();
+  const due = filterDueUpgrades(scheduled, nowIso).map((row) => ({
+    ...row,
+    commands: formatUpgradeRunCommands(row),
+  }));
+  return { scheduled, due };
 }
 
 export function getAuditLog(limit = 200) {

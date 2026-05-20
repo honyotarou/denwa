@@ -5,6 +5,7 @@ export * from './schema-introspection.js';
 export * from './repos/extensions.js';
 export * from './repos/ring-groups.js';
 export * from './repos/pickup-groups.js';
+export * from './repos/extension-pickup-groups.js';
 export * from './repos/phonebook.js';
 export * from './repos/business-hours.js';
 export * from './repos/ivr.js';

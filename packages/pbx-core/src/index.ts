@@ -36,6 +36,8 @@ export * from './phonebook/validate.js';
 export * from './phonebook/lookup.js';
 export * from './guidance/validate.js';
 export * from './upgrade/validate.js';
+export * from './upgrade/due.js';
+export * from './cdr/ui-row.js';
 export * from './originate/ami.js';
 export * from './dialplan/filename.js';
 export * from './inbox/meta.js';

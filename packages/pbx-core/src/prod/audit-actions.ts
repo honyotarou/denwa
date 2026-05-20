@@ -43,6 +43,7 @@ export const SERVER_ACTION_AUDIT_ACTIONS = [
   'trunk.delete',
   'upgrade.schedule',
   'upgrade.delete',
+  'upgrade.due',
   'network.update',
   'patient.upsert',
   'patient.delete',

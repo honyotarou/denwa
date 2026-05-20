@@ -167,6 +167,46 @@ describe('Phase 6 — middleware & API', () => {
       expect(r.status).toBe(200);
       expect(r.headers?.['Content-Type']).toContain('text/event-stream');
     });
+
+    it('Given AMI session mock When stream Then snapshot has connected and devices', async () => {
+      const ctx = await mkTmpCtx();
+      ctx.sessionToken = await loginAsAdmin(ctx);
+      let changeCb: (() => void) | null = null;
+      const mockSession = {
+        start: () => {},
+        destroy: () => {},
+        isConnected: () => true,
+        getDevices: () => [
+          {
+            device: 'PJSIP/1001',
+            extension: '1001',
+            state: 'not_inuse' as const,
+            contact: 'sip:1001@lan',
+            reachable: true,
+            updatedAt: '2026-05-20T00:00:00.000Z',
+          },
+        ],
+        onChange: (handler: () => void) => {
+          changeCb = handler;
+          return () => {
+            changeCb = null;
+          };
+        },
+      };
+      const r = await handleDevicesStreamGet(ctx, { getSession: () => mockSession });
+      expect(r.status).toBe(200);
+      expect(r.stream).toBeDefined();
+      const reader = (r.stream as ReadableStream<Uint8Array>).getReader();
+      const decoder = new TextDecoder();
+      const { value } = await reader.read();
+      reader.releaseLock();
+      const text = decoder.decode(value);
+      expect(text).toContain('event: snapshot');
+      expect(text).toContain('"connected":true');
+      expect(text).toContain('PJSIP/1001');
+      expect(changeCb).not.toBeNull();
+      mockSession.destroy();
+    });
   });
 
   describe('T-API-005/006: extensions mask', () => {
