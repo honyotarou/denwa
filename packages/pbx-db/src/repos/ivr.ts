@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { DuplicateError, NotFoundError } from '../errors.js';
+import { duplicateError, notFoundError } from '../errors.js';
 
 export type IvrOptionRow = Readonly<{
   digit: string;
@@ -39,7 +39,7 @@ export function createIvrMenu(
   db: Database.Database,
   input: { number: string; name?: string; options: readonly IvrOptionRow[] },
 ): IvrMenuRow {
-  if (getIvrMenu(db, input.number)) throw new DuplicateError(`IVR ${input.number} は既に存在`);
+  if (getIvrMenu(db, input.number)) throw duplicateError(`IVR ${input.number} は既に存在`);
   const info = db
     .prepare(`INSERT INTO ivr_menus (number, name, updated_at) VALUES (?, ?, datetime('now'))`)
     .run(input.number, input.name ?? null);
@@ -52,7 +52,7 @@ export function updateIvrMenu(
   input: { number: string; name?: string; options: readonly IvrOptionRow[] },
 ): IvrMenuRow {
   const menu = getIvrMenu(db, input.number);
-  if (!menu) throw new NotFoundError(`IVR ${input.number} は存在しません`);
+  if (!menu) throw notFoundError(`IVR ${input.number} は存在しません`);
   db.prepare(`UPDATE ivr_menus SET name = ?, updated_at = datetime('now') WHERE id = ?`).run(
     input.name ?? menu.name,
     menu.id,
@@ -70,7 +70,7 @@ export function deleteIvrMenu(db: Database.Database, number: string): boolean {
 function replaceOptions(db: Database.Database, menuId: number, opts: readonly IvrOptionRow[]): void {
   const digits = new Set<string>();
   for (const o of opts) {
-    if (digits.has(o.digit)) throw new DuplicateError(`IVR digit 重複: ${o.digit}`);
+    if (digits.has(o.digit)) throw duplicateError(`IVR digit 重複: ${o.digit}`);
     digits.add(o.digit);
   }
   const tx = db.transaction((rows: readonly IvrOptionRow[]) => {

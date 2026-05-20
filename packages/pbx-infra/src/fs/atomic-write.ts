@@ -1,13 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { UnsafePathError } from './errors.js';
+import { unsafePathError } from './errors.js';
 
 /** baseDir 配下への相対パスのみ許可（T-INFRA-003） */
 export function resolveUnderBase(baseDir: string, relativePath: string): string {
   const base = path.resolve(baseDir);
   const target = path.resolve(base, relativePath);
   if (target !== base && !target.startsWith(base + path.sep)) {
-    throw new UnsafePathError(`path escapes base: ${relativePath}`);
+    throw unsafePathError(`path escapes base: ${relativePath}`);
   }
   return target;
 }

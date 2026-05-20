@@ -45,7 +45,12 @@ export const SERVER_ACTION_AUDIT_ACTIONS = [
   'upgrade.delete',
 ] as const;
 
-export const API_AUDIT_ACTIONS = ['click2call'] as const;
+export const API_AUDIT_ACTIONS = [
+  'click2call',
+  'recording.read',
+  'phonebook.lookup',
+  'devices.stream',
+] as const;
 
 export const ALL_AUDIT_ACTIONS = [...SERVER_ACTION_AUDIT_ACTIONS, ...API_AUDIT_ACTIONS] as const;
 

@@ -1,31 +1,54 @@
-/** DB 層の制約違反・リポジトリエラー */
+/** DB 層エラー — class なし・判別 tag（実行時 instanceof 不可に留意） */
 
-export class DbError extends Error {
-  readonly code: string;
-  constructor(code: string, message: string) {
-    super(message);
-    this.name = 'DbError';
-    this.code = code;
-  }
+export type DbErrorKind = 'duplicate' | 'not_found' | 'constraint';
+
+export type DbErrorFields = Readonly<{
+  kind: DbErrorKind;
+  code: string;
+}>;
+
+export type DbError = Error & DbErrorFields;
+
+function dbError(kind: DbErrorKind, code: string, message: string): DbError {
+  const e = new Error(message) as DbError;
+  e.name =
+    kind === 'duplicate' ? 'DuplicateError' : kind === 'not_found' ? 'NotFoundError' : 'ConstraintError';
+  Object.assign(e, { kind, code });
+  return e;
 }
 
-export class DuplicateError extends DbError {
-  constructor(message: string) {
-    super('DUPLICATE', message);
-    this.name = 'DuplicateError';
-  }
+export function duplicateError(message: string): DbError {
+  return dbError('duplicate', 'DUPLICATE', message);
 }
 
-export class NotFoundError extends DbError {
-  constructor(message: string) {
-    super('NOT_FOUND', message);
-    this.name = 'NotFoundError';
-  }
+export function notFoundError(message: string): DbError {
+  return dbError('not_found', 'NOT_FOUND', message);
 }
 
-export class ConstraintError extends DbError {
-  constructor(message: string) {
-    super('CONSTRAINT', message);
-    this.name = 'ConstraintError';
-  }
+export function constraintError(message: string): DbError {
+  return dbError('constraint', 'CONSTRAINT', message);
 }
+
+export function isDbError(e: unknown, kind?: DbErrorKind): e is DbError {
+  if (typeof e !== 'object' || e === null) return false;
+  const k = (e as DbErrorFields).kind;
+  if (k !== 'duplicate' && k !== 'not_found' && k !== 'constraint') return false;
+  return kind === undefined || k === kind;
+}
+
+export function isDuplicateError(e: unknown): e is DbError {
+  return isDbError(e, 'duplicate');
+}
+
+export function isNotFoundError(e: unknown): e is DbError {
+  return isDbError(e, 'not_found');
+}
+
+export function isConstraintError(e: unknown): e is DbError {
+  return isDbError(e, 'constraint');
+}
+
+/** @deprecated use isDuplicateError — instanceof 互換なし */
+export type DuplicateError = DbError;
+export type NotFoundError = DbError;
+export type ConstraintError = DbError;

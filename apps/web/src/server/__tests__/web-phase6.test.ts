@@ -8,6 +8,7 @@ import { validateInboxMeta } from '@openpbx/infra';
 import { createTestContext, loginAsAdmin } from '../context';
 import { middlewareDecision } from '../middleware-auth';
 import {
+  handleCdrExportGet,
   handleCdrIngestPost,
   handleDevicesStreamGet,
   handleExtensionsGet,
@@ -19,7 +20,7 @@ import {
   handleRecordingGet,
   ensureRecordingFixture,
 } from '../api-handlers';
-import { AuthError } from '../auth';
+import { authError, isAuthError } from '../auth';
 
 const tmpDirs: string[] = [];
 
@@ -65,7 +66,7 @@ describe('Phase 6 — middleware & API', () => {
   describe('T-MW-004: fake cookie handler', () => {
     it('Given bad token When requireAccount Then 401', async () => {
       const ctx = await mkTmpCtx();
-      expect(() => ctx.auth.requireAccount('bad-token', ctx.meta)).toThrow(AuthError);
+      expect(() => ctx.auth.requireAccount('bad-token', ctx.meta)).toThrow('unauthorized');
     });
   });
 
@@ -74,7 +75,7 @@ describe('Phase 6 — middleware & API', () => {
       const ctx = await mkTmpCtx();
       upsertIpAllow(ctx.db, '10.0.0.0/8');
       const token = await loginAsAdmin(ctx);
-      expect(() => ctx.auth.requireAccount(token, { ip: '192.168.1.1' })).toThrow(AuthError);
+      expect(() => ctx.auth.requireAccount(token, { ip: '192.168.1.1' })).toThrow('IP not allowed');
     });
   });
 
@@ -98,7 +99,7 @@ describe('Phase 6 — middleware & API', () => {
         role: 'user',
       });
       const token = ctx.auth.createSession(user.id, ctx.meta);
-      expect(() => ctx.auth.requireRole(token, ctx.meta, 'admin')).toThrow(AuthError);
+      expect(() => ctx.auth.requireRole(token, ctx.meta, 'admin')).toThrow('forbidden');
     });
   });
 
@@ -106,6 +107,29 @@ describe('Phase 6 — middleware & API', () => {
     it('Given health When GET Then 200', async () => {
       const r = await handleHealthGet();
       expect(r.status).toBe(200);
+    });
+  });
+
+  describe('T-SEC-CSV-001: cdr export', () => {
+    it('Given supervisor When export Then csv with formula escape', async () => {
+      const ctx = await mkTmpCtx();
+      const sup = createAccount(ctx.db, {
+        username: 'supcsv',
+        passwordHash: hashPassword('password12'),
+        role: 'supervisor',
+      });
+      ctx.sessionToken = ctx.auth.createSession(sup.id, ctx.meta);
+      ctx.db
+        .prepare(
+          `INSERT INTO cdr_records (uniqueid, start_at, src, dst, billsec, disposition)
+           VALUES ('u-csv', datetime('now'), '=evil', '1002', 10, 'ANSWERED')`,
+        )
+        .run();
+      const r = await handleCdrExportGet(ctx);
+      expect(r.status).toBe(200);
+      const csv = r.body as string;
+      expect(csv).toContain("'=evil");
+      expect(csv).not.toMatch(/^=evil/m);
     });
   });
 
@@ -205,6 +229,28 @@ describe('Phase 6 — middleware & API', () => {
       expect(r.status).toBe(400);
     });
 
+    it('T-SEC-AMI-002: Given non-internal context When originate Then 400', async () => {
+      const ctx = await mkTmpCtx();
+      ctx.sessionToken = await loginAsAdmin(ctx);
+      const r = await handleOriginatePost(ctx, {
+        from: '1001',
+        to: '1002',
+        context: 'from-trunk',
+      });
+      expect(r.status).toBe(400);
+    });
+
+    it('T-SEC-AMI-001: Given CRLF callerId When originate Then 400', async () => {
+      const ctx = await mkTmpCtx();
+      ctx.sessionToken = await loginAsAdmin(ctx);
+      const r = await handleOriginatePost(ctx, {
+        from: '1001',
+        to: '1002',
+        callerId: 'x\r\nAction: Command',
+      });
+      expect(r.status).toBe(400);
+    });
+
     it('Given no session When originate Then 401', async () => {
       const ctx = await mkTmpCtx();
       const r = await handleOriginatePost(ctx, { from: '1001', to: '1002' });
@@ -236,6 +282,14 @@ describe('Phase 6 — middleware & API', () => {
       const ctx = await mkTmpCtx();
       ctx.sessionToken = await loginAsAdmin(ctx);
       const r = await handleGuidancesPost(ctx, 'bad', new Uint8Array([1, 2, 3]));
+      expect(r.status).toBe(400);
+    });
+
+    it('T-SEC-A03-001: Given traversal name When POST Then 400', async () => {
+      const ctx = await mkTmpCtx();
+      ctx.sessionToken = await loginAsAdmin(ctx);
+      const wav = Buffer.from('RIFFxxxxWAVEdata');
+      const r = await handleGuidancesPost(ctx, '../evil', wav);
       expect(r.status).toBe(400);
     });
   });

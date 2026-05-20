@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { DuplicateError, NotFoundError } from '../errors.js';
+import { duplicateError, notFoundError } from '../errors.js';
 
 export type RingGroupRow = Readonly<{
   id: number;
@@ -64,7 +64,7 @@ export type UpsertRingGroupInput = Readonly<{
 }>;
 
 export function createRingGroup(db: Database.Database, input: UpsertRingGroupInput): RingGroupRow {
-  if (getRingGroup(db, input.number)) throw new DuplicateError(`着信グループ ${input.number} は既に存在`);
+  if (getRingGroup(db, input.number)) throw duplicateError(`着信グループ ${input.number} は既に存在`);
   const info = db
     .prepare(
       `INSERT INTO ring_groups (number, name, strategy, ring_seconds, fallback_extension, updated_at)
@@ -83,7 +83,7 @@ export function createRingGroup(db: Database.Database, input: UpsertRingGroupInp
 
 export function updateRingGroup(db: Database.Database, input: UpsertRingGroupInput): RingGroupRow {
   const existing = getRingGroup(db, input.number);
-  if (!existing) throw new NotFoundError(`着信グループ ${input.number} は存在しません`);
+  if (!existing) throw notFoundError(`着信グループ ${input.number} は存在しません`);
   db.prepare(
     `UPDATE ring_groups SET name = ?, strategy = ?, ring_seconds = ?, fallback_extension = ?, updated_at = datetime('now') WHERE number = ?`,
   ).run(

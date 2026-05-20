@@ -1,7 +1,7 @@
-import { AuthError } from '@/server/auth';
+import { isAuthError } from '@/server/auth';
 
 export function mapActionError(err: unknown): string {
-  if (err instanceof AuthError) {
+  if (isAuthError(err)) {
     if (err.status === 403) return '権限がありません';
     if (err.status === 401) return 'ログインが必要です';
     return '認証に失敗しました';

@@ -2,13 +2,17 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# F-015: APT 版を pin（CVE 追随は意図的 bump + image rebuild）
+ARG ASTERISK_PKG_VERSION=1:18.20.4~dfsg-1ubuntu1
+
 # Ubuntu 22.04 main universe には asterisk (18.x) が含まれる。
 # bookworm-slim は arm64 で asterisk が取得できなかったので Ubuntu に切替。
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      asterisk \
+      asterisk=${ASTERISK_PKG_VERSION} \
       asterisk-core-sounds-en \
       ca-certificates \
+      openssl \
       curl \
       tzdata \
  && rm -rf /var/lib/apt/lists/*

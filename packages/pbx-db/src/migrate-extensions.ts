@@ -6,8 +6,6 @@ export function migrateExtensions(db: Database.Database): void {
   const names = new Set(cols.map((c) => c.name));
   if (!names.has('secret')) {
     db.exec(`ALTER TABLE extensions ADD COLUMN secret TEXT NOT NULL DEFAULT ''`);
-    db.prepare(`UPDATE extensions SET secret = 'secret-1001' WHERE number = '1001' AND secret = ''`).run();
-    db.prepare(`UPDATE extensions SET secret = 'secret-1002' WHERE number = '1002' AND secret = ''`).run();
   }
   if (!names.has('updated_at')) {
     db.exec(`ALTER TABLE extensions ADD COLUMN updated_at TEXT`);

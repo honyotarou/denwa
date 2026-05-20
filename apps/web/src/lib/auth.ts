@@ -2,7 +2,7 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { buildContext, sessionTokenFromCookieHeader } from '@/server/app-context';
 import { clientIpFromHeaders } from '@/server/request-ip';
-import { AuthError, type Role, type SessionAccount } from '@/server/auth';
+import { isAuthError, type Role, type SessionAccount } from '@/server/auth';
 
 export type { Role };
 export type Account = SessionAccount & { totpEnabled: boolean };
@@ -45,7 +45,7 @@ export async function guardPage(min: Role): Promise<Account> {
   try {
     return await requireMinRole(min);
   } catch (e) {
-    if (e instanceof AuthError) {
+    if (isAuthError(e)) {
       if (e.status === 401) redirect('/login');
       redirect(`/?err=${encodeURIComponent('権限がありません')}`);
     }

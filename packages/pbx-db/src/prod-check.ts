@@ -1,12 +1,8 @@
 import type Database from 'better-sqlite3';
-import { verifyPassword } from '@openpbx/core';
+import { isForbiddenExtensionSecret, verifyPassword } from '@openpbx/core';
 import { fail, pass, type ProdCheckFinding } from '@openpbx/core';
 
 const DEFAULT_ADMIN_PASSWORD = ['admin', '-please', '-change'].join('');
-const DEFAULT_EXTENSION_SECRETS = [
-  ['secret-', '1001'].join(''),
-  ['secret-', '1002'].join(''),
-] as const;
 
 export function runProdCheckDatabase(
   db: Database.Database,
@@ -27,9 +23,7 @@ export function runProdCheckDatabase(
   const rows = db
     .prepare(`SELECT number, secret FROM extensions WHERE number IN ('1001','1002')`)
     .all() as Array<{ number: string; secret: string }>;
-  const bad = rows.filter((r) =>
-    DEFAULT_EXTENSION_SECRETS.includes(r.secret as (typeof DEFAULT_EXTENSION_SECRETS)[number]),
-  );
+  const bad = rows.filter((r) => isForbiddenExtensionSecret(r.secret));
   if (bad.length) {
     findings.push(
       fail('T-PROD-005', `extensions still use default secrets: ${bad.map((r) => r.number).join(', ')}`),

@@ -8,8 +8,8 @@ OpenPBX を **TDD で再構築**するリポジトリ。仕様の正本は [`doc
 npm install          # lefthook を prepare で有効化
 npm test             # @openpbx/core の Vitest
 npm run check:static # 毎編集（Cursor pre/post）・pre-commit
-npm run harness:fast # 手動 TDD（static + typecheck + test）
-npm run harness      # stop / pre-push（full test:gate）
+npm run harness:fast # 手動 TDD（static + typecheck）
+npm run harness      # stop / pre-push / CI（full = test:gate + prod-check + sca）
 ```
 
 ### ローカル UI のみ（SQLite、Asterisk なし）
@@ -36,7 +36,7 @@ docker compose up --build
 | 管理画面 | http://localhost:3000 |
 | SIP | UDP/TCP **5060** |
 | RTP | **10000–10020**/udp（`asterisk/rtp.conf` と compose で一致） |
-| HTTP/WS (Asterisk) | **8088** / TLS **8089** |
+| HTTP/WS (Asterisk) | コンテナ内 **127.0.0.1:8088** / **8089** のみ（ホスト非公開・`T-SEC-A05-001`） |
 | 初回ログイン | `admin` / OpenPBX README の初回パスワード（**本番前に変更**） |
 
 ### 特番・録音 inbox

@@ -1,0 +1,5 @@
+# 本番向け overlay: SIP/RTP をホスト公開しない（F-001 / PBX-TOLL-01）。
+# 利用: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  asterisk:
+    ports: []

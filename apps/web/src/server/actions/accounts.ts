@@ -1,5 +1,6 @@
 import type { AppContext } from '../context.js';
 import { audit, requireAdmin, s } from './shared.js';
+import { updateAccountRoleWithSession } from '../services/accounts.js';
 
 // T-ACT-025〜026 self
 export async function updateMyDisplayNameActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
@@ -29,16 +30,14 @@ export async function createAccountActionImpl(ctx: AppContext, formData: FormDat
   audit(ctx, me, 'account.create', s(formData.get('username')));
 }
 
-export async function updateAccountRoleActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
+export async function updateAccountRoleActionImpl(
+  ctx: AppContext,
+  formData: FormData,
+): Promise<import('../services/accounts.js').UpdateAccountRoleResult> {
   const me = requireAdmin(ctx);
   const id = Number(s(formData.get('id')));
   const role = s(formData.get('role')) as 'user' | 'supervisor' | 'admin';
-  const target = ctx.auth.getAccountById(id);
-  if (target?.role === 'admin' && role !== 'admin' && ctx.auth.countAdmins(id) === 0) {
-    throw new Error('last admin');
-  }
-  ctx.auth.updateRole(id, role);
-  audit(ctx, me, 'account.role.update', String(id));
+  return updateAccountRoleWithSession(ctx, me, id, role);
 }
 
 export async function updateAccountDisplayNameActionImpl(ctx: AppContext, formData: FormData): Promise<void> {

@@ -1,5 +1,11 @@
 import type { ExtensionDraft } from './extension.js';
-import { validateExtensionDraft } from './extension.js';
+import {
+  normalizeExtensionDraft,
+  toExtensionDraft,
+  validateExtensionDraft,
+  type ExtensionDraftInput,
+} from './extension.js';
+import { sanitizeIniDisplayName } from './ini/sanitize.js';
 
 /** Asterisk pjsip.d/extensions.conf 断片の純関数生成 */
 
@@ -14,7 +20,7 @@ export function renderPjsipExtensions(
     '',
   ];
   for (const e of extensions) {
-    const cidName = (e.displayName ?? `Ext ${e.number}`).replace(/"/g, '');
+    const cidName = sanitizeIniDisplayName(e.displayName, `Ext ${e.number}`);
     const templateName = e.webrtc ? 'endpoint-webrtc' : 'endpoint-internal';
     blocks.push(`[${e.number}](${templateName})`);
     blocks.push(`auth=auth${e.number}`);
@@ -38,11 +44,12 @@ export function renderPjsipExtensions(
 
 /** T-PJSIP-005: いずれかが invalid なら conf を出力しない */
 export function renderPjsipExtensionsIfValid(
-  extensions: readonly ExtensionDraft[],
+  extensions: readonly ExtensionDraftInput[],
   opts?: { updatedAt?: string },
 ): string | null {
   for (const e of extensions) {
     if (validateExtensionDraft(e).length > 0) return null;
   }
-  return renderPjsipExtensions(extensions, opts);
+  const branded = extensions.map((e) => toExtensionDraft(normalizeExtensionDraft(e)));
+  return renderPjsipExtensions(branded, opts);
 }

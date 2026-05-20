@@ -6,6 +6,13 @@ import {
   type ProdCheckFinding,
   type ProdCheckResult,
 } from '@openpbx/core';
+import {
+  findForbiddenTrackedExtensionPasswords,
+} from '@openpbx/core';
+import {
+  composePublishesForbiddenAsteriskHttp,
+  readComposeDraftFromFile,
+} from '../docker/compose-file.js';
 
 export type { ProdCheckFinding, ProdCheckResult } from '@openpbx/core';
 export { fail, pass } from '@openpbx/core';
@@ -14,11 +21,6 @@ export type ProdCheckInput = Readonly<{
   repoRoot: string;
 }>;
 
-/** 既定値文字列は pre-commit static と同型のため分割定義（検知ロジック用） */
-const DEFAULT_EXTENSION_SECRETS = [
-  ['secret-', '1001'].join(''),
-  ['secret-', '1002'].join(''),
-] as const;
 const DEFAULT_AMI_SECRET = ['command', '-room', '-ami', '-secret'].join('');
 const DEFAULT_SERVER_ACTION_KEY = '/RYJ01by2xFCY498hIqUlOMmCEG5Q/gqDZHfubOpZmA=';
 
@@ -37,14 +39,13 @@ export function runProdCheckFiles(input: ProdCheckInput): ProdCheckResult {
 
   const compose = readFileOrEmpty(path.join(root, 'docker-compose.yml'));
   const manager = readFileOrEmpty(path.join(root, 'asterisk/manager.conf'));
+  const managerTemplate = readFileOrEmpty(path.join(root, 'asterisk/manager.conf.template'));
+  const managerText = manager + managerTemplate;
   const authActionsTs = readFileOrEmpty(path.join(root, 'apps/web/src/app/actions/auth.ts'));
   const sessionCookieTs = readFileOrEmpty(path.join(root, 'apps/web/src/server/session-cookie.ts'));
   const pjsipSeed = readFileOrEmpty(path.join(root, 'asterisk/pjsip.d/extensions.conf'));
-  const goldenPjsip = readFileOrEmpty(
-    path.join(root, 'fixtures/golden/current/pjsip/extensions.conf'),
-  );
 
-  if (compose.includes(DEFAULT_AMI_SECRET) || manager.includes(DEFAULT_AMI_SECRET)) {
+  if (compose.includes(DEFAULT_AMI_SECRET) || managerText.includes(DEFAULT_AMI_SECRET)) {
     findings.push(fail('T-PROD-002', 'default AMI secret still present in compose or manager.conf'));
   } else {
     findings.push(pass('T-PROD-002', 'AMI secret not using repository default'));
@@ -58,18 +59,19 @@ export function runProdCheckFiles(input: ProdCheckInput): ProdCheckResult {
     findings.push(pass('T-PROD-003', 'Server Action encryption key rotated from repo default'));
   }
 
-  const extSecretHit = DEFAULT_EXTENSION_SECRETS.some(
-    (s) => pjsipSeed.includes(s) || goldenPjsip.includes(s) || compose.includes(s),
-  );
-  if (extSecretHit) {
+  const forbiddenPjsip = findForbiddenTrackedExtensionPasswords(pjsipSeed);
+  if (forbiddenPjsip.length > 0) {
     findings.push(
-      fail('T-PROD-005', 'default extension secrets for 1001/1002 still in seed or compose'),
+      fail(
+        'T-PROD-005',
+        `tracked pjsip.d/extensions.conf has forbidden passwords: ${forbiddenPjsip.join(', ')}`,
+      ),
     );
   } else {
     findings.push(pass('T-PROD-005', 'extension secrets not using repository defaults in tracked files'));
   }
 
-  if (/permit\s*=\s*172\.0\.0\.0\/255\.0\.0\.0/.test(manager)) {
+  if (/permit\s*=\s*172\.0\.0\.0\/255\.0\.0\.0/.test(managerText)) {
     findings.push(fail('T-PROD-006', 'AMI permit still allows broad Docker bridge 172.0.0.0/8'));
   } else {
     findings.push(pass('T-PROD-006', 'AMI permit narrowed from default Docker range'));
@@ -96,6 +98,19 @@ export function runProdCheckFiles(input: ProdCheckInput): ProdCheckResult {
     findings.push(
       pass('T-PROD-004', 'dev compose — enable secure: true on session cookie before production'),
     );
+  }
+
+  const draft = readComposeDraftFromFile(root);
+  const forbiddenHttp = composePublishesForbiddenAsteriskHttp(draft);
+  if (forbiddenHttp.length > 0) {
+    findings.push(
+      fail(
+        'T-SEC-A05-001',
+        `Asterisk HTTP must not be published to host: ${forbiddenHttp.join(', ')}`,
+      ),
+    );
+  } else {
+    findings.push(pass('T-SEC-A05-001', 'Asterisk HTTP/ARI not published on docker-compose host ports'));
   }
 
   const failures = findings.filter((f) => f.severity === 'fail');

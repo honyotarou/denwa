@@ -1,13 +1,8 @@
 import { buildOriginateAction, type OriginateRequest } from '@openpbx/core';
+import { amiOriginateError } from './errors.js';
 
-export class AmiOriginateError extends Error {
-  readonly code: 'LOGIN_FAILED' | 'ORIGINATE_FAILED' | 'TIMEOUT';
-  constructor(code: AmiOriginateError['code'], message: string) {
-    super(message);
-    this.name = 'AmiOriginateError';
-    this.code = code;
-  }
-}
+export type { AmiOriginateError, AmiOriginateErrorCode } from './errors.js';
+export { amiOriginateError, isAmiOriginateError } from './errors.js';
 
 export type AmiSocketLike = Readonly<{
   write: (data: string) => void;
@@ -33,7 +28,7 @@ export function originateOverSocket(
     let stage: 'greeting' | 'login' | 'originate' | 'done' = 'greeting';
     const timer = setTimeout(() => {
       socket.destroy();
-      reject(new AmiOriginateError('TIMEOUT', 'AMI originate timeout'));
+      reject(amiOriginateError('TIMEOUT', 'AMI originate timeout'));
     }, opts.timeoutMs ?? 8000);
 
     const send = (fields: Record<string, string>) => {
@@ -55,7 +50,7 @@ export function originateOverSocket(
         if (!/Response: Success/.test(buf)) {
           clearTimeout(timer);
           socket.destroy();
-          reject(new AmiOriginateError('LOGIN_FAILED', 'AMI login failed'));
+          reject(amiOriginateError('LOGIN_FAILED', 'AMI login failed'));
           return;
         }
         stage = 'originate';
@@ -69,7 +64,7 @@ export function originateOverSocket(
         send({ Action: 'Logoff' });
         socket.end();
         if (!ok) {
-          reject(new AmiOriginateError('ORIGINATE_FAILED', raw));
+          reject(amiOriginateError('ORIGINATE_FAILED', raw));
           return;
         }
         resolve({ ok, raw });

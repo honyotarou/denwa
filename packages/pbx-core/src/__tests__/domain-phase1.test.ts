@@ -288,11 +288,11 @@ describe('T-PICKUP / T-PB / T-DP / T-GUID / T-UPG / T-ORIG', () => {
     const fields = buildOriginateAction({
       from: '1001',
       to: '1002',
-      callerId: 'Test <1001>',
+      callerId: 'Desk 1001',
     });
     expect(fields.Channel).toBe('PJSIP/1001');
     expect(fields.Exten).toBe('1002');
-    expect(fields.CallerID).toBe('Test <1001>');
+    expect(fields.CallerID).toBe('Desk 1001');
     expect(validateOriginateRequest({ from: '1', to: '1002' })).not.toEqual([]);
   });
 });

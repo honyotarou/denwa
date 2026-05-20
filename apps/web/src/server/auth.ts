@@ -6,12 +6,13 @@ import {
   isIpAllowed,
   isValidCidr,
   generateSecret,
-  verifyTotp,
+  verifyTotpConsuming,
 } from '@openpbx/core';
 import {
   createAccount,
   createSessionToken,
   destroySession,
+  destroySessionsForAccount,
   getAccountById,
   getAccountBySessionToken,
   getAccountByUsername,
@@ -23,6 +24,8 @@ import {
   countAdmins,
   getTotpSecret,
   setTotpSecret,
+  getTotpLastCounter,
+  setTotpLastCounter,
   deleteAccount,
   listIpAllow,
   recordAudit,
@@ -30,6 +33,13 @@ import {
   upsertIpAllow,
   deleteIpAllow,
 } from '@openpbx/db';
+import {
+  countRecentLoginFailures,
+  countRecentLoginFailuresByIp,
+  getLockoutPolicy,
+} from '@openpbx/db/repos/login-lockout';
+import { authError } from './auth-error';
+import { isLoginLockedOut, LOGIN_LOCKOUT_WINDOW_MINUTES } from '@openpbx/core';
 
 export type Role = 'user' | 'supervisor' | 'admin';
 export type RequestMeta = Readonly<{ ip?: string; userAgent?: string }>;
@@ -41,14 +51,7 @@ export type SessionAccount = Readonly<{
   role: Role;
 }>;
 
-export class AuthError extends Error {
-  readonly status: number;
-  constructor(status: number, message: string) {
-    super(message);
-    this.name = 'AuthError';
-    this.status = status;
-  }
-}
+export { authError, isAuthError, type AuthError } from './auth-error';
 
 const ROLE_RANK: Record<Role, number> = { user: 1, supervisor: 2, admin: 3 };
 
@@ -62,6 +65,9 @@ export function createAuthService(db: Database.Database) {
     destroySession(token: string) {
       destroySession(db, token);
     },
+    destroySessionsForAccount(accountId: number) {
+      destroySessionsForAccount(db, accountId);
+    },
     getAccountBySessionToken(token: string | null | undefined) {
       if (!token) return null;
       return getAccountBySessionToken(db, token) as SessionAccount | null;
@@ -70,26 +76,39 @@ export function createAuthService(db: Database.Database) {
       if (token) {
         const allow = listIpAllow(db);
         if (!isIpAllowed(meta?.ip, allow)) {
-          throw new AuthError(403, 'IP not allowed');
+          throw authError(403, 'IP not allowed');
         }
       }
       const a = this.getAccountBySessionToken(token);
-      if (!a) throw new AuthError(401, 'unauthorized');
+      if (!a) throw authError(401, 'unauthorized');
       return a;
     },
     requireRole(token: string | null | undefined, meta: RequestMeta | undefined, ...roles: Role[]) {
       const a = this.requireAccount(token, meta);
-      if (!roles.includes(a.role as Role)) throw new AuthError(403, 'forbidden');
+      if (!roles.includes(a.role as Role)) throw authError(403, 'forbidden');
       return a;
     },
     requireMinRole(token: string | null | undefined, meta: RequestMeta | undefined, min: Role) {
       const a = this.requireAccount(token, meta);
-      if (ROLE_RANK[a.role as Role] < ROLE_RANK[min]) throw new AuthError(403, 'forbidden');
+      if (ROLE_RANK[a.role as Role] < ROLE_RANK[min]) throw authError(403, 'forbidden');
       return a;
     },
     recordAudit: (input: Parameters<typeof recordAudit>[1]) => recordAudit(db, input),
-    recordLoginAttempt: (username: string, success: boolean) =>
-      recordLoginAttempt(db, username, success),
+    recordLoginAttempt: (username: string, success: boolean, meta?: RequestMeta) =>
+      recordLoginAttempt(db, username, success, meta),
+    getLockoutPolicy: () => getLockoutPolicy(db),
+    countRecentLoginFailures: (username: string) =>
+      countRecentLoginFailures(db, username, LOGIN_LOCKOUT_WINDOW_MINUTES),
+    countRecentLoginFailuresByIp: (ip: string | undefined) =>
+      countRecentLoginFailuresByIp(db, ip, LOGIN_LOCKOUT_WINDOW_MINUTES),
+    isLoginLocked: (username: string, ip?: string) => {
+      const policy = getLockoutPolicy(db);
+      const byUser = countRecentLoginFailures(db, username, policy.windowMinutes);
+      const byIp = countRecentLoginFailuresByIp(db, ip, policy.windowMinutes);
+      return (
+        isLoginLockedOut(byUser, policy.threshold) || isLoginLockedOut(byIp, policy.threshold)
+      );
+    },
     getAccountByUsername: (u: string) => getAccountByUsername(db, u),
     getAccountById: (id: number) => getAccountById(db, id),
     createAccount: (input: Parameters<typeof createAccount>[1]) => createAccount(db, input),
@@ -118,7 +137,15 @@ export function createAuthService(db: Database.Database) {
     upsertIpAllow: (cidr: string, note?: string) => upsertIpAllow(db, cidr, note),
     deleteIpAllow: (cidr: string) => deleteIpAllow(db, cidr),
     generateTotpSecret: generateSecret,
-    verifyTotpCode: verifyTotp,
+    verifyTotpCode(accountId: number, secret: string, code: string) {
+      const last = getTotpLastCounter(db, accountId);
+      const r = verifyTotpConsuming(secret, code, last);
+      if (r.ok) {
+        setTotpLastCounter(db, accountId, r.counter);
+        return true;
+      }
+      return false;
+    },
   };
 }
 

@@ -33,8 +33,14 @@ export function recordLoginAttempt(
   db: Database.Database,
   username: string,
   success: boolean,
+  meta?: { ip?: string; userAgent?: string },
 ): void {
-  db.prepare(`INSERT INTO login_history (username, success) VALUES (?, ?)`).run(username, success ? 1 : 0);
+  db.prepare(`INSERT INTO login_history (username, success, ip, user_agent) VALUES (?, ?, ?, ?)`).run(
+    username,
+    success ? 1 : 0,
+    meta?.ip ?? null,
+    meta?.userAgent ?? null,
+  );
 }
 
 export function listLoginHistory(

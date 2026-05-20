@@ -1,4 +1,5 @@
-import { DuplicateError } from '@openpbx/db/errors';
+import { isDuplicateError } from '@openpbx/db/errors';
+import { PBX_CONFIG_WRITE_MIN_ROLE } from '@openpbx/core';
 import { listExtensions } from '@openpbx/db/repos/extensions';
 import { maskSecret } from '@/lib/format';
 import type { AppContext } from '../../context';
@@ -33,11 +34,11 @@ export async function handleExtensionsPost(
         });
         return { status: 201, body: { ok: true } };
       } catch (e) {
-        if (e instanceof DuplicateError) return { status: 400, body: { error: e.message } };
+        if (isDuplicateError(e)) return { status: 400, body: { error: e.message } };
         if (e instanceof Error) return { status: 400, body: { error: e.message } };
         throw e;
       }
     },
-    { minRole: 'user' },
+    { minRole: PBX_CONFIG_WRITE_MIN_ROLE },
   );
 }

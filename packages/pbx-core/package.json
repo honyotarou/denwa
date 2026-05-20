@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./auth/policy": "./src/auth/policy.ts",
+    "./auth/middleware-ip-policy": "./src/auth/middleware-ip-policy.ts",
     "./auth/access": "./src/auth/access.ts"
   },
   "scripts": {

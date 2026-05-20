@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { DuplicateError, NotFoundError } from '../errors.js';
+import { duplicateError, notFoundError } from '../errors.js';
 
 export type PickupGroupRow = Readonly<{
   id: number;
@@ -36,7 +36,7 @@ export function createPickupGroup(
   name: string,
   members: readonly string[],
 ): PickupGroupRow {
-  if (getPickupGroupByName(db, name)) throw new DuplicateError(`ピックアップ ${name} は既に存在`);
+  if (getPickupGroupByName(db, name)) throw duplicateError(`ピックアップ ${name} は既に存在`);
   const info = db
     .prepare(`INSERT INTO pickup_groups (name, updated_at) VALUES (?, datetime('now'))`)
     .run(name);
@@ -50,7 +50,7 @@ export function updatePickupGroup(
   members: readonly string[],
 ): PickupGroupRow {
   const g = getPickupGroupByName(db, name);
-  if (!g) throw new NotFoundError(`ピックアップ ${name} は存在しません`);
+  if (!g) throw notFoundError(`ピックアップ ${name} は存在しません`);
   replaceMembers(db, g.id, members);
   return getPickupGroupByName(db, name)!;
 }

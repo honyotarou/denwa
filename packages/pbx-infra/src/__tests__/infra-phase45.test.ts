@@ -13,17 +13,21 @@ import {
   renderRingGroupDialplan,
   renderTrunksDialplan,
   renderTrunksPjsip,
-  type ExtensionDraft,
+  type ExtensionDraftInput,
   type RingGroupDraft,
+  normalizeExtensionDraft,
+  toExtensionDraft,
 } from '@openpbx/core';
 import { createInMemoryDb, getCdrIngestState, getCdrRecord, getConcurrencySnapshot } from '@openpbx/db';
 import {
-  AmiOriginateError,
+  amiOriginateError,
   amiReconnectDelayMs,
   countActiveChannels,
-  DeviceMap,
+  createDeviceMap,
   ingestCdrChunk,
   ingestCdrFile,
+  isAmiOriginateError,
+  isUnsafePathError,
   openRecordingReadStream,
   originateOverSocket,
   parseAmiBlocks,
@@ -33,7 +37,6 @@ import {
   saveGuidanceWav,
   signalAsteriskReload,
   splitCdrLines,
-  UnsafePathError,
   validateInboxMeta,
   writeDialplanFile,
   writePjsipFile,
@@ -64,7 +67,9 @@ describe('Phase 4–5 — @openpbx/infra', () => {
 
     it('Given traversal When write Then error', async () => {
       const base = await mkTmp();
-      await expect(writeTextAtomic(base, '../escape.conf', 'x')).rejects.toThrow(UnsafePathError);
+      await expect(writeTextAtomic(base, '../escape.conf', 'x')).rejects.toSatisfy((e) =>
+        isUnsafePathError(e),
+      );
     });
   });
 
@@ -89,9 +94,10 @@ describe('Phase 4–5 — @openpbx/infra', () => {
       const base = await mkTmp();
       const input = JSON.parse(
         await fs.readFile(path.join(GOLDEN, 'pjsip/extensions.input.json'), 'utf8'),
-      ) as { updatedAt: string; extensions: ExtensionDraft[] };
+      ) as { updatedAt: string; extensions: ExtensionDraftInput[] };
+      const extensions = input.extensions.map((e) => toExtensionDraft(normalizeExtensionDraft(e)));
       const expected = await fs.readFile(path.join(GOLDEN, 'pjsip/extensions.conf'), 'utf8');
-      const content = renderPjsipExtensions(input.extensions, { updatedAt: input.updatedAt });
+      const content = renderPjsipExtensions(extensions, { updatedAt: input.updatedAt });
       await writePjsipFile(path.join(base, 'pjsip.d'), 'extensions.conf', content);
       const actual = await fs.readFile(path.join(base, 'pjsip.d', 'extensions.conf'), 'utf8');
       expect(actual).toBe(expected);
@@ -210,7 +216,7 @@ describe('Phase 4–5 — @openpbx/infra', () => {
       const { blocks, remainder } = parseAmiBlocks(buf);
       expect(blocks.length).toBe(1);
       expect(remainder.trim()).toBe('');
-      const map = new DeviceMap();
+      const map = createDeviceMap();
       map.applyBlock(blocks[0]!);
       expect(map.getDevices()[0]!.state).toBe('ringing');
     });
@@ -226,7 +232,7 @@ describe('Phase 4–5 — @openpbx/infra', () => {
 
   describe('T-AMI-004: device snapshot', () => {
     it('Given map When getDevices Then snapshot', () => {
-      const map = new DeviceMap();
+      const map = createDeviceMap();
       map.applyBlock('Event: DeviceStateChange\r\nDevice: PJSIP/1001\r\nState: Inuse\r\n');
       expect(map.getDevices()).toHaveLength(1);
     });
@@ -282,7 +288,7 @@ describe('Phase 4–5 — @openpbx/infra', () => {
           secret: 's',
           request: { from: '1001', to: '1002' },
         }),
-      ).rejects.toBeInstanceOf(AmiOriginateError);
+      ).rejects.toSatisfy((e) => isAmiOriginateError(e));
     });
   });
 

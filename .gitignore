@@ -19,6 +19,9 @@ data/signals/*
 !data/signals/.gitkeep
 data/asterisk-cdr/*
 !data/asterisk-cdr/.gitkeep
+data/pbx-out/**/*
+!data/pbx-out/pjsip.d/.gitkeep
+!data/pbx-out/dialplan.d/.gitkeep
 
 asterisk/pjsip.d/*.conf
 !asterisk/pjsip.d/transports.conf

@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3';
 import type { IvrMenuDraft, RingGroupDraft } from '@openpbx/core';
+import { toIvrMenuDraft } from '@openpbx/core';
 import { getRingGroup } from './ring-groups.js';
 import { getIvrMenu } from './ivr.js';
 
@@ -25,22 +26,24 @@ export function listIvrMenuDrafts(db: Database.Database): IvrMenuDraft[] {
   return rows
     .map((r) => getIvrMenu(db, r.number))
     .filter((m): m is NonNullable<typeof m> => m != null)
-    .map((m) => ({
-      number: m.number,
-      name: m.name,
-      welcomePrompt: null,
-      menuPrompt: null,
-      invalidPrompt: null,
-      goodbyePrompt: null,
-      maxRetries: 3,
-      waitSeconds: 6,
-      options: m.options.map((o) => ({
-        digit: o.digit,
-        action: o.action as IvrMenuDraft['options'][number]['action'],
-        target: o.target,
-        label: o.label,
-      })),
-    }));
+    .map((m) =>
+      toIvrMenuDraft({
+        number: m.number,
+        name: m.name,
+        welcomePrompt: null,
+        menuPrompt: null,
+        invalidPrompt: null,
+        goodbyePrompt: null,
+        maxRetries: 3,
+        waitSeconds: 6,
+        options: m.options.map((o) => ({
+          digit: o.digit,
+          action: o.action as IvrMenuDraft['options'][number]['action'],
+          target: o.target,
+          label: o.label,
+        })),
+      }),
+    );
 }
 
 export function loadBusinessHoursForInfra(db: Database.Database) {

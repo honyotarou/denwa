@@ -10,7 +10,8 @@ import {
   readComposeDraftFromFile,
 } from '@openpbx/ops';
 import { normalizeDockerCompose } from '../docker/compose.js';
-import type { ExtensionDraft } from '../extension.js';
+import type { ExtensionDraftInput } from '../extension.js';
+import { normalizeExtensionDraft, toExtensionDraft } from '../extension.js';
 import { renderPjsipExtensions } from '../pjsip.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -59,9 +60,10 @@ describe('Phase 2.5 — early runtime smoke', () => {
     it('Given golden extension input When renderPjsipExtensions Then golden extensions.conf と一致', () => {
       const input = JSON.parse(
         fs.readFileSync(path.join(GOLDEN_PJSIP_DIR, 'extensions.input.json'), 'utf8'),
-      ) as { updatedAt: string; extensions: ExtensionDraft[] };
+      ) as { updatedAt: string; extensions: ExtensionDraftInput[] };
       const expected = fs.readFileSync(path.join(GOLDEN_PJSIP_DIR, 'extensions.conf'), 'utf8');
-      const actual = renderPjsipExtensions(input.extensions, { updatedAt: input.updatedAt });
+      const extensions = input.extensions.map((e) => toExtensionDraft(normalizeExtensionDraft(e)));
+      const actual = renderPjsipExtensions(extensions, { updatedAt: input.updatedAt });
       expect(actual).toBe(expected);
     });
   });

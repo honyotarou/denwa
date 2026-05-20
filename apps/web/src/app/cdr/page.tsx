@@ -12,7 +12,12 @@ export default async function CdrPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">発着信履歴</h2>
-        {sup && <Link href="/api/cdr/ingest" className="text-sm text-blue-600 hover:underline">いま取り込む</Link>}
+        {sup && (
+          <div className="flex gap-3 text-sm">
+            <Link href="/api/cdr/export" className="text-blue-600 hover:underline">CSV ダウンロード</Link>
+            <Link href="/api/cdr/ingest" className="text-blue-600 hover:underline">いま取り込む</Link>
+          </div>
+        )}
       </div>
       <div className="overflow-x-auto rounded border bg-white">
         <table className="w-full text-sm"><thead><tr className="text-left text-slate-500"><th>開始</th><th>src</th><th>dst</th><th>秒</th><th>結果</th></tr></thead>

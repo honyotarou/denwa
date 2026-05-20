@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createTestContext, loginAsAdmin } from '../context';
 import { withAuth, authErrorResponse } from '../api/with-auth';
-import { AuthError } from '../auth';
+import { authError, isAuthError } from '../auth';
 
 describe('withAuth (T-API-AUTH-001)', () => {
   it('Given no session When withAuth Then 401 JSON', async () => {
@@ -37,7 +37,7 @@ describe('withAuth (T-API-AUTH-001)', () => {
   });
 
   it('Given AuthError When authErrorResponse Then status preserved', () => {
-    const r = authErrorResponse(new AuthError(403, 'forbidden'));
+    const r = authErrorResponse(authError(403, 'forbidden'));
     expect(r).toEqual({ status: 403, body: { error: 'forbidden' } });
   });
 });

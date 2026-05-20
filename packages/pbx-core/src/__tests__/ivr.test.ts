@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { renderIvrDialplan } from '../ivr/dialplan.js';
-import { validateIvrMenuDraft } from '../ivr/validate.js';
+import { validateIvrMenuDraftInput, toIvrMenuDraft } from '../ivr/validate.js';
+import type { IvrMenuDraftInput } from '../ivr/types.js';
 
-const sampleMenu = {
+const sampleMenu: IvrMenuDraftInput = {
   number: '5000',
   name: 'Main',
   welcomePrompt: 'welcome',
@@ -19,11 +20,11 @@ const sampleMenu = {
 
 describe('IVR バリデーション', () => {
   it('Given 正常メニュー When validate Then 空', () => {
-    expect(validateIvrMenuDraft(sampleMenu)).toEqual([]);
+    expect(validateIvrMenuDraftInput(sampleMenu)).toEqual([]);
   });
 
   it('Given digit 重複 When validate Then エラー', () => {
-    const errs = validateIvrMenuDraft({
+    const errs = validateIvrMenuDraftInput({
       ...sampleMenu,
       options: [
         { digit: '1', action: 'hangup', target: null, label: null },
@@ -36,7 +37,7 @@ describe('IVR バリデーション', () => {
 
 describe('IVR dialplan 生成', () => {
   it('Given メニュー When render Then context と Goto', () => {
-    const out = renderIvrDialplan([sampleMenu], { updatedAt: 'fixed' });
+    const out = renderIvrDialplan([toIvrMenuDraft(sampleMenu)], { updatedAt: 'fixed' });
     expect(out).toContain('[ivr-5000]');
     expect(out).toContain('Goto(internal,1001,1)');
     expect(out).toContain('Goto(ringgroups,6000,1)');

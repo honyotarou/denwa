@@ -26,7 +26,7 @@ import {
   upsertTrunkActionImpl,
   scheduleUpgradeActionImpl,
 } from '../actions-handlers';
-import { AuthError } from '../auth';
+import { isAuthError } from '../auth';
 
 const tmpDirs: string[] = [];
 
@@ -190,6 +190,25 @@ describe('Phase 6.5 — Server Actions (T-ACT-001〜040)', () => {
     ).rejects.toThrow(/last admin/);
   });
 
+  it('T-SEC-SESSION-001: updateAccountRole rotates self session', async () => {
+    const ctx = await authedCtx();
+    createAccount(ctx.db, {
+      username: 'admin2',
+      passwordHash: hashPassword('password12'),
+      role: 'admin',
+    });
+    const admin = ctx.auth.getAccountByUsername('admin')!;
+    const oldToken = ctx.sessionToken!;
+    expect(ctx.auth.getAccountBySessionToken(oldToken)?.role).toBe('admin');
+    const r = await updateAccountRoleActionImpl(
+      ctx,
+      fd({ id: String(admin.id), role: 'supervisor' }),
+    );
+    expect(r.rotatedToken).toBeTruthy();
+    expect(ctx.auth.getAccountBySessionToken(oldToken)).toBeNull();
+    expect(ctx.auth.getAccountBySessionToken(r.rotatedToken!)?.role).toBe('supervisor');
+  });
+
   it('T-ACT-033: upsertIpAllow CIDR validate', async () => {
     const ctx = await authedCtx();
     await upsertIpAllowActionImpl(ctx, fd({ cidr: '192.168.0.0/24', note: 'lan' }));
@@ -227,6 +246,6 @@ describe('Phase 6.5 — Server Actions (T-ACT-001〜040)', () => {
     const ctx = createTestContext();
     await expect(
       createExtensionActionImpl(ctx, fd({ number: '2001', secret: 'secret-2001' })),
-    ).rejects.toBeInstanceOf(AuthError);
+    ).rejects.toSatisfy((e: unknown) => isAuthError(e));
   });
 });

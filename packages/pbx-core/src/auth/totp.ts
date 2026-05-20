@@ -61,13 +61,28 @@ export function generateTotp(secretBase32: string, time = Date.now()): string {
 }
 
 export function verifyTotp(secretBase32: string, code: string, time = Date.now()): boolean {
-  if (!/^\d{6}$/.test(code)) return false;
-  const counter = Math.floor(time / 1000 / STEP);
+  return verifyTotpConsuming(secretBase32, code, null, time).ok;
+}
+
+export type TotpVerifyResult = Readonly<{ ok: true; counter: number } | { ok: false }>;
+
+/** F-013: 同一 counter の再利用を拒否（±1 window は維持） */
+export function verifyTotpConsuming(
+  secretBase32: string,
+  code: string,
+  lastAcceptedCounter: number | null | undefined,
+  time = Date.now(),
+): TotpVerifyResult {
+  if (!/^\d{6}$/.test(code)) return { ok: false };
   const secret = base32Decode(secretBase32);
+  const now = Math.floor(time / 1000 / STEP);
   for (const delta of [-1, 0, 1]) {
-    if (hotp(secret, counter + delta) === code) return true;
+    const counter = now + delta;
+    if (hotp(secret, counter) !== code) continue;
+    if (lastAcceptedCounter != null && counter <= lastAcceptedCounter) return { ok: false };
+    return { ok: true, counter };
   }
-  return false;
+  return { ok: false };
 }
 
 export function buildOtpauthUri(account: string, secret: string, issuer = 'OpenPBX'): string {

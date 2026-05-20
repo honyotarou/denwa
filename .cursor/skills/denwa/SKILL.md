@@ -1,20 +1,20 @@
 ---
 name: denwa
 description: >-
-  OpenPBX TDD 再構築（/denwa）。0→9。SOC/カプセル化は denwa-architecture-gate + import-boundaries で強制。
+  OpenPBX TDD 再構築（/denwa）。0→9。SOC/カプセル化/T-TS(§5.4.1)/T-SEC(ペネトレ)は denwa-architecture-gate + Vitest + prod-check で強制。
   層: core / ops / db / infra / web(services→actions→pages)。pre static / post harness:fast / push harness。
-  Use when: /denwa, denwa, T-ARCH, T-SOC, T-ACT, services, withAuth, architecture gate, harness, legacy OpenPBX.
-  正本 .cursor/skills/denwa。手順 steps-denwa.md。
+  Use when: /denwa, denwa, pentest, OWASP, ITIL, T-ARCH, T-SOC, T-SEC, T-TS, harness, legacy OpenPBX, SECURITY-MAP.
+  正本 .cursor/skills/denwa。手順 steps-denwa.md。地図 docs/SECURITY-MAP.md。
 ---
 
 # denwa — OpenPBX TDD 再構築（`/denwa`）
 
-**正本**: 本 SKILL → **`steps-denwa.md` §{番号}`** → `docs/TDD-REBUILD-PLAN.md`
+**正本**: 本 SKILL → **`steps-denwa.md` §{番号}`** → `docs/TDD-REBUILD-PLAN.md` / セキュリティ地図 **`docs/SECURITY-MAP.md`**
 
 **番号だけでよい**。`harness` / `check` は独立メニューにしない。編集時 **pre→static** / **post→harness:fast**、turn 末 **stop→harness**、push で **harness**。
 
-> **SOC・カプセル化・変更容易性は「推奨」ではない。**  
-> `scripts/denwa-architecture-gate.mjs`（`npm run check:static`）+ `apps/web/src/__tests__/import-boundaries.test.ts` が **二重**で強制。  
+> **SOC・カプセル化・TypeScript 規約（§5.4.1）は「推奨」ではない。**  
+> `scripts/denwa-architecture-gate.mjs`（`npm run check:static`）+ Vitest（`typescript-gate.test.ts` / `no-class.test.ts` / `brands.test.ts` / `import-boundaries.test.ts`）が **二重**で強制。  
 > ゲートが赤 → **コードを直す**。ルールを緩めない（意図的な設計変更は gate と Vitest を同時に更新）。
 
 ---
@@ -42,13 +42,13 @@ description: >-
 | turn 終了 | stop → `npm run harness` |
 | `git commit` | lefthook → `harness:fast` |
 | `git push` | lefthook → `npm run harness` |
-| GitHub Actions | `harness:fast` + `test:gate` |
+| GitHub Actions | `npm run harness`（pre-push と同一: prod-check + SCA 含む） |
 
 | コマンド | 内容 |
 |----------|------|
 | `npm run check:static` | `scripts/check-denwa-static.mjs` → secrets + `denwa-architecture-gate.mjs` |
 | `npm run harness:fast` | static + 全 workspace typecheck |
-| `npm run harness` | fast + `test:gate`（Vitest 全パッケージ） |
+| `npm run harness` | fast + `test:gate` + `prod-check --expect-pass` + `sca-audit` |
 
 編集 **1 ファイル** 時も pre/post で該当ルールのみ再検査（`check:static -- <path>`）。
 
@@ -83,8 +83,116 @@ description: >-
 | T-SEC-002 | 本番 session cookie `secure: true`（`session-cookie.ts`） | — | ✓ |
 | T-SEC-003 | ログイン `next` は `safeRedirectPath`（相対パスのみ） | — | ✓ |
 | T-SEC-004 | AMI: 172.16.0.0/12、`write` に `command` なし | — | ✓ (ops) |
+| T-SEC-INI-001 | PJSIP displayName は `sanitizeIniDisplayName` のみ | ✓ | — |
+| T-SEC-PJSIP-001 | 追跡 `pjsip.d/extensions.conf` に ext-dev/secret-100x 禁止 | ✓ | ✓ (pjsip-tracked-secrets) |
+| T-SEC-AST-001 | Asterisk Docker APT 版 pin（= T-SEC-IMG-001） | ✓ | ✓ (pentest-ch4/ch5) |
+| T-SEC-IMG-001 | `asterisk/Dockerfile` `asterisk=${ASTERISK_PKG_VERSION}` | ✓ | ✓ |
+| T-SEC-MOUNT-001 | web は `data/pbx-out` のみ（git `asterisk/pjsip.d` RW 禁止） | ✓ | ✓ (pentest-mount) |
+| T-SEC-RTP-001 | `endpoint-internal` SDES (`transports.conf`) | ✓ | ✓ (pentest-rtp) |
+| T-SEC-IP-001 | 本番 middleware: 空 `IP_ALLOW_CIDRS` → deny | ✓ | ✓ (middleware-ip) |
+| T-SEC-A05-002 | `http.conf` bindaddr/tlsbindaddr loopback のみ | ✓ | ✓ (asterisk-http-bind) |
+| T-SEC-A10-001 | originate context allowlist（= T-SEC-AMI-002） | — | ✓ (pentest-ch3) |
+| T-SEC-INBOX-002 | inbox meta HMAC（`inbox/hmac.ts` + notify-event） | — | ✓ |
+| T-SEC-A01-001 | PBX 書込 API は `PBX_CONFIG_WRITE_MIN_ROLE` | ✓ | ✓ |
+| T-SEC-A01-002 | 録音 API は `RECORDING_READ_MIN_ROLE` + `withAuth` | ✓ | ✓ (ch1-access) |
+| T-SEC-A01-003 | devices SSE は `DEVICE_STREAM_MIN_ROLE` + `withAuth` | ✓ | ✓ (ch1-access) |
+| T-SEC-A09-001 | 機微 API は `recording.read` 等を audit | ✓ | — |
+| T-SEC-HEADERS-001 | `next.config` → `buildSecurityHeaders` | ✓ | ✓ |
+| T-SEC-CSRF-001 | POST API route → `rejectDisallowedPostOrigin` | ✓ | ✓ (sec-csrf) |
+| T-SEC-CSRF-002 | Origin 無し POST は `Sec-Fetch-Site` 必須（core `csrf.ts`） | — | ✓ (sec-csrf) |
+| T-SEC-CSV-001 | CDR export は `renderCdrExportCsv` 経由のみ | ✓ | ✓ (cdr-export) |
+| T-SEC-SESSION-001 | ロール変更で `destroySessionsForAccount` + 自己 cookie | ✓ | ✓ |
+| T-SEC-AMI-001 | originate は `validateOriginateRequest`（callerId/context） | ✓ | ✓ |
+| T-SEC-AMI-002 | originate `context` は `ORIGINATE_ALLOWED_CONTEXTS` のみ | — | ✓ (originate-ami) |
+| T-SEC-A03-001 | guidances は core `validateGuidanceName` / `validateWavHeader` | ✓ | — |
+| T-SEC-SHELL-001 | dialplan `SAFE_CALLER_NAME`（`CALLERID(name)` を System に渡さない） | ✓ | ✓ (shell-argv) |
+| T-SEC-INBOX-001 | inbox meta は `validateInboxMetaShape`（core） | — | ✓ |
+| T-SEC-TOTP-001 | TOTP は `verifyTotpConsuming` + `totp_last_counter` | — | ✓ |
+| T-SEC-A05-001 | compose で Asterisk HTTP 8088/8089 ホスト非公開 | — | ✓ (prod-check / pentest-compose) |
+| T-TS-001 | Branded Type（`ExtensionNumber` ≠ `IvrNumber`）。`brands.ts` + `parse*` / `to*` | ✓ | ✓ |
+| T-TS-002 | データ型 `Readonly<{…}>`。`*DraftInput` は string 境界可 | ✓ | ✓ |
+| T-TS-003 | `export class` / `class extends Error` 禁止 — tag + factory | ✓ | ✓ |
+| T-TS-004 | カスタム `*Error` への `instanceof` / `new XxxError()` 禁止 | ✓ | ✓ |
+| T-TS-005 | `services/extensions`・`services/ivr` は `validate*` → `to*Draft` 必須 | ✓ | — |
 
 **ゲートが赤いとき**: まず `npm run check:static` の `[T-xxx]` 行を読む → 該当ファイルを修正 → `npm run harness:fast`。
+
+---
+
+## 2b. TypeScript 規約（§5.4.1 / t-wada）— 強制
+
+Java/C# とは異なり **構造的部分型**。型注釈は実行時に消える → **class / instanceof に頼らない**。
+
+| やること | 正本パス | 門番 |
+|----------|----------|------|
+| Branded 値 | `packages/pbx-core/src/brands.ts` | T-TS-001 |
+| 入力→正規化→検証→brand | `normalize*` → `validate*` → `to*Draft` | T-TS-005 (services) |
+| エラー tag | `xxxError()` + `isXxxError(e)` | T-TS-003/004 |
+| Draft 型 | `Readonly<{ number: ExtensionNumber; … }>` | T-TS-002 |
+
+### データフロー（内線の例）
+
+```text
+Form/API string
+  → ExtensionDraftInput
+  → normalizeExtensionDraft
+  → validateExtensionDraft
+  → toExtensionDraft  （ExtensionNumber）
+  → render / DB / audit
+```
+
+### ゲート赤の直し方（T-TS）
+
+| ID | 症状 | 修正 |
+|----|------|------|
+| T-TS-001 | `ExtensionDraft.number` が string | `brands.ts` の `ExtensionNumber` + `toExtensionDraft` |
+| T-TS-002 | `export type FooDraft = {` | `Readonly<{ … }>` に変更 |
+| T-TS-003 | `export class` / `class extends Error` | tag 付き factory + `isXxxError` |
+| T-TS-004 | `instanceof DuplicateError` | `isDuplicateError(e)` |
+| T-TS-005 | services が brand 化しない | `validate*` 後に `toExtensionDraft` / `toIvrMenuDraft` |
+
+新 Branded 値を足すとき: `brands.ts` に `parse*` → core `to*Draft` → `BRAND_BOUNDARY_SERVICES`（要 brand 化 service）→ `brands.test.ts` に type-level テスト。
+
+---
+
+## 2c. セキュリティ契約（T-SEC / ペネトレ）— 強制
+
+**地図**: `docs/SECURITY-MAP.md`（OWASP ↔ ゲート ID ↔ ITIL EC/NC/CSI）。
+
+**ルール**: ドメイン検証・CSV/CSRF/AMI/context/shell は **`packages/pbx-core` に Red→Green** → web/asterisk は薄いアダプタのみ。ゲート赤は **緩めない**（意図変更は gate + 対応 Vitest を同時更新）。
+
+### 正本パス（追加時はここを増やす）
+
+| 関心 | core | web / infra |
+|------|------|-------------|
+| API ロール契約 | `auth/pbx-api-policy.ts` | handlers が `RECORDING_READ_MIN_ROLE` 等を参照 |
+| CSRF | `http/csrf.ts` | `server/api/post-origin.ts` + 各 POST `route.ts` |
+| CDR CSV | `cdr/export.ts` | `services/cdr-export.ts` → `handlers/cdr.ts` |
+| Originate AMI | `originate/ami.ts` | `handlers/originate.ts` |
+| Shell 引数 | `shell/argv.ts` | `asterisk/extensions.conf` + `notify-event.sh` |
+| inbox meta | `inbox/validate-meta.ts` | `infra/inbox/validate-meta.ts` は委譲 |
+| TOTP リプレイ | `auth/totp.ts` `verifyTotpConsuming` | `auth.ts` + `accounts.totp_last_counter` |
+| 本番 compose | — | `docker-compose.prod.yml`（SIP 非公開 overlay） |
+
+### ペネトレ（ITIL）の進め方
+
+ユーザーが **ペネトレ / OWASP / ITIL** と言ったときは **`steps-denwa.md` 付録 C** に従う。
+
+| 章 | やること | 実装 |
+|----|----------|------|
+| 1 Identification | 攻撃面台帳 | 修正しない |
+| 2 Threat Modeling | STRIDE × L×I | 修正しない |
+| 3 Verification | 再現確認 | **新規 Red は書かない**（`pentest-ch3-verification.test.ts` は緩和の静的確認） |
+| 4 Treatment | TDD 修正 | core → service/handler → gate |
+| 5 CSI | 回帰 | `npm run harness` + `SECURITY-MAP.md` |
+
+### 新規 API / 変更時（セキュリティ）
+
+1. [ ] POST route に `rejectDisallowedPostOrigin`（T-SEC-CSRF-001）
+2. [ ] 機微 GET に `withAuth` + `pbx-api-policy` の `minRole`（T-SEC-A01-002/003）
+3. [ ] 監査 action を `audit-actions.ts` に追加（T-SEC-A09-001）
+4. [ ] PBX 書込は `PBX_CONFIG_WRITE_MIN_ROLE`（T-SEC-A01-001）
+5. [ ] ドメイン文字列検証は core にテスト付きで追加
 
 ---
 
@@ -122,6 +230,7 @@ apps/web     services → actions → pages / app/actions
 | API handler | `server/api/handlers/*.ts` | 業務ロジック。認可は `withAuth` |
 | API barrel | `server/api-handlers.ts` | **re-export のみ**（T-SOC-005） |
 | API 認可 | `server/api/with-auth.ts` | `withAuth` / `authErrorResponse` |
+| API CSRF 門番 | `server/api/post-origin.ts` | POST route から呼ぶ（T-SEC-CSRF-001） |
 | 画面データ | `server/page-data.ts` | repo 経由。SQL 禁止 |
 | パス | `server/paths.ts` | env は server のみ。**page 禁止** |
 | API 文脈 | `server/request-meta.ts` | `buildContextFromRequest(req)` |
@@ -172,8 +281,12 @@ domain mutation は **T-ARCH-004**（core `validate*`）。`auth-login` / `guida
 5. [ ] `server/actions/impl.ts` re-export
 6. [ ] **`app/actions/<domain>.ts`**（`'use server'` + flash）
 7. [ ] API が要るなら **`server/api/handlers/`** + `api-handlers.ts` barrel
-8. [ ] `MUTATION_SERVICES` / `ACTIONS_SERVICE_ROUTED` を `denwa-architecture-gate.mjs` に追加（新 domain 時）
-9. [ ] `npm run harness` 緑
+8. [ ] 新 Branded 値なら `brands.ts` + `to*Draft` + `brands.test.ts`
+9. [ ] `MUTATION_SERVICES` / `ACTIONS_SERVICE_ROUTED` / `BRAND_BOUNDARY_SERVICES` を `denwa-architecture-gate.mjs` に追加
+10. [ ] POST API なら `rejectDisallowedPostOrigin`（T-SEC-CSRF-001）
+11. [ ] 機微 API なら `pbx-api-policy` の `minRole` + gate `SENSITIVE_API_*`（必要時）
+12. [ ] `docs/SECURITY-MAP.md` にゲート ID を 1 行追記（セキュリティ変更時）
+13. [ ] `npm run harness` 緑
 
 ---
 
@@ -187,7 +300,14 @@ domain mutation は **T-ARCH-004**（core `validate*`）。`auth-login` / `guida
 - `pbx-db` → `pbx-ops`
 - `apps/web/src/lib` に domain 二重実装（T-SOC-002）
 - ログインで TOTP をスキップする実装（T-ACT-021 / `auth-login` 迂回）
+- `export class` / `class extends Error`（T-TS-003）
+- カスタム `*Error` への `instanceof`（T-TS-004）— `instanceof Error` / `instanceof File` は可
+- `*Draft = {`（Readonly なし T-TS-002）
 - 秘密の commit / `--no-verify` 恒常利用
+- POST API で CSRF 門番なし（T-SEC-CSRF-001）
+- `renderCdrExportCsv` を web/lib で再実装（T-SEC-CSV-001 / T-SOC-002）
+- dialplan の `System(..., "${CALLERID(name)}", ...)`（T-SEC-SHELL-001）
+- compose に `8088:8088` / `8089:8089` ホスト公開（T-SEC-A05-001）
 
 ---
 
@@ -204,3 +324,11 @@ domain mutation は **T-ARCH-004**（core `validate*`）。`auth-login` / `guida
 |--------|------|
 | **linegas** | 門番の早い/遅い分離の参考 |
 | **line** | 将来 E2E |
+| **pentest-tdd-loop**（任意） | 自走ペネトレの参考。denwa 正本は `SECURITY-MAP.md` + 付録 C |
+
+### 指示例（セキュリティ）
+
+- `/denwa 6` + 「T-SEC-CSRF-001 POST に Origin 門番」
+- `/denwa 2` + 「T-SEC-AMI-002 context allowlist Red→Green」
+- `/denwa 8` + 「T-SEC-A05-001 prod-check 通す」
+- 「ペネトレ ITIL 第4章」→ 付録 C Treatment、Ch3 まで Red テストを増やさない

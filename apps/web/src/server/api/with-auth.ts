@@ -1,5 +1,5 @@
 import type { AppContext } from '../context';
-import { AuthError, type Role, type SessionAccount } from '../auth';
+import { isAuthError, type Role, type SessionAccount } from '../auth';
 import type { JsonHandlerResult } from './types';
 
 type AuthOptions = Readonly<{
@@ -8,9 +8,8 @@ type AuthOptions = Readonly<{
 }>;
 
 export function authErrorResponse(e: unknown): JsonHandlerResult {
-  const err = e as AuthError;
-  const status = err instanceof AuthError ? err.status : 500;
-  const message = err instanceof AuthError ? err.message : 'internal error';
+  const status = isAuthError(e) ? e.status : 500;
+  const message = isAuthError(e) ? e.message : 'internal error';
   return { status, body: { error: message } };
 }
 

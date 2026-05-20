@@ -51,3 +51,14 @@ export function getAccountBySessionTokenIncludingExpired(
 export function destroySession(db: Database.Database, token: string): void {
   db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
 }
+
+export function destroySessionsForAccount(db: Database.Database, accountId: number): void {
+  db.prepare('DELETE FROM sessions WHERE account_id = ?').run(accountId);
+}
+
+export function countSessionsForAccount(db: Database.Database, accountId: number): number {
+  const row = db
+    .prepare('SELECT COUNT(*) AS c FROM sessions WHERE account_id = ?')
+    .get(accountId) as { c: number };
+  return row.c;
+}

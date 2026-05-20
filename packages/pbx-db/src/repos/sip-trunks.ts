@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { DuplicateError, NotFoundError } from '../errors.js';
+import { duplicateError, notFoundError } from '../errors.js';
 
 export type SipTrunkRow = Readonly<{
   id: number;
@@ -20,7 +20,7 @@ export function upsertSipTrunk(
   const row = db.prepare('SELECT id, name, host, port FROM sip_trunks WHERE name = ?').get(input.name) as
     | { id: number; name: string; host: string; port: number }
     | undefined;
-  if (!row) throw new NotFoundError(`trunk ${input.name}`);
+  if (!row) throw notFoundError(`trunk ${input.name}`);
   return row;
 }
 
@@ -37,7 +37,7 @@ export function createSipTrunk(
       .get(Number(info.lastInsertRowid)) as SipTrunkRow;
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes('UNIQUE')) throw new DuplicateError(`trunk ${input.name} は既に存在`);
+    if (msg.includes('UNIQUE')) throw duplicateError(`trunk ${input.name} は既に存在`);
     throw e;
   }
 }
