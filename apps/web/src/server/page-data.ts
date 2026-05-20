@@ -93,17 +93,16 @@ export function listGuidances() {
 export function listCdr(limit = 200) {
   return db()
     .prepare(
-      `SELECT uniqueid, start_time AS startTime, src, dst, billsec, disposition, recording_file AS recordingFile
-       FROM cdr_records ORDER BY start_time DESC LIMIT ?`,
+      `SELECT uniqueid, start_at AS startTime, src, dst, billsec, disposition
+       FROM cdr_records ORDER BY start_at DESC LIMIT ?`,
     )
     .all(limit) as Array<{
     uniqueid: string;
-    startTime: string;
-    src: string;
-    dst: string;
+    startTime: string | null;
+    src: string | null;
+    dst: string | null;
     billsec: number;
-    disposition: string;
-    recordingFile: string | null;
+    disposition: string | null;
   }>;
 }
 
@@ -115,7 +114,7 @@ export function listIpAllowRows() {
 
 export function listSipTrunks() {
   return db()
-    .prepare(`SELECT name, host, port, username, inbound_did AS inboundDid FROM sip_trunks ORDER BY name`)
+    .prepare(`SELECT name, host, port, username, did_inbound AS inboundDid FROM sip_trunks ORDER BY name`)
     .all() as Array<{ name: string; host: string; port: number; username: string | null; inboundDid: string | null }>;
 }
 

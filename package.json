@@ -15,6 +15,7 @@
     "harness": "bash scripts/harness-check.sh",
     "harness:fast": "bash scripts/harness-fast.sh",
     "check:static": "node scripts/check-denwa-static.mjs",
+    "prod-check": "npx tsx scripts/prod-check.ts",
     "prepare": "lefthook install || true"
   },
   "devDependencies": {
