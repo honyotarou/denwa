@@ -7,5 +7,5 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: Request) {
   const ctx = buildContextFromRequest(req);
   const r = await handleDevicesStreamGet(ctx);
-  return new Response(r.stream, { status: r.status, headers: r.headers });
+  return new Response(r.stream as BodyInit, { status: r.status, headers: r.headers });
 }

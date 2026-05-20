@@ -2,7 +2,7 @@ import { validateTrunkDraft, type TrunkDraft } from '@openpbx/core';
 import { deleteSipTrunk, upsertSipTrunk } from '@openpbx/db';
 import type { AppContext } from '../context';
 import type { SessionAccount } from '../auth';
-import { audit } from '../actions/shared';
+import { audit } from '../audit';
 import { throwIfInvalid } from './validate';
 
 function trunkDraftFromForm(input: { name: string; host: string; port?: number }): TrunkDraft {

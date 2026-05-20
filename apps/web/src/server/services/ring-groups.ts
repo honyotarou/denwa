@@ -2,7 +2,7 @@ import { validateRingGroupDraft, type RingGroupDraft, type RingStrategy } from '
 import { createRingGroup, deleteRingGroup, getRingGroup, updateRingGroup } from '@openpbx/db';
 import type { AppContext } from '../context';
 import type { SessionAccount } from '../auth';
-import { audit } from '../actions/shared';
+import { audit } from '../audit';
 import { parseCommaSeparatedExtensions } from './form-helpers';
 import { throwIfInvalid } from './validate';
 

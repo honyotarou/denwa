@@ -14,26 +14,37 @@ const MUTATION_SERVICES = [
   "business-hours.ts",
   "trunks.ts",
   "upgrades.ts",
+  "guidance.ts",
+  "ivr.ts",
+  "admin-policy.ts",
+  "auth-login.ts",
 ];
 
-/** actions は services 経由必須（未移行はホワイトリスト） */
+/** core validate* 必須（認証・単純 delete は除外） */
+const SERVICES_REQUIRE_CORE_VALIDATE = [
+  "extensions.ts",
+  "ring-groups.ts",
+  "pickup.ts",
+  "phonebook.ts",
+  "business-hours.ts",
+  "trunks.ts",
+  "upgrades.ts",
+  "ivr.ts",
+];
+
+/** actions は services 経由必須（barrel / shared のみ例外） */
 const ACTIONS_SERVICE_ROUTED = [
   "extensions.ts",
   "ring-groups.ts",
   "pickup.ts",
   "phonebook.ts",
   "business-hours.ts",
-];
-
-const ACTIONS_DB_WHITELIST = new Set([
-  "shared.ts",
-  "impl.ts",
-  "index.ts",
   "guidance-auth.ts",
-  "accounts.ts",
   "ivr.ts",
   "admin.ts",
-]);
+];
+
+const ACTIONS_DB_WHITELIST = new Set(["shared.ts", "impl.ts", "index.ts", "accounts.ts"]);
 
 function readSafe(filePath) {
   try {
@@ -111,6 +122,19 @@ function checkCorePure(root, failures) {
   }
 }
 
+function checkServicesNoActionsImport(root, failures) {
+  const dir = path.join(root, "apps/web/src/server/services");
+  if (!fs.existsSync(dir)) return;
+  for (const name of fs.readdirSync(dir)) {
+    if (!name.endsWith(".ts")) continue;
+    const rel = `apps/web/src/server/services/${name}`;
+    const text = readSafe(path.join(dir, name));
+    if (/from\s+['"].*\/actions\//.test(text) || /from\s+['"]\.\.\/actions\//.test(text)) {
+      fail(failures, "T-SOC-003", rel, "services must not import from actions (use server/audit.ts)");
+    }
+  }
+}
+
 function checkMutationServices(root, failures) {
   const dir = path.join(root, "apps/web/src/server/services");
   for (const name of MUTATION_SERVICES) {
@@ -120,6 +144,7 @@ function checkMutationServices(root, failures) {
       fail(failures, "T-ARCH-004", rel, "mutation service file missing");
       continue;
     }
+    if (!SERVICES_REQUIRE_CORE_VALIDATE.includes(name)) continue;
     if (!/@openpbx\/core/.test(text) || !/validate\w+/.test(text)) {
       fail(failures, "T-ARCH-004", rel, "must import validate* from @openpbx/core");
     }
@@ -199,6 +224,66 @@ function checkInfraSync(root, failures) {
   }
 }
 
+function checkAppActionsSplit(root, failures) {
+  const barrel = path.join(root, "apps/web/src/app/actions.ts");
+  if (!fs.existsSync(barrel)) return;
+  const text = readSafe(barrel);
+  const lines = text.split("\n").length;
+  if (lines > 25) {
+    fail(
+      failures,
+      "T-SOC-004",
+      "apps/web/src/app/actions.ts",
+      `barrel must re-export only (max 25 lines, got ${lines})`,
+    );
+  }
+  if (/async function \w+Action/.test(text)) {
+    fail(failures, "T-SOC-004", "apps/web/src/app/actions.ts", "implement actions in app/actions/<domain>.ts");
+  }
+  const legacyHandlers = path.join(root, "apps/web/src/server/api-handlers.ts");
+  const hText = readSafe(legacyHandlers);
+  if (fs.existsSync(legacyHandlers) && /export async function handle/.test(hText)) {
+    fail(
+      failures,
+      "T-SOC-005",
+      "apps/web/src/server/api-handlers.ts",
+      "handlers belong in server/api/handlers/* (barrel re-export only)",
+    );
+  }
+}
+
+function checkWebPackageImports(root, failures) {
+  const forbidBarrel = (rel, text) => {
+    if (/from ['"]@openpbx\/db['"]/.test(text)) {
+      fail(failures, "T-PKG-001", rel, "use @openpbx/db/repos/* or @openpbx/db/schema subpaths");
+    }
+    if (/from ['"]@openpbx\/infra['"]/.test(text)) {
+      fail(failures, "T-PKG-001", rel, "use @openpbx/infra/* subpath exports");
+    }
+  };
+  const actionsDir = path.join(root, "apps/web/src/server/actions");
+  if (fs.existsSync(actionsDir)) {
+    for (const name of fs.readdirSync(actionsDir)) {
+      if (!name.endsWith(".ts")) continue;
+      forbidBarrel(`apps/web/src/server/actions/${name}`, readSafe(path.join(actionsDir, name)));
+    }
+    const formsDir = path.join(actionsDir, "forms");
+    if (fs.existsSync(formsDir)) {
+      for (const name of fs.readdirSync(formsDir)) {
+        if (!name.endsWith(".ts")) continue;
+        forbidBarrel(`apps/web/src/server/actions/forms/${name}`, readSafe(path.join(formsDir, name)));
+      }
+    }
+  }
+  const apiHandlers = path.join(root, "apps/web/src/server/api/handlers");
+  if (fs.existsSync(apiHandlers)) {
+    for (const name of fs.readdirSync(apiHandlers)) {
+      if (!name.endsWith(".ts")) continue;
+      forbidBarrel(`apps/web/src/server/api/handlers/${name}`, readSafe(path.join(apiHandlers, name)));
+    }
+  }
+}
+
 function checkWebLib(root, failures) {
   const webLib = path.join(root, "apps/web/src/lib");
   if (!fs.existsSync(webLib)) return;
@@ -271,6 +356,7 @@ export function runArchitectureGate(root, opts = {}) {
   checkPageData(root, failures);
   checkPbxDbPackage(root, failures);
   checkCorePure(root, failures);
+  checkServicesNoActionsImport(root, failures);
   checkMutationServices(root, failures);
   checkActionsUseServices(root, failures);
   checkApiRoutes(root, failures);
@@ -278,5 +364,7 @@ export function runArchitectureGate(root, opts = {}) {
   checkMiddlewareIp(root, failures);
   checkInfraSync(root, failures);
   checkWebLib(root, failures);
+  checkAppActionsSplit(root, failures);
+  checkWebPackageImports(root, failures);
   return failures;
 }

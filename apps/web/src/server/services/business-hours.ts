@@ -14,7 +14,7 @@ import {
 } from '@openpbx/db';
 import type { AppContext } from '../context';
 import type { SessionAccount } from '../auth';
-import { audit } from '../actions/shared';
+import { audit } from '../audit';
 import { throwIfInvalid, throwIfInvalidField } from './validate';
 
 export async function upsertHolidayWithSync(
