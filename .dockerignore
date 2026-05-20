@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+.next
+**/.next
+.git
+.cursor
+data
+e2e
+playwright-report
+test-results
+*.md
+!apps/web/README.md
