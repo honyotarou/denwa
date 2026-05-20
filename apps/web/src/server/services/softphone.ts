@@ -1,4 +1,5 @@
-import { listExtensions } from '@openpbx/db';
+import { filterSoftphoneProfiles } from '@openpbx/core';
+import { listExtensions, listGrantedExtensionNumbers } from '@openpbx/db';
 import type { AppContext } from '../context';
 import type { SessionAccount } from '../auth';
 
@@ -7,9 +8,14 @@ export type SoftphoneProfile = Readonly<{
   secret?: string;
 }>;
 
-/** T-SOFT-001/002: admin のみ secret 付き。user/supervisor は空（grant 未実装） */
+/** T-SOFT-001〜003: admin は全 WebRTC、user/supervisor は grant のみ */
 export function getSoftphoneProfiles(ctx: AppContext, me: SessionAccount): SoftphoneProfile[] {
-  const webrtc = listExtensions(ctx.db).filter((e) => e.webrtc);
-  if (me.role !== 'admin') return [];
-  return webrtc.map((e) => ({ number: e.number, secret: e.secret }));
+  const extensions = listExtensions(ctx.db).map((e) => ({
+    number: e.number,
+    secret: e.secret,
+    webrtc: e.webrtc,
+  }));
+  const granted =
+    me.role === 'admin' ? [] : listGrantedExtensionNumbers(ctx.db, me.id);
+  return filterSoftphoneProfiles(me.role, extensions, granted);
 }

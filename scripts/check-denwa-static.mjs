@@ -20,14 +20,18 @@ const targetAbs = targetArg
 const failures = [];
 const warnings = [];
 
-function walk(dir, acc = []) {
+function walk(dir, acc = [], opts = { testsOnly: true }) {
   if (!fs.existsSync(dir)) return acc;
   for (const name of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, name.name);
     if (name.isDirectory()) {
       if (name.name === "node_modules" || name.name === ".git") continue;
-      walk(p, acc);
-    } else if (/\.(test|spec)\.[cm]?[jt]sx?$/.test(name.name)) {
+      walk(p, acc, opts);
+    } else if (
+      opts.testsOnly
+        ? /\.(test|spec)\.[cm]?[jt]sx?$/.test(name.name)
+        : /\.(tsx?|jsx?)$/.test(name.name)
+    ) {
       acc.push(p);
     }
   }
@@ -110,6 +114,17 @@ if (targetAbs) {
   }
   for (const line of runArchitectureGate(ROOT)) {
     failures.push(line);
+  }
+  const webSrc = path.join(ROOT, "apps/web/src");
+  if (fs.existsSync(webSrc)) {
+    for (const file of walk(webSrc, [], { testsOnly: false })) {
+      const text = readSafe(file);
+      if (/cdn\.jsdelivr\.net\/npm\/sip\.js/i.test(text)) {
+        failures.push(
+          `${path.relative(ROOT, file)}: CDN sip.js forbidden (use npm sip.js dependency)`,
+        );
+      }
+    }
   }
 }
 
