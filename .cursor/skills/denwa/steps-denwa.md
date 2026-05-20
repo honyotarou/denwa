@@ -109,6 +109,22 @@ git clone https://github.com/tanimurahifukka/OpenPBX.git ../OpenPBX
 - `node:fs` / `node:child_process` / `better-sqlite3` 等を core に入れない → **`T-ARCH-001`** が Red になる
 - prod 用の監査アクション定数など **値オブジェクト** は core 可（`audit-actions`）
 
+### TypeScript 規約（§5.4.1 / t-wada）— **門番で強制**
+
+| 規約 | 門番 | 実装 |
+|------|------|------|
+| クラス禁止 | **T-TS-003** static + Vitest | tag + factory |
+| instanceof カスタム Error 禁止 | **T-TS-004** static + Vitest | `isXxxError(e)` |
+| Readonly Draft | **T-TS-002** static + Vitest | `Readonly<{…}>` |
+| Branded Type | **T-TS-001** static + Vitest | `brands.ts` |
+| services で brand 化 | **T-TS-005** static | `to*Draft` after `validate*` |
+
+構造的部分型: 型注釈は実行時に消える。`private` も実行時に無視される。
+
+例（内線）: `ExtensionDraftInput`（string）→ `validateExtensionDraft` → `toExtensionDraft`（`ExtensionNumber`）。
+
+ゲート赤 → `steps-denwa.md` 付録 B の T-TS 行を参照。**gate と Vitest を同時に更新**してからルール緩和。
+
 ### 門番（§2 の作業中は常に）
 
 | タイミング | 自動 |
@@ -218,9 +234,12 @@ server/api/handlers/    JSON 業務（withAuth T-API-AUTH-001、barrel: api-hand
 | Form 契約 | `server/actions/forms/*.ts` |
 | Server Action UI | `app/actions/<domain>.ts` + `app/actions/_flash.ts` |
 | API 認可 | `server/api/with-auth.ts` |
+| API CSRF | `server/api/post-origin.ts` → `rejectDisallowedPostOrigin`（T-SEC-CSRF-001） |
 | API 実装 | `server/api/handlers/*.ts` |
 | 読取 | `server/page-data.ts` |
 | 認証 UC | `server/services/auth-login.ts` → `authenticateLogin`（T-ACT-021） |
+| ロール契約 | `@openpbx/core/auth/pbx-api-policy.ts`（`RECORDING_READ_MIN_ROLE` 等） |
+| CDR export | `services/cdr-export.ts` → `handlers/cdr.ts`（T-SEC-CSV-001） |
 
 ### コンテキスト
 
@@ -242,6 +261,26 @@ server/api/handlers/    JSON 業務（withAuth T-API-AUTH-001、barrel: api-hand
 
 FormData key を変えるときは **forms/ と page の input を同時**（T-FORM-001）。
 
+### セキュリティ（T-SEC）
+
+地図: **`docs/SECURITY-MAP.md`**。ペネトレ指示時は **付録 C**。
+
+| やること | 契約 ID | 正本 |
+|----------|---------|------|
+| POST API に Origin 門番 | T-SEC-CSRF-001 | `core/http/csrf.ts` + `post-origin.ts` |
+| Origin 無し POST は Fetch Metadata | T-SEC-CSRF-002 | `csrf.ts`（Vitest: `sec-csrf.test.ts`） |
+| CDR CSV は core のみ | T-SEC-CSV-001 | `core/cdr/export.ts` |
+| ロール変更で他セッション破棄 | T-SEC-SESSION-001 | `destroySessionsForAccount` + `updateAccountRoleWithSession` |
+| originate AMI フィールド | T-SEC-AMI-001/002 | `core/originate/ami.ts` |
+| 録音 / devices は minRole + withAuth | T-SEC-A01-002/003 | `pbx-api-policy` + handler |
+| PBX 書込 API の minRole | T-SEC-A01-001 | gate `checkApiPbxWriteRole` |
+| 機微 GET の audit | T-SEC-A09-001 | `audit-actions.ts` |
+| guidances 検証 | T-SEC-A03-001 | core `guidance/*` |
+| inbox meta | T-SEC-INBOX-001 | core `inbox/validate-meta.ts`（infra は委譲） |
+
+新 POST route: `buildContextFromRequest` のあと **`rejectDisallowedPostOrigin(req)`** を最初に呼ぶ。  
+新機微 GET: **`withAuth`** + policy の定数。ゲートに `checkPostApiCsrf` / `checkSensitiveApiMinRole` 等が既にあるか確認。
+
 ### Middleware / IP
 
 - Edge: `IP_ALLOW_CIDRS` + `clientIpOptional`（T-MW-007）
@@ -251,9 +290,10 @@ FormData key を変えるときは **forms/ と page の input を同時**（T-F
 
 1. Red: core / `import-boundaries` / 必要なら `extension-form` 型の契約テスト
 2. Green: repo → **service** → thin action → `app/actions/<domain>.ts`
-3. API が要れば `api/handlers/<name>.ts` + route
+3. API が要れば `api/handlers/<name>.ts` + route（POST なら CSRF 門番）
 4. **`denwa-architecture-gate.mjs`** の `MUTATION_SERVICES` と `ACTIONS_SERVICE_ROUTED` にファイル名追加
-5. `npm run harness` 緑
+5. セキュリティ変更なら **`docs/SECURITY-MAP.md`** にゲート ID を 1 行追記
+6. `npm run harness` 緑
 
 ### 門番
 
@@ -281,7 +321,17 @@ FormData key を変えるときは **forms/ と page の input を同時**（T-F
 
 ## §8 通話・本番化（Phase 8〜10）
 
-**目的**: `docker compose up`、9001/9002 inbox、`T-PROD-*`、README 同期。
+**目的**: `docker compose up`、9001/9002 inbox、`T-PROD-*`、README 同期。本番 SIP 非公開は **`docker-compose.prod.yml`** overlay。
+
+### 本番 compose / Asterisk HTTP（T-SEC-A05-001）
+
+| 環境 | compose | SIP / HTTP |
+|------|---------|------------|
+| 開発 | `docker-compose.yml` | `:5060` 公開は意図的（F-001 台帳参照） |
+| 本番 | `docker compose -f docker-compose.yml -f docker-compose.prod.yml` | SIP ホスト非公開、8088/8089 ホストマップなし |
+
+`prod/check.ts`（T-SEC-A05-001）: 開発 tree の `docker-compose.yml` に `8088:8088` / `8089:8089` があれば FAIL。  
+dialplan / notify: **T-SEC-SHELL-001** — `CALLERID(name)` を `System()` に渡さない。`notify-event.sh` はメタ文字拒否。
 
 ### @openpbx/ops（I/O 正本）
 
@@ -343,6 +393,8 @@ docker compose up            # 9001/9002 inbox 等
 - [ ] FRONTEND 変更時、FormData key は `actions/forms/*` と page で一致
 - [ ] 新規 mutation は `server/services/*`（`app/actions.ts` に実装を書いていない）
 - [ ] 新 domain なら `denwa-architecture-gate.mjs` のリスト更新済み
+- [ ] 新 POST API に CSRF 門番（T-SEC-CSRF-001）
+- [ ] セキュリティ変更なら `docs/SECURITY-MAP.md` 同期
 - [ ] 新規 SQL は `pbx-db/src/repos` のみ
 
 ### PR テンプレ
@@ -356,7 +408,7 @@ docker compose up            # 9001/9002 inbox 等
 - Green: …
 
 ## 確認（自動門番含む）
-- [ ] Cursor stop / pre-push で harness 緑
+- [ ] Cursor stop / pre-push / **GitHub CI** で `npm run harness` 緑（pre-push と同一）
 - [ ] check:static（architecture gate）通過
 - [ ] pre-commit harness:fast 通過
 - [ ] prod-check（本番化時）
@@ -371,9 +423,10 @@ docker compose up            # 9001/9002 inbox 等
 | スクリプト | 内容 |
 |------------|------|
 | `scripts/harness-lib.sh` | static / typecheck / test:gate の共通実装 |
-| `scripts/check-denwa-static.mjs` | pre / afterFileEdit |
+| `scripts/check-denwa-static.mjs` | pre / afterFileEdit（secrets + T-ARCH/SOC/**T-TS**） |
+| `scripts/denwa-architecture-gate.mjs` | SOC + **T-TS-001〜005** 静的強制 |
 | `scripts/harness-fast.sh` | postToolUse / pre-commit / 手動 |
-| `scripts/harness-check.sh` | stop / pre-push / CI（full） |
+| `scripts/harness-check.sh` | stop / pre-push / **CI**（`npm run harness` = prod-check + SCA 含む） |
 | `scripts/prod-check.ts` | `pbx-ops` の prod/check を CLI 実行 |
 
 | Cursor フック | イベント |
@@ -405,3 +458,39 @@ docker compose up            # 9001/9002 inbox 等
 | Edge `node:crypto` エラー | middleware は `@openpbx/core/auth/policy` サブパス |
 | staged secret | ローテーション or `prod/check.ts` は分割文字列定義 |
 | Action テスト Red | FormData key・service 経由か確認 |
+| `T-TS-003` Red | class → `xxxError()` + `isXxxError` |
+| `T-TS-004` Red | `instanceof DuplicateError` → `isDuplicateError(e)` |
+| `T-TS-002` Red | `*Draft = {` → `Readonly<{…}>` |
+| `T-TS-001` Red | Draft.number を Branded + `to*Draft` |
+| `T-TS-005` Red | service に `toExtensionDraft` / `toIvrMenuDraft` を追加 |
+| `T-SEC-CSRF-001` Red | POST `route.ts` に `rejectDisallowedPostOrigin` |
+| `T-SEC-CSRF-002` Red | `csrf.ts` の Fetch Metadata 分岐 + `sec-csrf.test.ts` |
+| `T-SEC-CSV-001` Red | CSV を `core/cdr/export.ts` に移し web は service 経由のみ |
+| `T-SEC-SESSION-001` Red | `destroySessionsForAccount` + role 更新 service |
+| `T-SEC-AMI-001/002` Red | `originate/ami.ts` + handler |
+| `T-SEC-A01-002/003` Red | handler に `withAuth` + `pbx-api-policy` 定数 |
+| `T-SEC-A05-001` Red | compose から 8088/8089 削除 + `pentest-compose` / prod-check |
+| `T-SEC-SHELL-001` Red | dialplan `SAFE_CALLER_NAME` + `shell/argv.ts` + notify-event |
+| `T-SEC-TOTP-001` Red | `verifyTotpConsuming` + `totp_last_counter` migrate |
+| `T-SEC-INBOX-001` Red | `inbox/validate-meta.ts`（core） |
+| gate: `checkPostApiCsrf` 等 Red | `denwa-architecture-gate.mjs` と実装を同時更新（緩めない） |
+
+---
+
+## 付録 C: ペネトレ（ITIL / OWASP）
+
+**キーワード**: ペネトレ、OWASP、ITIL、STRIDE、脅威台帳、F-00x。
+
+**正本**: `docs/SECURITY-MAP.md`（ゲート ID ↔ 緩和 ↔ 残リスク）。
+
+| 章 | エージェントがやること | やらないこと |
+|----|------------------------|--------------|
+| 1 Identification | 攻撃面を台帳化（docs 可） | コード修正 |
+| 2 Threat Modeling | STRIDE × L×I、F-xxx 整理 | コード修正 |
+| 3 Verification | 再現手順・期待結果の記録 | **新規 Red テストは書かない**（`pentest-ch3-verification.test.ts` は緩和の静的確認のみ） |
+| 4 Treatment | core Red→Green → web/asterisk 配線 → gate | ゲートだけ緩める |
+| 5 CSI | `npm run harness` + `docs/SECURITY-MAP.md` + `docs/runbook-security.md` + `docs/PENTEST-NEXT-SCOPE.md` + gate 件数回帰（`pentest-ch5-csi.test.ts`） | 巨大 1 PR にまとめない（§9 で論理分割） |
+
+**TDD 順（Treatment）**: `packages/pbx-core` の契約テスト → `pbx-db` / `pbx-infra` → `server/services` → `api/handlers` → `denwa-architecture-gate.mjs` → `apps/web/src/server/__tests__/pentest-ch*.test.ts`（ch1/ch3 はアクセス・compose の回帰）。
+
+**意図的残存**（台帳に書く）: 開発 compose の SIP `:5060` 公開（本番 overlay で除去）、WSS 自己署名 cert（F-010）、A09 SIEM は次回 PT（`PENTEST-NEXT-SCOPE.md`）。

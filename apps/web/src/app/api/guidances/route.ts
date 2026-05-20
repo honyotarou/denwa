@@ -1,10 +1,13 @@
 import { buildContextFromRequest } from '@/server/request-meta';
+import { rejectDisallowedPostOrigin } from '@/server/api/post-origin';
 import { handleGuidancesPost } from '@/server/api-handlers';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  const denied = rejectDisallowedPostOrigin(req);
+  if (denied) return Response.json(denied.body, { status: denied.status });
   const ctx = buildContextFromRequest(req);
   const form = await req.formData();
   const name = String(form.get('name') ?? '').trim();

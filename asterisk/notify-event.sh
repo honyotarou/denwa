@@ -8,6 +8,12 @@ KIND="${1:-}"
 EXTNUM="${2:-}"
 CALLER_ID="${3:-}"
 CALLER_NAME="${4:-}"
+
+# F-007: shell メタ文字は KIND/EXT/番号のみ拒否（callerName は JSON esc で処理）
+if printf '%s' "${KIND}${EXTNUM}${CALLER_ID}" | grep -qE '[;"'"'"'\\$#<>|&]'; then
+  echo "notify-event: unsafe positional arg rejected" >&2
+  exit 2
+fi
 UNIQUE_ID="${5:-}"
 RECORDING="${6:-}"        # e.g. /var/spool/asterisk/monitor/<uniqueid>-9001-1001.wav
 
@@ -61,6 +67,13 @@ RECEIVED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   printf '"receivedAt":%s'   "$(esc "${RECEIVED_AT}")"
   printf '}'
 } > "${TMP_PATH}"
+
+# F-009: INBOX_HMAC_SECRET 設定時は core inboxMetaCanonicalJson と同型の HMAC を付与
+if [ -n "${INBOX_HMAC_SECRET:-}" ]; then
+  BODY=$(cat "${TMP_PATH}")
+  SIG=$(printf '%s' "${BODY}" | openssl dgst -sha256 -hmac "${INBOX_HMAC_SECRET}" | awk '{print $2}')
+  printf '%s' "${BODY%\}},\"integrity\":{\"alg\":\"hmac-sha256\",\"value\":\"${SIG}\"}}" > "${TMP_PATH}"
+fi
 
 # atomic rename。watcher は meta.json の create を見て処理を開始する想定。
 mv "${TMP_PATH}" "${META_PATH}"

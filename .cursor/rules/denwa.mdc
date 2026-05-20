@@ -5,8 +5,8 @@ alwaysApply: true
 
 # denwa（毎セッション）
 
-契約: `docs/TDD-REBUILD-PLAN.md`。legacy: `docs/LEGACY.md` → `../OpenPBX`。  
-手順: `.cursor/skills/denwa/SKILL.md` / `steps-denwa.md`。
+契約: `docs/TDD-REBUILD-PLAN.md`。セキュリティ地図: `docs/SECURITY-MAP.md`。legacy: `docs/LEGACY.md` → `../OpenPBX`。  
+手順: `.cursor/skills/denwa/SKILL.md` / `steps-denwa.md`（ペネトレ → steps 付録 C）。
 
 ## メニュー 0→9
 
@@ -42,11 +42,13 @@ API: `server/api/handlers/*` + `withAuth`（barrel: `api-handlers.ts`）。
 | Write/Edit | pre `check:static`（secrets + **denwa-architecture-gate**）/ post `harness:fast` |
 | turn 終了 | `harness` |
 | commit | `harness:fast` |
-| push | `harness` |
+| push / CI | `harness`（full = prod-check + SCA） |
 
 **ゲート赤 = コード修正。** ルール緩和は gate + Vitest を同時更新した設計変更時のみ。
 
-主要 ID: T-ARCH-001〜006, T-SOC-001〜005, T-PKG-001, T-API-IP-001, T-MW-007/008, T-FORM-001, T-ACT-021。
+主要 ID: T-ARCH-001〜006, T-SOC-001〜005, T-PKG-001, **T-TS-001〜005**, **T-SEC-CSRF/CSV/SESSION/AMI/A01/A03/A05/A09/INI/HEADERS/SHELL/TOTP/INBOX**, T-API-IP-001, T-MW-007/008, T-FORM-001, T-ACT-021。
+
+§2: **class/instanceof 禁止・Readonly・Branded Type・tag+factory** — `check:static` + Vitest で二重強制（推奨ではない）。
 
 ## エージェント
 
@@ -61,3 +63,5 @@ API: `server/api/handlers/*` + `withAuth`（barrel: `api-handlers.ts`）。
 - `/denwa 6` + 「T-ACT-021 authenticateLogin」
 - `/denwa 6` + 「api/handlers に withAuth」
 - `/denwa 9` + 「harness 確認して push」
+- 「ペネトレ ITIL 第4章」→ steps 付録 C Treatment（Ch3 まで Red 増やさない）
+- `/denwa 6` + 「T-SEC-CSRF-001 POST Origin 門番」

@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { NotFoundError } from '../errors.js';
+import { notFoundError } from '../errors.js';
 
 export type PasswordPolicyRow = Readonly<{
   id: number;
@@ -13,7 +13,7 @@ export function getPasswordPolicy(db: Database.Database): PasswordPolicyRow {
       'SELECT id, min_length, require_digit FROM password_policies WHERE id = 1',
     )
     .get() as { id: number; min_length: number; require_digit: number } | undefined;
-  if (!row) throw new NotFoundError('password_policies bootstrap missing');
+  if (!row) throw notFoundError('password_policies bootstrap missing');
   return { id: row.id, minLength: row.min_length, requireDigit: !!row.require_digit };
 }
 

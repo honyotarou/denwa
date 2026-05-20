@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { NotFoundError } from '../errors.js';
+import { notFoundError } from '../errors.js';
 
 export type PhonebookRow = Readonly<{
   id: number;
@@ -76,7 +76,7 @@ export function updatePhonebookEntry(
   id: number,
   input: { name: string; number: string; category?: string; note?: string },
 ): PhonebookRow {
-  if (!getPhonebookById(db, id)) throw new NotFoundError(`phonebook id=${id}`);
+  if (!getPhonebookById(db, id)) throw notFoundError(`phonebook id=${id}`);
   db.prepare(
     `UPDATE phonebook SET name = ?, number = ?, category = ?, note = ?, updated_at = datetime('now') WHERE id = ?`,
   ).run(input.name, input.number, input.category ?? null, input.note ?? null, id);

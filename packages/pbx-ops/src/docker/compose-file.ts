@@ -12,10 +12,10 @@ export const COMPOSE_SECTION_10_VOLUME_PAIRS = [
   { host: './data/asterisk-cdr', container: '/app/data/asterisk-cdr:ro' },
   { host: './data/asterisk-cdr', container: '/var/log/asterisk/cdr-csv' },
   { host: './asterisk/sounds', container: '/sounds' },
-  { host: './asterisk/pjsip.d', container: '/asterisk/pjsip.d' },
-  { host: './asterisk/pjsip.d', container: '/etc/asterisk/pjsip.d' },
-  { host: './asterisk/dialplan.d', container: '/asterisk/dialplan.d' },
-  { host: './asterisk/dialplan.d', container: '/etc/asterisk/dialplan.d' },
+  { host: './data/pbx-out/pjsip.d', container: '/asterisk/pjsip.d' },
+  { host: './data/pbx-out/pjsip.d', container: '/etc/asterisk/pjsip.d' },
+  { host: './data/pbx-out/dialplan.d', container: '/asterisk/dialplan.d' },
+  { host: './data/pbx-out/dialplan.d', container: '/etc/asterisk/dialplan.d' },
   { host: './data/signals', container: '/asterisk/signals' },
   { host: './data/signals', container: '/signals' },
 ] as const;
@@ -24,10 +24,16 @@ const REQUIRED_PORTS = [
   '5060:5060/tcp',
   '5060:5060/udp',
   '10000-10020:10000-10020/udp',
-  '8088:8088/tcp',
-  '8089:8089/tcp',
   '3000:3000',
 ] as const;
+
+/** ホストに公開してはいけない Asterisk 管理 HTTP（PBX-AMI-01） */
+export const FORBIDDEN_HOST_PUBLISHED_PORTS = ['8088:8088/tcp', '8089:8089/tcp'] as const;
+
+export function composePublishesForbiddenAsteriskHttp(draft: ComposeDraft): readonly string[] {
+  const asteriskPorts = draft.services.asterisk?.ports ?? [];
+  return FORBIDDEN_HOST_PUBLISHED_PORTS.filter((p) => asteriskPorts.includes(p));
+}
 
 /** リポ root の docker-compose.yml を ComposeDraft に変換（Phase 2.5 smoke） */
 export function readComposeDraftFromFile(repoRoot: string): ComposeDraft {

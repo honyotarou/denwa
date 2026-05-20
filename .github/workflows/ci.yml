@@ -10,9 +10,9 @@ concurrency:
 
 jobs:
   harness:
-    name: harness (static + typecheck + test:gate)
+    name: harness (full — same as pre-push)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -27,8 +27,5 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: harness:fast
-        run: npm run harness:fast
-
-      - name: harness (test:gate)
-        run: npm run test:gate
+      - name: harness
+        run: npm run harness

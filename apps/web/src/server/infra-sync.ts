@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
 import {
   normalizeExtensionDraft,
+  toExtensionDraft,
   renderPjsipExtensions,
   renderRingGroupDialplan,
   renderPickupDialplan,
@@ -32,13 +33,15 @@ export function createInfraSync(db: Database.Database, dirs: InfraDirs) {
     async syncPjsipExtensions() {
       const rows = listExtensions(db);
       const drafts = rows.map((r) =>
-        normalizeExtensionDraft({
-          number: r.number,
-          displayName: r.displayName,
-          secret: r.secret,
-          webrtc: r.webrtc,
-          pickupGroupNames: [],
-        }),
+        toExtensionDraft(
+          normalizeExtensionDraft({
+            number: r.number,
+            displayName: r.displayName,
+            secret: r.secret,
+            webrtc: r.webrtc,
+            pickupGroupNames: [],
+          }),
+        ),
       );
       const content = renderPjsipExtensions(drafts);
       await writePjsipFile(dirs.pjsipDir, 'extensions.conf', content);

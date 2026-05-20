@@ -55,4 +55,16 @@ denwa_harness_full() {
   denwa_harness_static "${1:-}"
   denwa_harness_typechecks
   denwa_harness_test_gate
+  denwa_harness_prod_check
+  denwa_harness_sca
+}
+
+denwa_harness_prod_check() {
+  echo "== denwa harness: prod-check =="
+  npm run prod-check -- --expect-pass
+}
+
+denwa_harness_sca() {
+  echo "== denwa harness: sca (npm audit) =="
+  node "$HARNESS_ROOT/scripts/sca-audit.mjs"
 }

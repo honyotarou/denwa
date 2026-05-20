@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import type { ExtensionDraft } from '../extension.js';
+import type { ExtensionDraftInput } from '../extension.js';
+import { normalizeExtensionDraft, toExtensionDraft } from '../extension.js';
 import { renderPjsipExtensions } from '../pjsip.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -10,7 +11,7 @@ const GOLDEN_DIR = path.join(ROOT, 'fixtures/golden/current/pjsip');
 
 type GoldenInput = {
   updatedAt: string;
-  extensions: ExtensionDraft[];
+  extensions: ExtensionDraftInput[];
 };
 
 describe('T-GM-001: golden pjsip/extensions.conf', () => {
@@ -19,7 +20,8 @@ describe('T-GM-001: golden pjsip/extensions.conf', () => {
       fs.readFileSync(path.join(GOLDEN_DIR, 'extensions.input.json'), 'utf8'),
     ) as GoldenInput;
     const expected = fs.readFileSync(path.join(GOLDEN_DIR, 'extensions.conf'), 'utf8');
-    const actual = renderPjsipExtensions(input.extensions, { updatedAt: input.updatedAt });
+    const extensions = input.extensions.map((e) => toExtensionDraft(normalizeExtensionDraft(e)));
+    const actual = renderPjsipExtensions(extensions, { updatedAt: input.updatedAt });
     expect(actual).toBe(expected);
   });
 });

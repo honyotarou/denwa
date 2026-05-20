@@ -214,19 +214,20 @@ describe('Phase 8 — runtime & production', () => {
     });
   });
 
-  describe('T-PROD-002〜006: repo defaults fail prod file check', () => {
-    it('Given repository defaults When prod file check Then fail', () => {
+  describe('T-PROD-002〜006: repo secrets rotated pass prod file check', () => {
+    it('Given no hardcoded AMI/Server Action secrets When prod file check Then pass', () => {
       const r = runProdCheckFiles({ repoRoot: ROOT });
-      expect(r.ok).toBe(false);
-      expect(r.findings.some((f) => f.id === 'T-PROD-002' && f.severity === 'fail')).toBe(true);
+      expect(r.ok).toBe(true);
+      expect(r.findings.some((f) => f.id === 'T-PROD-002' && f.severity === 'fail')).toBe(false);
+      expect(r.findings.some((f) => f.id === 'T-PROD-003' && f.severity === 'fail')).toBe(false);
     });
   });
 
-  describe('T-PROD-008: secrets ready only when 001-007 pass', () => {
-    it('Given default repo When merge findings Then T-PROD-008 fails', () => {
+  describe('T-PROD-008: secrets ready when 001-007 pass', () => {
+    it('Given rotated repo When merge findings Then T-PROD-008 passes', () => {
       const file = runProdCheckFiles({ repoRoot: ROOT });
       const eight = prodCheckSecretsReady(file.findings);
-      expect(eight.severity).toBe('fail');
+      expect(eight.severity).toBe('pass');
       expect(formatProdCheckReport(mergeProdCheckResults(file, { ok: false, findings: [eight] }))).toContain(
         'T-PROD',
       );

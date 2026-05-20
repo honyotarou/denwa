@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
 import { applySchema } from '../apply-schema.js';
-import { hashPassword } from '@openpbx/core';
+import { hashPassword, isForbiddenExtensionSecret } from '@openpbx/core';
 import { runProdCheckDatabase } from '../prod-check.js';
 
 describe('T-PROD-001 / T-PROD-007 database prod check', () => {
@@ -24,6 +24,16 @@ describe('T-PROD-001 / T-PROD-007 database prod check', () => {
     ).run(hashPassword('rotated-secret-value'));
     const findings = runProdCheckDatabase(db);
     expect(findings.find((f) => f.id === 'T-PROD-001')?.severity).toBe('pass');
+    db.close();
+  });
+
+  it('Given ext-dev extension secret When check Then T-PROD-005 fails', () => {
+    const db = new Database(':memory:');
+    applySchema(db, { seed: true });
+    db.prepare(`UPDATE extensions SET secret = 'ext-dev-1001' WHERE number = '1001'`).run();
+    expect(isForbiddenExtensionSecret('ext-dev-1001')).toBe(true);
+    const findings = runProdCheckDatabase(db);
+    expect(findings.find((f) => f.id === 'T-PROD-005')?.severity).toBe('fail');
     db.close();
   });
 

@@ -13,6 +13,7 @@ export * from './repos/cdr.js';
 export * from './repos/accounts.js';
 export * from './repos/sessions.js';
 export * from './repos/audit.js';
+export * from './repos/login-lockout.js';
 export * from './repos/policy.js';
 export * from './repos/billing.js';
 export * from './repos/concurrency.js';

@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { DuplicateError } from '../errors.js';
+import { duplicateError } from '../errors.js';
 
 export function upsertBillingRate(
   db: Database.Database,
@@ -17,7 +17,7 @@ export function upsertBillingRate(
     ).run(input.prefix, input.label ?? null, input.perMin, input.setupFee ?? 0);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes('UNIQUE')) throw new DuplicateError(msg);
+    if (msg.includes('UNIQUE')) throw duplicateError(msg);
     throw e;
   }
 }

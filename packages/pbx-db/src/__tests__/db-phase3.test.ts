@@ -22,7 +22,7 @@ import {
   deleteRingGroup,
   deleteSipTrunk,
   deleteVersionUpgrade,
-  DuplicateError,
+  isDuplicateError,
   EXPECTED_TABLES,
   getAccountBySessionToken,
   getAccountBySessionTokenIncludingExpired,
@@ -57,6 +57,16 @@ import {
   recordAudit,
   recordLoginAttempt,
 } from '../index.js';
+
+function expectDuplicateError(fn: () => void): void {
+  let err: unknown;
+  try {
+    fn();
+  } catch (e) {
+    err = e;
+  }
+  expect(isDuplicateError(err)).toBe(true);
+}
 
 const FIXTURES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../fixtures');
 const SCHEMA_SNAPSHOT = path.join(FIXTURES, 'schema-normalized.json');
@@ -123,7 +133,7 @@ describe('Phase 3 — @openpbx/db (T-DB-001〜026)', () => {
       const db = createInMemoryDb();
       seedExtensions(db);
       createExtension(db, { number: '2001', secret: 'secret-2001' });
-      expect(() => createExtension(db, { number: '2001', secret: 'x' })).toThrow(DuplicateError);
+      expectDuplicateError(() => createExtension(db, { number: '2001', secret: 'x' }));
       updateExtension(db, { number: '2001', secret: 'new-secret' });
       expect(getExtension(db, '2001')!.secret).toBe('new-secret');
       expect(deleteExtension(db, '2001')).toBe(true);
@@ -174,7 +184,7 @@ describe('Phase 3 — @openpbx/db (T-DB-001〜026)', () => {
         name: 'NY',
       });
       createTimeRule(db, { name: 'weekday' });
-      expect(() => createTimeRule(db, { name: 'weekday' })).toThrow(DuplicateError);
+      expectDuplicateError(() => createTimeRule(db, { name: 'weekday' }));
     });
   });
 
@@ -231,7 +241,7 @@ describe('Phase 3 — @openpbx/db (T-DB-001〜026)', () => {
     it('Given repo When duplicate username Then error', () => {
       const db = createInMemoryDb();
       createAccount(db, { username: 'alice', passwordHash: 'hash' });
-      expect(() => createAccount(db, { username: 'alice', passwordHash: 'hash2' })).toThrow(DuplicateError);
+      expectDuplicateError(() => createAccount(db, { username: 'alice', passwordHash: 'hash2' }));
     });
   });
 
@@ -310,7 +320,7 @@ describe('Phase 3 — @openpbx/db (T-DB-001〜026)', () => {
     it('Given repo When CRUD Then name unique', () => {
       const db = createInMemoryDb();
       createSipTrunk(db, { name: 'carrier-a', host: 'sip.example.com' });
-      expect(() => createSipTrunk(db, { name: 'carrier-a', host: 'other' })).toThrow(DuplicateError);
+      expectDuplicateError(() => createSipTrunk(db, { name: 'carrier-a', host: 'other' }));
       upsertSipTrunk(db, { name: 'carrier-a', host: 'updated.example.com' });
       expect(deleteSipTrunk(db, 'carrier-a')).toBe(true);
     });

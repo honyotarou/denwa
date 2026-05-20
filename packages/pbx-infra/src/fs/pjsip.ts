@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { InvalidFilenameError } from './errors.js';
+import { invalidFilenameError } from './errors.js';
 import { writeTextAtomic } from './atomic-write.js';
 
 const PJSIP_NAME_RE = /^[a-zA-Z0-9._-]+\.conf$/;
@@ -11,7 +11,7 @@ export async function writePjsipFile(
   content: string,
 ): Promise<string> {
   if (!PJSIP_NAME_RE.test(filename)) {
-    throw new InvalidFilenameError(`invalid pjsip filename: ${filename}`);
+    throw invalidFilenameError(`invalid pjsip filename: ${filename}`);
   }
   const base = path.resolve(pjsipDir);
   return writeTextAtomic(base, filename, content);

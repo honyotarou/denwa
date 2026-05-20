@@ -11,6 +11,22 @@ function fd(fields: Record<string, string>): FormData {
 }
 
 describe('authenticateLogin (T-ACT-021)', () => {
+  it('Given 5 failures When 6th login Then lockout', () => {
+    const ctx = createTestContext();
+    createAccount(ctx.db, {
+      username: 'bob',
+      passwordHash: hashPassword('password12'),
+      role: 'user',
+    });
+    for (let i = 0; i < 5; i++) {
+      const r = authenticateLogin(ctx, { username: 'bob', password: 'wrong' });
+      expect(r.ok).toBe(false);
+    }
+    const locked = authenticateLogin(ctx, { username: 'bob', password: 'wrong' });
+    expect(locked.ok).toBe(false);
+    if (!locked.ok) expect(locked.error).toMatch(/too many/i);
+  });
+
   it('Given valid credentials When no TOTP secret Then session token', () => {
     const ctx = createTestContext();
     createAccount(ctx.db, {

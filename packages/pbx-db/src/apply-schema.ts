@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import { migrateAccounts } from './migrate-accounts.js';
 import { migrateExtensions } from './migrate-extensions.js';
 import { SCHEMA_SQL } from './schema-sql.js';
 
@@ -6,20 +7,30 @@ export type ApplySchemaOptions = Readonly<{
   seed?: boolean;
 }>;
 
-const SEED_EXTENSIONS_SQL = `
-INSERT OR IGNORE INTO extensions (number, display_name, secret, note) VALUES
-  ('1001', 'Reception 1001', 'secret-1001', '受付'),
-  ('1002', 'Doctor 1002',    'secret-1002', '診察室');
-`;
-
 export function applySchema(db: Database.Database, options: ApplySchemaOptions = {}): void {
   const { seed = false } = options;
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA_SQL);
   migrateExtensions(db);
+  migrateAccounts(db);
   if (seed) {
-    db.exec(SEED_EXTENSIONS_SQL);
+    seedDevExtensions(db);
+  }
+}
+
+/** 開発用内線（F-001: ext-dev / secret-100x 禁止）。bootstrap が secret をローテートする。 */
+export function seedDevExtensions(db: Database.Database): void {
+  const rows = [
+    { number: '1001', displayName: 'Reception 1001', note: '受付', webrtc: 0 },
+    { number: '1002', displayName: 'Doctor 1002', note: '診察室', webrtc: 1 },
+  ] as const;
+  const ins = db.prepare(
+    `INSERT OR IGNORE INTO extensions (number, display_name, secret, note, webrtc, updated_at)
+     VALUES (?, ?, '', ?, ?, datetime('now'))`,
+  );
+  for (const r of rows) {
+    ins.run(r.number, r.displayName, r.note, r.webrtc);
   }
 }
 
@@ -30,5 +41,5 @@ export function createInMemoryDb(options: ApplySchemaOptions = {}): Database.Dat
 }
 
 export function seedExtensions(db: Database.Database): void {
-  db.exec(SEED_EXTENSIONS_SQL);
+  seedDevExtensions(db);
 }

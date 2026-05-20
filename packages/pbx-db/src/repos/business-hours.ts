@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { DuplicateError, NotFoundError } from '../errors.js';
+import { duplicateError, notFoundError } from '../errors.js';
 
 export function upsertHoliday(db: Database.Database, date: string, name: string): void {
   db.prepare(
@@ -48,7 +48,7 @@ export function createTimeRule(
     return getTimeRule(db, Number(info.lastInsertRowid))!;
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes('UNIQUE')) throw new DuplicateError(`time_rule ${input.name} は既に存在`);
+    if (msg.includes('UNIQUE')) throw duplicateError(`time_rule ${input.name} は既に存在`);
     throw e;
   }
 }
@@ -86,7 +86,7 @@ export function updateTimeRule(
   id: number,
   input: { name: string; days: string; startTime: string; endTime: string },
 ): TimeRuleRow {
-  if (!getTimeRule(db, id)) throw new NotFoundError(`time_rule id=${id}`);
+  if (!getTimeRule(db, id)) throw notFoundError(`time_rule id=${id}`);
   db.prepare(
     `UPDATE time_rules SET name = ?, days = ?, start_time = ?, end_time = ?, updated_at = datetime('now') WHERE id = ?`,
   ).run(input.name, input.days, input.startTime, input.endTime, id);

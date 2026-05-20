@@ -1,7 +1,9 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { getRequestContext } from '@/lib/auth';
 import * as H from '@/server/actions-handlers';
+import { sessionCookieOptions } from '@/server/session-cookie';
 import { flash } from './_flash';
 
 export async function createAccountAction(formData: FormData): Promise<void> {
@@ -12,7 +14,11 @@ export async function createAccountAction(formData: FormData): Promise<void> {
 
 export async function updateAccountRoleAction(formData: FormData): Promise<void> {
   await flash('/accounts', 'ロールを更新しました', async () => {
-    await H.updateAccountRoleActionImpl(await getRequestContext(), formData);
+    const r = await H.updateAccountRoleActionImpl(await getRequestContext(), formData);
+    if (r.rotatedToken) {
+      const store = await cookies();
+      store.set('cr_session', r.rotatedToken, sessionCookieOptions());
+    }
   });
 }
 

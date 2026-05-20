@@ -114,9 +114,9 @@ if (targetAbs) {
 }
 
 // --- staged secret patterns ---
-const SECRET_PATTERNS = [
+const SECRET_PATH_BLOCK = [
   /\.env$/,
-  /\.env\./,
+  /\.env\.(?!example$)/,
   /credentials\.json$/,
   /\.pem$/,
   /\.key$/,
@@ -133,6 +133,7 @@ const STAGED_SECRET_SCAN_SKIP = new Set([
   "scripts/check-denwa-static.mjs",
   "docs/TDD-REBUILD-PLAN.md",
   "docs/FRONTEND-PLAN.md",
+  "packages/pbx-core/forbidden-tracked-extension-passwords.json",
 ]);
 
 /** golden / テスト / 開発用 compose・asterisk は TDD 計画の既定値を含む */
@@ -155,7 +156,7 @@ function shouldSkipStagedSecretContentScan(rel) {
 }
 
 for (const rel of stagedFiles()) {
-  if (SECRET_PATTERNS.some((re) => re.test(rel))) {
+  if (SECRET_PATH_BLOCK.some((re) => re.test(rel))) {
     failures.push(`staged: ${rel} must not be committed (secrets/env)`);
   }
   if (shouldSkipStagedSecretContentScan(rel)) continue;
@@ -178,4 +179,4 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log("[denwa:static] OK (secrets + architecture SOC/encapsulation)");
+console.log("[denwa:static] OK (secrets + architecture SOC/T-TS gate)");

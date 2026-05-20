@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { DuplicateError } from '../errors.js';
+import { duplicateError } from '../errors.js';
 
 export type AccountRow = Readonly<{
   id: number;
@@ -30,7 +30,7 @@ export function createAccount(
   input: { username: string; displayName?: string; passwordHash: string; role?: string },
 ): AccountRow {
   if (getAccountByUsername(db, input.username)) {
-    throw new DuplicateError(`username 重複: ${input.username}`);
+    throw duplicateError(`username 重複: ${input.username}`);
   }
   db.prepare(
     `INSERT INTO accounts (username, display_name, password_hash, role, created_at, updated_at)
@@ -99,10 +99,22 @@ export function getTotpSecret(db: Database.Database, accountId: number): string 
 }
 
 export function setTotpSecret(db: Database.Database, accountId: number, secret: string | null): void {
-  db.prepare(`UPDATE accounts SET totp_secret = ?, updated_at = datetime('now') WHERE id = ?`).run(
-    secret,
-    accountId,
-  );
+  db.prepare(
+    `UPDATE accounts SET totp_secret = ?, totp_last_counter = NULL, updated_at = datetime('now') WHERE id = ?`,
+  ).run(secret, accountId);
+}
+
+export function getTotpLastCounter(db: Database.Database, accountId: number): number | null {
+  const row = db.prepare('SELECT totp_last_counter FROM accounts WHERE id = ?').get(accountId) as
+    | { totp_last_counter: number | null }
+    | undefined;
+  return row?.totp_last_counter ?? null;
+}
+
+export function setTotpLastCounter(db: Database.Database, accountId: number, counter: number): void {
+  db.prepare(
+    `UPDATE accounts SET totp_last_counter = ?, updated_at = datetime('now') WHERE id = ?`,
+  ).run(counter, accountId);
 }
 
 export function deleteAccount(db: Database.Database, accountId: number): boolean {

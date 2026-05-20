@@ -8,30 +8,37 @@ export type DeviceInfo = Readonly<{
   updatedAt: string;
 }>;
 
-export class DeviceMap {
-  private readonly devices = new Map<string, DeviceInfo>();
+export type DeviceMap = Readonly<{
+  applyBlock: (block: string) => DeviceInfo | null;
+  getDevices: () => readonly DeviceInfo[];
+  snapshot: () => ReadonlyMap<string, DeviceInfo>;
+}>;
 
-  applyBlock(block: string): DeviceInfo | null {
-    const fields = parseAmiBlock(block);
-    const parsed = parseDeviceStateChangeEvent(fields);
-    if (!parsed) return null;
-    const cur: DeviceInfo = {
-      device: parsed.device,
-      extension: parsed.extension,
-      state: parsed.state,
-      updatedAt: new Date().toISOString(),
-    };
-    this.devices.set(parsed.device, cur);
-    return cur;
-  }
+/** AMI device 状態 — class なし factory */
+export function createDeviceMap(): DeviceMap {
+  const devices = new Map<string, DeviceInfo>();
 
-  getDevices(): DeviceInfo[] {
-    return Array.from(this.devices.values()).sort((a, b) =>
-      (a.extension ?? '').localeCompare(b.extension ?? ''),
-    );
-  }
-
-  snapshot(): ReadonlyMap<string, DeviceInfo> {
-    return new Map(this.devices);
-  }
+  return {
+    applyBlock(block: string): DeviceInfo | null {
+      const fields = parseAmiBlock(block);
+      const parsed = parseDeviceStateChangeEvent(fields);
+      if (!parsed) return null;
+      const cur: DeviceInfo = {
+        device: parsed.device,
+        extension: parsed.extension,
+        state: parsed.state,
+        updatedAt: new Date().toISOString(),
+      };
+      devices.set(parsed.device, cur);
+      return cur;
+    },
+    getDevices(): readonly DeviceInfo[] {
+      return [...devices.values()].sort((a, b) =>
+        (a.extension ?? '').localeCompare(b.extension ?? ''),
+      );
+    },
+    snapshot(): ReadonlyMap<string, DeviceInfo> {
+      return new Map(devices);
+    },
+  };
 }

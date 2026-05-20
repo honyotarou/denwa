@@ -9,18 +9,17 @@ services:
       - "5060:5060/udp"
       - "5060:5060/tcp"
       - "10000-10020:10000-10020/udp"
-      - "8088:8088/tcp"
-      - "8089:8089/tcp"
+      # Asterisk HTTP/ARI はホスト公開しない（PBX-AMI-01 / A05）。コンテナ内のみ http.conf 参照。
     volumes:
       - ./asterisk/pjsip.conf:/etc/asterisk/pjsip.conf:ro
-      - ./asterisk/pjsip.d:/etc/asterisk/pjsip.d
-      - ./asterisk/dialplan.d:/etc/asterisk/dialplan.d
+      - ./data/pbx-out/pjsip.d:/etc/asterisk/pjsip.d
+      - ./data/pbx-out/dialplan.d:/etc/asterisk/dialplan.d
       - ./asterisk/extensions.conf:/etc/asterisk/extensions.conf:ro
       - ./asterisk/asterisk.conf:/etc/asterisk/asterisk.conf:ro
       - ./asterisk/modules.conf:/etc/asterisk/modules.conf:ro
       - ./asterisk/logger.conf:/etc/asterisk/logger.conf:ro
       - ./asterisk/rtp.conf:/etc/asterisk/rtp.conf:ro
-      - ./asterisk/manager.conf:/etc/asterisk/manager.conf:ro
+      - ./asterisk/manager.conf.template:/etc/asterisk/manager.conf.template:ro
       - ./asterisk/cdr.conf:/etc/asterisk/cdr.conf:ro
       - ./asterisk/http.conf:/etc/asterisk/http.conf:ro
       - ./asterisk/certs:/etc/asterisk/certs:ro
@@ -33,6 +32,8 @@ services:
       - ./data/asterisk-cdr:/var/log/asterisk/cdr-csv
     environment:
       INBOX_DIR: /inbox
+      INBOX_HMAC_SECRET: ${INBOX_HMAC_SECRET:-}
+      AMI_SECRET: ${AMI_SECRET}
     command: ["/usr/local/bin/entrypoint.sh"]
     networks:
       - command-room
@@ -50,8 +51,8 @@ services:
       - ./data/recordings:/app/data/recordings:ro
       - ./data/asterisk-cdr:/app/data/asterisk-cdr:ro
       - ./asterisk/sounds:/sounds
-      - ./asterisk/pjsip.d:/asterisk/pjsip.d
-      - ./asterisk/dialplan.d:/asterisk/dialplan.d
+      - ./data/pbx-out/pjsip.d:/asterisk/pjsip.d
+      - ./data/pbx-out/dialplan.d:/asterisk/dialplan.d
       - ./data/signals:/asterisk/signals
     environment:
       NODE_ENV: production
@@ -62,18 +63,21 @@ services:
       INBOX_DIR: /app/data/inbox
       PJSIP_OUT_DIR: /asterisk/pjsip.d
       DIALPLAN_OUT_DIR: /asterisk/dialplan.d
+      INBOX_HMAC_SECRET: ${INBOX_HMAC_SECRET:-}
       ASTERISK_SIGNAL_DIR: /asterisk/signals
       AMI_HOST: asterisk
       AMI_PORT: "5038"
       AMI_USERNAME: command-room
-      AMI_SECRET: command-room-ami-secret
+      AMI_SECRET: ${AMI_SECRET}
       CDR_CSV_PATH: /app/data/asterisk-cdr/Master.csv
       SOUNDS_DIR: /sounds
-      # Server Action のハッシュ化を再ビルド間で安定させる (古いタブからの呼び出しが 404 にならない)
-      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: /RYJ01by2xFCY498hIqUlOMmCEG5Q/gqDZHfubOpZmA=
+      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY}
     networks:
       - command-room
 
 networks:
   command-room:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

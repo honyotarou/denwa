@@ -1,4 +1,4 @@
-import { normalizeExtensionDraft, validateExtensionDraft } from '@openpbx/core';
+import { normalizeExtensionDraft, validateExtensionDraft, toExtensionDraft } from '@openpbx/core';
 import {
   createExtension,
   deleteExtension,
@@ -10,19 +10,24 @@ import type { SessionAccount } from '../auth';
 import { audit } from '../audit';
 import { throwIfInvalid } from './validate';
 
-export async function createExtensionWithSync(
-  ctx: AppContext,
-  me: SessionAccount,
-  input: UpsertExtensionInput,
-): Promise<void> {
-  const draft = normalizeExtensionDraft({
+function extensionDraftFromInput(input: UpsertExtensionInput) {
+  const normalized = normalizeExtensionDraft({
     number: input.number,
     displayName: input.displayName,
     secret: input.secret,
     webrtc: input.webrtc,
   });
-  throwIfInvalid(validateExtensionDraft(draft));
-  createExtension(ctx.db, { ...input, ...draft });
+  throwIfInvalid(validateExtensionDraft(normalized));
+  return toExtensionDraft(normalized);
+}
+
+export async function createExtensionWithSync(
+  ctx: AppContext,
+  me: SessionAccount,
+  input: UpsertExtensionInput,
+): Promise<void> {
+  const draft = extensionDraftFromInput(input);
+  createExtension(ctx.db, { ...input, number: draft.number, webrtc: draft.webrtc });
   await ctx.infra.syncPjsipExtensions();
   audit(ctx, me, 'extension.create', draft.number);
 }
@@ -32,14 +37,8 @@ export async function updateExtensionWithSync(
   me: SessionAccount,
   input: UpsertExtensionInput,
 ): Promise<void> {
-  const draft = normalizeExtensionDraft({
-    number: input.number,
-    displayName: input.displayName,
-    secret: input.secret,
-    webrtc: input.webrtc,
-  });
-  throwIfInvalid(validateExtensionDraft(draft));
-  updateExtension(ctx.db, { ...input, ...draft });
+  const draft = extensionDraftFromInput(input);
+  updateExtension(ctx.db, { ...input, number: draft.number, webrtc: draft.webrtc });
   await ctx.infra.syncPjsipExtensions();
   audit(ctx, me, 'extension.update', draft.number);
 }

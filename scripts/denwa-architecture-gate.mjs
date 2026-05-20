@@ -202,10 +202,14 @@ function checkMiddleware(root, failures) {
 
 function checkMiddlewareIp(root, failures) {
   const rel = "apps/web/src/server/middleware-ip.ts";
+  const mip = readSafe(path.join(root, rel));
+  if (mip && !/auth\/middleware-ip-policy/.test(mip)) {
+    fail(failures, "T-SEC-IP-001", rel, "must delegate to @openpbx/core/auth/middleware-ip-policy");
+  }
   const text = readSafe(path.join(root, rel));
   if (!text) return;
-  if (/from ['"]@openpbx\/core['"]/.test(text) && !/auth\/policy/.test(text)) {
-    fail(failures, "T-MW-008", rel, "use @openpbx/core/auth/policy subpath only (no crypto barrel)");
+  if (/from ['"]@openpbx\/core['"]/.test(text) && !/auth\/(policy|middleware-ip-policy)/.test(text)) {
+    fail(failures, "T-MW-008", rel, "use @openpbx/core/auth/* subpath only (no crypto barrel)");
   }
 }
 
@@ -296,6 +300,384 @@ function checkWebLib(root, failures) {
   }
 }
 
+/** §5.4.1: export class 禁止 — tag + factory でエラー・値オブジェクトを表現 */
+const TS_CONVENTION_DIRS = [
+  "packages/pbx-core/src",
+  "packages/pbx-db/src",
+  "packages/pbx-infra/src",
+  "apps/web/src/server",
+];
+
+/** mutation service は core 境界で brand 化必須 */
+const BRAND_BOUNDARY_SERVICES = {
+  "extensions.ts": /toExtensionDraft\s*\(/,
+  "ivr.ts": /toIvrMenuDraft\s*\(/,
+};
+
+/** 実行時に消える class ベースエラー — instanceof / new 禁止（Error 本体は可） */
+const CUSTOM_ERROR_NAMES =
+  "Duplicate|NotFound|Auth|AmiOriginate|UnsafePath|Constraint|Fs|Db";
+const INSTANCEOF_CUSTOM_ERROR = new RegExp(
+  `instanceof\\s+(${CUSTOM_ERROR_NAMES})Error\\b`,
+);
+const NEW_CUSTOM_ERROR = new RegExp(`new\\s+(${CUSTOM_ERROR_NAMES})Error\\s*\\(`);
+
+function checkNoExportClass(root, failures) {
+  for (const relDir of TS_CONVENTION_DIRS) {
+    const dir = path.join(root, relDir);
+    if (!fs.existsSync(dir)) continue;
+    for (const file of walk(dir, (p) => p.endsWith(".ts") && !p.endsWith(".test.ts"))) {
+      const rel = path.relative(root, file);
+      const text = readSafe(file);
+      if (/export\s+class\s+\w+/.test(text)) {
+        fail(failures, "T-TS-003", rel, "export class forbidden — use tag + factory");
+      }
+      if (/class\s+\w+\s+extends\s+Error/.test(text)) {
+        fail(failures, "T-TS-003", rel, "class extends Error forbidden — use tag + factory");
+      }
+    }
+  }
+}
+
+function checkNoInstanceofCustomErrors(root, failures) {
+  for (const relDir of TS_CONVENTION_DIRS) {
+    const dir = path.join(root, relDir);
+    if (!fs.existsSync(dir)) continue;
+    for (const file of walk(dir, (p) => p.endsWith(".ts") && !p.endsWith(".test.ts"))) {
+      const rel = path.relative(root, file);
+      const text = readSafe(file);
+      if (INSTANCEOF_CUSTOM_ERROR.test(text)) {
+        fail(
+          failures,
+          "T-TS-004",
+          rel,
+          "instanceof custom *Error forbidden — use isXxxError(e) tag guard",
+        );
+      }
+      if (NEW_CUSTOM_ERROR.test(text)) {
+        fail(failures, "T-TS-004", rel, "new CustomError() forbidden — use xxxError() factory");
+      }
+    }
+  }
+}
+
+/** core の *Draft 型は Readonly + branded number（Input は string 可） */
+function checkCoreDraftConventions(root, failures) {
+  const coreSrc = path.join(root, "packages/pbx-core/src");
+  if (!fs.existsSync(coreSrc)) return;
+  for (const file of walk(coreSrc, (p) => p.endsWith(".ts") && !/\.test\.ts$/.test(p))) {
+    const rel = path.relative(root, file);
+    const text = readSafe(file);
+    if (/export\s+type\s+\w+Draft\s*=\s*\{/.test(text)) {
+      fail(failures, "T-TS-002", rel, "*Draft types must use Readonly<{…}>");
+    }
+  }
+  const ext = readSafe(path.join(coreSrc, "extension.ts"));
+  if (ext && !/number:\s*ExtensionNumber/.test(ext)) {
+    fail(failures, "T-TS-001", "packages/pbx-core/src/extension.ts", "ExtensionDraft.number must be ExtensionNumber");
+  }
+  const ivr = readSafe(path.join(coreSrc, "ivr/types.ts"));
+  if (ivr && !/number:\s*IvrNumber/.test(ivr)) {
+    fail(failures, "T-TS-001", "packages/pbx-core/src/ivr/types.ts", "IvrMenuDraft.number must be IvrNumber");
+  }
+}
+
+function checkBrandBoundaryServices(root, failures) {
+  const dir = path.join(root, "apps/web/src/server/services");
+  for (const [name, re] of Object.entries(BRAND_BOUNDARY_SERVICES)) {
+    const rel = `apps/web/src/server/services/${name}`;
+    const text = readSafe(path.join(dir, name));
+    if (!text) continue;
+    if (!re.test(text)) {
+      fail(
+        failures,
+        "T-TS-005",
+        rel,
+        `must call ${re.source.includes("Extension") ? "toExtensionDraft" : "toIvrMenuDraft"} after validate*`,
+      );
+    }
+  }
+}
+
+function checkPjsipIniSanitize(root, failures) {
+  const rel = "packages/pbx-core/src/pjsip.ts";
+  const text = readSafe(path.join(root, rel));
+  if (!text) return;
+  if (!/sanitizeIniDisplayName/.test(text)) {
+    fail(failures, "T-SEC-INI-001", rel, "must use sanitizeIniDisplayName from ini/sanitize");
+  }
+  if (/\.replace\(\s*\/"\/g/.test(text)) {
+    fail(failures, "T-SEC-INI-001", rel, "replace(/\"/g) only sanitize forbidden");
+  }
+}
+
+const PBX_WRITE_HANDLERS = {
+  "extensions.ts": /PBX_CONFIG_WRITE_MIN_ROLE/,
+  "guidance.ts": /PBX_CONFIG_WRITE_MIN_ROLE/,
+};
+
+function checkApiPbxWriteRole(root, failures) {
+  const dir = path.join(root, "apps/web/src/server/api/handlers");
+  for (const [name, re] of Object.entries(PBX_WRITE_HANDLERS)) {
+    const rel = `apps/web/src/server/api/handlers/${name}`;
+    const text = readSafe(path.join(dir, name));
+    if (!re.test(text)) {
+      fail(failures, "T-SEC-A01-001", rel, "PBX write must use PBX_CONFIG_WRITE_MIN_ROLE");
+    }
+  }
+}
+
+const SENSITIVE_API_AUDIT = {
+  "recording.ts": "recording.read",
+  "phonebook.ts": "phonebook.lookup",
+  "devices.ts": "devices.stream",
+};
+
+function checkSensitiveApiAudit(root, failures) {
+  const dir = path.join(root, "apps/web/src/server/api/handlers");
+  for (const [name, action] of Object.entries(SENSITIVE_API_AUDIT)) {
+    const rel = `apps/web/src/server/api/handlers/${name}`;
+    const text = readSafe(path.join(dir, name));
+    if (!text.includes(`'${action}'`) && !text.includes(`"${action}"`)) {
+      fail(failures, "T-SEC-A09-001", rel, `must audit with ${action}`);
+    }
+  }
+}
+
+function checkSecurityHeadersSource(root, failures) {
+  const rel = "apps/web/next.config.ts";
+  const text = readSafe(path.join(root, rel));
+  if (!/buildSecurityHeaders/.test(text)) {
+    fail(failures, "T-SEC-HEADERS-001", rel, "must use buildSecurityHeaders from security-headers.ts");
+  }
+}
+
+const POST_API_CSRF_ROUTES = [
+  "apps/web/src/app/api/extensions/route.ts",
+  "apps/web/src/app/api/originate/route.ts",
+  "apps/web/src/app/api/guidances/route.ts",
+  "apps/web/src/app/api/cdr/ingest/route.ts",
+];
+
+function checkPostApiCsrf(root, failures) {
+  for (const rel of POST_API_CSRF_ROUTES) {
+    const text = readSafe(path.join(root, rel));
+    if (!/rejectDisallowedPostOrigin/.test(text)) {
+      fail(failures, "T-SEC-CSRF-001", rel, "POST route must call rejectDisallowedPostOrigin");
+    }
+  }
+}
+
+function checkCdrExportPipeline(root, failures) {
+  const svc = "apps/web/src/server/services/cdr-export.ts";
+  const svcText = readSafe(path.join(root, svc));
+  if (!/renderCdrExportCsv/.test(svcText)) {
+    fail(failures, "T-SEC-CSV-001", svc, "must use renderCdrExportCsv from @openpbx/core");
+  }
+  const handler = "apps/web/src/server/api/handlers/cdr.ts";
+  const hText = readSafe(path.join(root, handler));
+  if (!/buildCdrExportCsv/.test(hText)) {
+    fail(failures, "T-SEC-CSV-001", handler, "CDR export must use buildCdrExportCsv service");
+  }
+}
+
+function checkSessionRotateService(root, failures) {
+  const rel = "apps/web/src/server/services/accounts.ts";
+  const text = readSafe(path.join(root, rel));
+  if (!/destroySessionsForAccount/.test(text)) {
+    fail(failures, "T-SEC-SESSION-001", rel, "role update must destroySessionsForAccount");
+  }
+}
+
+function checkOriginateAmiFields(root, failures) {
+  const rel = "apps/web/src/server/api/handlers/originate.ts";
+  const text = readSafe(path.join(root, rel));
+  if (!/callerId/.test(text) || !/validateOriginateRequest/.test(text)) {
+    fail(failures, "T-SEC-AMI-001", rel, "must pass callerId/context through validateOriginateRequest");
+  }
+}
+
+const SENSITIVE_API_MIN_ROLE = {
+  "recording.ts": "RECORDING_READ_MIN_ROLE",
+  "devices.ts": "DEVICE_STREAM_MIN_ROLE",
+};
+
+function checkSensitiveApiMinRole(root, failures) {
+  const dir = path.join(root, "apps/web/src/server/api/handlers");
+  for (const [name, token] of Object.entries(SENSITIVE_API_MIN_ROLE)) {
+    const rel = `apps/web/src/server/api/handlers/${name}`;
+    const text = readSafe(path.join(dir, name));
+    if (!text.includes(token) || !/withAuth/.test(text)) {
+      fail(failures, "T-SEC-A01-002", rel, `must use withAuth and ${token}`);
+    }
+  }
+}
+
+const PJSIP_SYNC_PLACEHOLDER = "__OPENPBX_SYNC__";
+
+function loadForbiddenTrackedPjsipPasswords(root) {
+  const rel = "packages/pbx-core/forbidden-tracked-extension-passwords.json";
+  try {
+    return JSON.parse(readSafe(path.join(root, rel)));
+  } catch {
+    return [];
+  }
+}
+
+function findForbiddenTrackedPjsipPasswords(iniText, forbiddenPasswords) {
+  const hits = new Set();
+  for (const line of iniText.split("\n")) {
+    const m = line.match(/^\s*password\s*=\s*(\S+)\s*$/);
+    if (!m) continue;
+    const value = m[1].replace(/^["']|["']$/g, "");
+    if (forbiddenPasswords.includes(value) || /^ext-dev-\d+$/.test(value)) {
+      hits.add(value);
+    }
+  }
+  return [...hits];
+}
+
+function checkPjsipInternalSrtp(root, failures) {
+  const rel = "asterisk/pjsip.d/transports.conf";
+  const text = readSafe(path.join(root, rel));
+  if (!text) return;
+  const block = text.match(/\[endpoint-internal\]\(!\)[\s\S]*?(?=\n\[|$)/);
+  if (!block) {
+    fail(failures, "T-SEC-RTP-001", rel, "missing [endpoint-internal](!) template");
+    return;
+  }
+  for (const marker of ["media_encryption=sdes", "media_encryption_optimistic=no"]) {
+    if (!block[0].includes(marker)) {
+      fail(failures, "T-SEC-RTP-001", rel, `endpoint-internal must include ${marker}`);
+    }
+  }
+}
+
+function checkComposeWebPbxOutMount(root, failures) {
+  const rel = "docker-compose.yml";
+  const text = readSafe(path.join(root, rel));
+  if (!text) return;
+  const forbidden = [
+    "./asterisk/pjsip.d:/asterisk/pjsip.d",
+    "./asterisk/dialplan.d:/asterisk/dialplan.d",
+  ];
+  for (const f of forbidden) {
+    if (text.includes(f)) {
+      fail(failures, "T-SEC-MOUNT-001", rel, `web must not RW-mount git asterisk config: ${f}`);
+    }
+  }
+  if (!text.includes("./data/pbx-out/pjsip.d:")) {
+    fail(failures, "T-SEC-MOUNT-001", rel, "web/asterisk must use ./data/pbx-out/pjsip.d for generated config");
+  }
+}
+
+function checkTrackedPjsipExtensionSecrets(root, failures) {
+  const rel = "asterisk/pjsip.d/extensions.conf";
+  const text = readSafe(path.join(root, rel));
+  if (!text) return;
+  const forbidden = findForbiddenTrackedPjsipPasswords(text, loadForbiddenTrackedPjsipPasswords(root));
+  if (forbidden.length > 0) {
+    fail(
+      failures,
+      "T-SEC-PJSIP-001",
+      rel,
+      `forbidden password= in tracked pjsip: ${forbidden.join(", ")}`,
+    );
+  }
+  const passwords = [];
+  for (const line of text.split("\n")) {
+    const m = line.match(/^\s*password\s*=\s*(\S+)\s*$/);
+    if (m) passwords.push(m[1].replace(/^["']|["']$/g, ""));
+  }
+  if (passwords.length > 0 && passwords.some((p) => p !== PJSIP_SYNC_PLACEHOLDER)) {
+    fail(
+      failures,
+      "T-SEC-PJSIP-001",
+      rel,
+      "tracked extensions.conf must use password=__OPENPBX_SYNC__ only (bootstrap/infra sync)",
+    );
+  }
+}
+
+function checkAsteriskHttpLoopback(root, failures) {
+  const rel = "asterisk/http.conf";
+  const text = readSafe(path.join(root, rel));
+  if (!text) return;
+  const bind = text.match(/^\s*bindaddr\s*=\s*(\S+)/m)?.[1];
+  const tls = text.match(/^\s*tlsbindaddr\s*=\s*(\S+)/m)?.[1];
+  if (bind !== "127.0.0.1") {
+    fail(failures, "T-SEC-A05-002", rel, "bindaddr must be 127.0.0.1");
+  }
+  if (tls && !tls.startsWith("127.0.0.1")) {
+    fail(failures, "T-SEC-A05-002", rel, "tlsbindaddr must bind loopback only");
+  }
+}
+
+function checkAsteriskImagePin(root, failures) {
+  const rel = "asterisk/Dockerfile";
+  const text = readSafe(path.join(root, rel));
+  if (!text) return;
+  if (!/ARG\s+ASTERISK_PKG_VERSION/.test(text) || !/asterisk=\$\{ASTERISK_PKG_VERSION\}/.test(text)) {
+    fail(failures, "T-SEC-IMG-001", rel, "must pin asterisk via ASTERISK_PKG_VERSION");
+  }
+}
+
+function checkDialplanShellSafety(root, failures) {
+  const rel = "asterisk/extensions.conf";
+  const text = readSafe(path.join(root, rel));
+  if (!text) return;
+  const systemLine = text.split("\n").find((l) => /System\(.*notify-event/.test(l)) ?? "";
+  if (systemLine.includes("CALLERID(name)")) {
+    fail(failures, "T-SEC-SHELL-001", rel, "System(notify-event) must use SAFE_CALLER_NAME not CALLERID(name)");
+  }
+  if (!/SAFE_CALLER_NAME/.test(text)) {
+    fail(failures, "T-SEC-SHELL-001", rel, "must Set(SAFE_CALLER_NAME=...) before notify-event");
+  }
+}
+
+function checkGuidanceCoreValidate(root, failures) {
+  const rel = "apps/web/src/server/api/handlers/guidance.ts";
+  const text = readSafe(path.join(root, rel));
+  if (!/validateGuidanceName/.test(text) || !/validateWavHeader/.test(text)) {
+    fail(failures, "T-SEC-A03-001", rel, "must validateGuidanceName/validateWavHeader from @openpbx/core");
+  }
+}
+
+function runTsConventionChecks(root, rel, failures) {
+  if (!rel) return;
+  const abs = path.join(root, rel);
+  if (!fs.existsSync(abs)) return;
+  const text = readSafe(abs);
+  if (rel.endsWith(".test.ts")) return;
+
+  const inTsDirs = TS_CONVENTION_DIRS.some((d) => rel.startsWith(`${d}/`) || rel === d);
+  if (inTsDirs) {
+    if (/export\s+class\s+\w+/.test(text)) {
+      fail(failures, "T-TS-003", rel, "export class forbidden");
+    }
+    if (/class\s+\w+\s+extends\s+Error/.test(text)) {
+      fail(failures, "T-TS-003", rel, "class extends Error forbidden");
+    }
+    if (INSTANCEOF_CUSTOM_ERROR.test(text)) {
+      fail(failures, "T-TS-004", rel, "instanceof custom *Error forbidden");
+    }
+    if (NEW_CUSTOM_ERROR.test(text)) {
+      fail(failures, "T-TS-004", rel, "new CustomError() forbidden");
+    }
+  }
+
+  if (rel.startsWith("packages/pbx-core/src/") && /export\s+type\s+\w+Draft\s*=\s*\{/.test(text)) {
+    fail(failures, "T-TS-002", rel, "*Draft must be Readonly");
+  }
+
+  const base = path.basename(rel);
+  if (rel.startsWith("apps/web/src/server/services/") && BRAND_BOUNDARY_SERVICES[base]) {
+    if (!BRAND_BOUNDARY_SERVICES[base].test(text)) {
+      fail(failures, "T-TS-005", rel, "must brand via to*Draft after validate*");
+    }
+  }
+}
+
 /** Run checks applicable to one repo-relative path (pre/post on edit). */
 function checkSingleRel(root, rel, failures) {
   if (rel.startsWith("apps/web/src/app/") && rel.endsWith("/page.tsx")) {
@@ -308,7 +690,7 @@ function checkSingleRel(root, rel, failures) {
     }
   }
   if (rel === "apps/web/src/server/page-data.ts") checkPageData(root, failures);
-  if (rel.startsWith("apps/web/src/server/services/") && MUTATION_SERVICES.includes(path.basename(rel))) {
+  if (rel.startsWith("apps/web/src/server/services/") && SERVICES_REQUIRE_CORE_VALIDATE.includes(path.basename(rel))) {
     const text = readSafe(path.join(root, rel));
     if (!/@openpbx\/core/.test(text) || !/validate\w+/.test(text)) {
       fail(failures, "T-ARCH-004", rel, "must use core validate*");
@@ -339,6 +721,7 @@ function checkSingleRel(root, rel, failures) {
       fail(failures, "T-SOC-002", rel, "domain in web/lib forbidden");
     }
   }
+  runTsConventionChecks(root, rel, failures);
 }
 
 /**
@@ -366,5 +749,25 @@ export function runArchitectureGate(root, opts = {}) {
   checkWebLib(root, failures);
   checkAppActionsSplit(root, failures);
   checkWebPackageImports(root, failures);
+  checkNoExportClass(root, failures);
+  checkNoInstanceofCustomErrors(root, failures);
+  checkCoreDraftConventions(root, failures);
+  checkBrandBoundaryServices(root, failures);
+  checkPjsipIniSanitize(root, failures);
+  checkApiPbxWriteRole(root, failures);
+  checkSensitiveApiAudit(root, failures);
+  checkSecurityHeadersSource(root, failures);
+  checkPostApiCsrf(root, failures);
+  checkCdrExportPipeline(root, failures);
+  checkSessionRotateService(root, failures);
+  checkOriginateAmiFields(root, failures);
+  checkSensitiveApiMinRole(root, failures);
+  checkGuidanceCoreValidate(root, failures);
+  checkDialplanShellSafety(root, failures);
+  checkTrackedPjsipExtensionSecrets(root, failures);
+  checkComposeWebPbxOutMount(root, failures);
+  checkPjsipInternalSrtp(root, failures);
+  checkAsteriskHttpLoopback(root, failures);
+  checkAsteriskImagePin(root, failures);
   return failures;
 }

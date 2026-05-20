@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { ConstraintError, DuplicateError, NotFoundError } from '../errors.js';
+import { constraintError, duplicateError, notFoundError } from '../errors.js';
 
 export type ExtensionRow = Readonly<{
   number: string;
@@ -58,7 +58,7 @@ export type UpsertExtensionInput = Readonly<{
 
 export function createExtension(db: Database.Database, input: UpsertExtensionInput): ExtensionRow {
   if (getExtension(db, input.number)) {
-    throw new DuplicateError(`内線 ${input.number} は既に存在します`);
+    throw duplicateError(`内線 ${input.number} は既に存在します`);
   }
   try {
     db.prepare(
@@ -79,7 +79,7 @@ export function createExtension(db: Database.Database, input: UpsertExtensionInp
 
 export function updateExtension(db: Database.Database, input: UpsertExtensionInput): ExtensionRow {
   if (!getExtension(db, input.number)) {
-    throw new NotFoundError(`内線 ${input.number} は存在しません`);
+    throw notFoundError(`内線 ${input.number} は存在しません`);
   }
   db.prepare(
     `UPDATE extensions SET display_name = ?, secret = ?, note = ?, webrtc = ?, updated_at = datetime('now') WHERE number = ?`,
@@ -99,7 +99,7 @@ export function deleteExtension(db: Database.Database, number: string): boolean 
 
 function mapSqliteError(e: unknown): Error {
   const msg = e instanceof Error ? e.message : String(e);
-  if (msg.includes('UNIQUE')) return new DuplicateError(msg);
-  if (msg.includes('FOREIGN KEY')) return new ConstraintError(msg);
+  if (msg.includes('UNIQUE')) return duplicateError(msg);
+  if (msg.includes('FOREIGN KEY')) return constraintError(msg);
   return e instanceof Error ? e : new Error(msg);
 }

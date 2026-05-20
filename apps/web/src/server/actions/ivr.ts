@@ -1,4 +1,4 @@
-import type { IvrMenuDraft, IvrOptionDraft } from '@openpbx/core';
+import type { IvrMenuDraftInput, IvrOptionDraft } from '@openpbx/core';
 import type { AppContext } from '../context.js';
 import { requireUser, s } from './shared.js';
 import { deleteIvrWithSync, upsertIvrWithSync } from '../services/ivr';
@@ -17,7 +17,7 @@ function parseIvrOptions(formData: FormData): readonly IvrOptionDraft[] {
   return [];
 }
 
-function buildIvrDraftFromForm(formData: FormData): IvrMenuDraft {
+function buildIvrDraftFromForm(formData: FormData): IvrMenuDraftInput {
   return {
     number: s(formData.get('number')),
     name: s(formData.get('name')) || null,
