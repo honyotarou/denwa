@@ -3,35 +3,22 @@ import {
   hashClickToCallToken,
   verifyClickToCallTokenPlain,
   clickToCallFromMatchesToken,
+  type OriginateRequest,
 } from '@openpbx/core';
 import { findActiveClickToCallTokenByHash } from '@openpbx/db/repos/click-to-call-tokens';
 import { getAccountById } from '@openpbx/db/repos/accounts';
 import type { AppContext } from '../../context';
 import type { JsonHandlerResult } from '../types';
 import { withAuth } from '../with-auth';
+import { executeOriginateCall } from '../../services/originate-call';
 
-function parseOriginateBody(body: Record<string, unknown>) {
+function parseOriginateBody(body: Record<string, unknown>): OriginateRequest {
   return {
     from: String(body.from ?? ''),
     to: String(body.to ?? ''),
     callerId: body.callerId != null ? String(body.callerId) : undefined,
     context: body.context != null ? String(body.context) : undefined,
   };
-}
-
-function recordOriginateAudit(
-  ctx: AppContext,
-  actor: string,
-  from: string,
-  to: string,
-): void {
-  ctx.auth.recordAudit({
-    actor,
-    action: 'click2call',
-    target: `${from}->${to}`,
-    ip: ctx.meta.ip,
-    userAgent: ctx.meta.userAgent,
-  });
 }
 
 /** T-CHX-013〜015: Bearer token（Chrome 拡張） */
@@ -58,8 +45,7 @@ async function handleOriginateBearer(
   const acct = getAccountById(ctx.db, tok.accountId);
   if (!acct) return { status: 401, body: { error: 'unauthorized' } };
 
-  recordOriginateAudit(ctx, `click2call:${tok.name}`, req.from, req.to);
-  return { status: 200, body: { ok: true, mocked: true } };
+  return executeOriginateCall(ctx, req, `click2call:${tok.name}`);
 }
 
 /** T-API-009: セッション + user+ */
@@ -67,17 +53,12 @@ async function handleOriginateSession(
   ctx: AppContext,
   body: Record<string, unknown>,
 ): Promise<JsonHandlerResult> {
-  return withAuth(
-    ctx,
-    (me) => {
-      const req = parseOriginateBody(body);
-      const errs = validateOriginateRequest(req);
-      if (errs.length) return { status: 400, body: { error: errs.join('; ') } };
-      recordOriginateAudit(ctx, me.username, req.from, req.to);
-      return { status: 200, body: { ok: true, mocked: true } };
-    },
-    {},
-  );
+  return withAuth(ctx, async (me) => {
+    const req = parseOriginateBody(body);
+    const errs = validateOriginateRequest(req);
+    if (errs.length) return { status: 400, body: { error: errs.join('; ') } };
+    return executeOriginateCall(ctx, req, me.username);
+  });
 }
 
 export async function handleOriginatePost(
