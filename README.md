@@ -48,7 +48,7 @@ docker compose up --build
 | `9002` | 折返し依頼（同上、`kind=callback_request`） |
 | `_100X` | 内線 + MixMonitor 録音 |
 
-手動 smoke（`manual-only` 可）: 内線 1001/1002 で相互発信、9001/9002 に発信して `data/inbox/` を確認。
+手動 smoke（`manual-only` 可）: [`docs/ROADMAP-MANUAL.md`](docs/ROADMAP-MANUAL.md)（Docker / SIP / 拡張発信 / inbox）。内線 1001/1002 相互発信、9001/9002 着信で `data/inbox/` を確認。
 
 ### OpenPBX 差分機能（移植済み）
 
