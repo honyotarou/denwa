@@ -2,6 +2,7 @@ import type Database from 'better-sqlite3';
 import { createInMemoryDb, seedExtensions } from '@openpbx/db';
 import { createAuthService, type AuthService, type RequestMeta } from './auth';
 import { createInfraSync, type InfraDirs, type InfraSync } from './infra-sync';
+import { createStubAmiOriginatePort, type AmiOriginatePort } from './ports/ami-originate';
 
 export type Role = 'user' | 'supervisor' | 'admin';
 
@@ -16,6 +17,7 @@ export type AppContext = ActionContext & {
   db: Database.Database;
   infra: InfraSync;
   infraDirs: InfraDirs;
+  ami: AmiOriginatePort;
   /** Chrome extension Bearer（cookie 不要） */
   bearerToken?: string | null;
 };
@@ -24,6 +26,7 @@ export function createTestContext(opts?: {
   sessionToken?: string | null;
   meta?: Partial<RequestMeta>;
   infraDirs?: Partial<InfraDirs>;
+  ami?: AmiOriginatePort;
 }): AppContext {
   const db = createInMemoryDb({ seed: true });
   const infraDirs: InfraDirs = {
@@ -44,6 +47,7 @@ export function createTestContext(opts?: {
     sessionToken: opts?.sessionToken ?? null,
     meta,
     infraDirs,
+    ami: opts?.ami ?? createStubAmiOriginatePort(),
   };
 }
 

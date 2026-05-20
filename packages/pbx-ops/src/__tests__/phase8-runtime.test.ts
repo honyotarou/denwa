@@ -275,6 +275,12 @@ describe('Phase 8 — runtime & production', () => {
       expect(readme()).toMatch(/host-tts|dev-only|開発のみ/i);
     });
 
+    it('T-DOC-004: host-tts make-prompts.sh exists', () => {
+      const script = path.join(ROOT, 'host-tts/make-prompts.sh');
+      expect(fs.existsSync(script)).toBe(true);
+      expect(fs.readFileSync(script, 'utf8')).toMatch(/say -v/);
+    });
+
     it('T-PROD-010: README lists prod-check checklist items', () => {
       const t = readme();
       expect(t).toMatch(/npm run prod-check/);
