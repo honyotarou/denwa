@@ -23,6 +23,7 @@ export const SERVER_ACTION_AUDIT_ACTIONS = [
   'guidance.delete',
   'login',
   'login.failed',
+  'login.failed.totp',
   'logout',
   'totp.setup',
   'totp.disable',

@@ -141,7 +141,7 @@ describe('Phase 6 — middleware & API', () => {
       ctx.sessionToken = await loginAsAdmin(ctx);
       const r = await handleDevicesStreamGet(ctx);
       expect(r.status).toBe(200);
-      expect(r.headers['Content-Type']).toContain('text/event-stream');
+      expect(r.headers?.['Content-Type']).toContain('text/event-stream');
     });
   });
 

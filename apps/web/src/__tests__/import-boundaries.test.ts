@@ -109,6 +109,21 @@ describe('T-MW-007: middleware uses IP resolver', () => {
   });
 });
 
+describe('T-SOC-003: services do not import actions layer', () => {
+  it('Given server/services/* When read Then no ../actions imports', () => {
+    const dir = path.join(SERVER, 'services');
+    const violations: string[] = [];
+    for (const name of fs.readdirSync(dir)) {
+      if (!name.endsWith('.ts')) continue;
+      const text = fs.readFileSync(path.join(dir, name), 'utf8');
+      if (/from\s+['"].*\/actions\//.test(text) || /from\s+['"]\.\.\/actions\//.test(text)) {
+        violations.push(name);
+      }
+    }
+    expect(violations, violations.join(', ')).toEqual([]);
+  });
+});
+
 describe('T-ARCH-006: migrated actions delegate to services', () => {
   const SERVICE_ROUTED = [
     'extensions.ts',
@@ -116,6 +131,9 @@ describe('T-ARCH-006: migrated actions delegate to services', () => {
     'pickup.ts',
     'phonebook.ts',
     'business-hours.ts',
+    'guidance-auth.ts',
+    'ivr.ts',
+    'admin.ts',
   ];
 
   it('Given server/actions/* When service-routed file Then no ctx.db or ctx.infra.sync', () => {
@@ -126,6 +144,32 @@ describe('T-ARCH-006: migrated actions delegate to services', () => {
       const text = fs.readFileSync(file, 'utf8');
       if (/\bctx\.db\b/.test(text)) violations.push(`${name} (ctx.db)`);
       if (/\bctx\.infra\.sync\w*\(/.test(text)) violations.push(`${name} (ctx.infra.sync)`);
+    }
+    expect(violations, violations.join(', ')).toEqual([]);
+  });
+});
+
+describe('T-SOC-004: app actions and api handlers are split', () => {
+  it('Given app/actions.ts When read Then barrel only', () => {
+    const text = fs.readFileSync(path.join(ROOT, 'app/actions.ts'), 'utf8');
+    expect(text.split('\n').length).toBeLessThanOrEqual(25);
+    expect(text).not.toMatch(/async function \w+Action/);
+  });
+
+  it('Given api-handlers.ts When read Then re-export barrel only', () => {
+    const text = fs.readFileSync(path.join(SERVER, 'api-handlers.ts'), 'utf8');
+    expect(text).not.toMatch(/export async function handle\w+/);
+  });
+});
+
+describe('T-PKG-001: actions/forms use db subpaths not barrel', () => {
+  it('Given actions/forms/*.ts When read Then no @openpbx/db barrel', () => {
+    const dir = path.join(SERVER, 'actions/forms');
+    const violations: string[] = [];
+    for (const name of fs.readdirSync(dir)) {
+      if (!name.endsWith('.ts')) continue;
+      const text = fs.readFileSync(path.join(dir, name), 'utf8');
+      if (/from ['"]@openpbx\/db['"]/.test(text)) violations.push(name);
     }
     expect(violations, violations.join(', ')).toEqual([]);
   });

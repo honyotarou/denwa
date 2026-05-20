@@ -1,11 +1,12 @@
 ---
-description: denwa OpenPBX TDD 再構築 — メニュー・門番・services/use-case 層
+description: denwa OpenPBX TDD — 門番・SOC・services 層（architecture gate 強制）
 alwaysApply: true
 ---
 
 # denwa（毎セッション）
 
-契約: `docs/TDD-REBUILD-PLAN.md`。legacy: `docs/LEGACY.md` → `../OpenPBX`。手順: `.cursor/skills/denwa/SKILL.md` / `steps-denwa.md`。
+契約: `docs/TDD-REBUILD-PLAN.md`。legacy: `docs/LEGACY.md` → `../OpenPBX`。  
+手順: `.cursor/skills/denwa/SKILL.md` / `steps-denwa.md`。
 
 ## メニュー 0→9
 
@@ -17,48 +18,46 @@ alwaysApply: true
 | 3 | asterisk/docker smoke |
 | 4 | `@openpbx/db` repos |
 | 5 | `@openpbx/infra` |
-| 6 | **services** + actions + API |
+| 6 | services + actions + API + `app/actions/*` |
 | 7 | フロント |
 | 8 | `@openpbx/ops` / prod-check |
 | 9 | commit / push |
 
-各 Step で §7 の `T-XXX-000` を Red→Green し尽くす（§1.4）。
+各 Step で §7 の `T-XXX-000` を Red→Green し尽くす。
 
-## 依存と web の形
+## web 3 層（変更順）
 
 ```text
-core ← ops, db, infra ← web
+server/services/     validate → db → infra.sync → audit（正本）
+server/actions/      FormData → service のみ（ctx.db 禁止）
+app/actions/<domain> flash + getRequestContext（barrel: app/actions.ts）
 ```
 
-| web | 責務 |
-|-----|------|
-| `server/services/*` | validate → db → sync → audit（mutation 正本） |
-| `server/actions/*` | 薄い FormData ラッパ |
-| `server/page-data.ts` | 読取 view model |
-| `server/paths.ts` | env パス（page 禁止） |
-| `request-ip.ts` / `request-meta.ts` | Edge IP / API 文脈 |
+API: `server/api/handlers/*` + `withAuth`（barrel: `api-handlers.ts`）。
 
 ## 門番
 
 | タイミング | 自動 |
 |------------|------|
-| Write/Edit | pre **static**（secrets + `denwa-architecture-gate`）/ post harness:fast |
-| turn 終了 | harness |
-| commit | harness:fast |
-| push | harness |
+| Write/Edit | pre `check:static`（secrets + **denwa-architecture-gate**）/ post `harness:fast` |
+| turn 終了 | `harness` |
+| commit | `harness:fast` |
+| push | `harness` |
 
-SOC・カプセル化は Skill 記述だけでなく **T-ARCH-*** を static で強制（Vitest と二重）。
+**ゲート赤 = コード修正。** ルール緩和は gate + Vitest を同時更新した設計変更時のみ。
+
+主要 ID: T-ARCH-001〜006, T-SOC-001〜005, T-PKG-001, T-API-IP-001, T-MW-007/008, T-FORM-001, T-ACT-021。
 
 ## エージェント
 
 1. 番号 **N** → `steps-denwa.md` §N のみ Read
-2. **1 turn = 1 T-XXX-000**（§7 正本）
-3. **新 mutation** → services に足す（actions に DB+sync 直書き禁止）
-4. **新 SQL** → `pbx-db/repos` のみ
-5. legacy 一括コピー禁止・秘密 commit 禁止
+2. **1 turn = 1 T-XXX-000**
+3. mutation → **services**（audit は `server/audit.ts`）
+4. 新 domain → gate の `MUTATION_SERVICES` / `ACTIONS_SERVICE_ROUTED` 更新
+5. legacy 一括コピー禁止
 
 ## 指示例
 
-- `/denwa 6` + 「T-ACT-004 を services/ring-groups 経由で」
-- `/denwa 6` + 「API に buildContextFromRequest 足す」
+- `/denwa 6` + 「T-ACT-021 authenticateLogin」
+- `/denwa 6` + 「api/handlers に withAuth」
 - `/denwa 9` + 「harness 確認して push」
