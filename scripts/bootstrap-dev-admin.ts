@@ -17,9 +17,9 @@ import { applySchema, createAccount, getExtension, listExtensions, updateExtensi
 import { writePjsipFile } from '@openpbx/infra';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
-const dbPath = path.join(root, 'data/db/command-room.sqlite');
-const pjsipDir = path.join(root, 'data/pbx-out/pjsip.d');
-const dialplanDir = path.join(root, 'data/pbx-out/dialplan.d');
+const dbPath = process.env.DATABASE_PATH ?? path.join(root, 'data/db/command-room.sqlite');
+const pjsipDir = process.env.PJSIP_OUT_DIR ?? path.join(root, 'data/pbx-out/pjsip.d');
+const dialplanDir = process.env.DIALPLAN_OUT_DIR ?? path.join(root, 'data/pbx-out/dialplan.d');
 fs.mkdirSync(pjsipDir, { recursive: true });
 fs.mkdirSync(dialplanDir, { recursive: true });
 
@@ -61,21 +61,30 @@ function rotateExtensionSecretIfNeeded(number: string): void {
 rotateExtensionSecretIfNeeded('1001');
 rotateExtensionSecretIfNeeded('1002');
 
-const drafts = listExtensions(db).map((row) =>
-  toExtensionDraft(
-    normalizeExtensionDraft({
-      number: row.number,
-      displayName: row.displayName,
-      secret: row.secret,
-      note: row.note,
-      webrtc: row.webrtc,
-      pickupGroupNames: [],
-    }),
-  ),
-);
-const pjsipBody = renderPjsipExtensions(drafts, { updatedAt: new Date().toISOString() });
-await writePjsipFile(pjsipDir, 'extensions.conf', pjsipBody);
-console.log('Synced', path.join(pjsipDir, 'extensions.conf'));
+async function syncPjsip(): Promise<void> {
+  const drafts = listExtensions(db).map((row) =>
+    toExtensionDraft(
+      normalizeExtensionDraft({
+        number: row.number,
+        displayName: row.displayName,
+        secret: row.secret,
+        note: row.note,
+        webrtc: row.webrtc,
+        pickupGroupNames: [],
+      }),
+    ),
+  );
+  const pjsipBody = renderPjsipExtensions(drafts, { updatedAt: new Date().toISOString() });
+  await writePjsipFile(pjsipDir, 'extensions.conf', pjsipBody);
+  console.log('Synced', path.join(pjsipDir, 'extensions.conf'));
+}
 
-db.close();
-console.log('DB:', dbPath);
+syncPjsip()
+  .then(() => {
+    db.close();
+    console.log('DB:', dbPath);
+  })
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
