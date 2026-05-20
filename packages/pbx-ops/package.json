@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./upgrades/compose-exec": "./src/upgrades/compose-exec.ts",
+    "./softphone/dev-ready": "./src/softphone/dev-ready.ts"
   },
   "scripts": {
     "test": "vitest run",

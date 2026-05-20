@@ -7,9 +7,14 @@
     ".": "./src/index.ts",
     "./cdr/ingest": "./src/cdr/ingest.ts",
     "./ami/device-map": "./src/ami/device-map.ts",
+    "./ami/config": "./src/ami/config.ts",
+    "./ami/device-session": "./src/ami/device-session.ts",
+    "./ami/device-session-tcp": "./src/ami/device-session-tcp.ts",
     "./fs/guidance": "./src/fs/guidance.ts",
     "./fs/recording": "./src/fs/recording.ts",
-    "./inbox/validate-meta": "./src/inbox/validate-meta.ts"
+    "./inbox/validate-meta": "./src/inbox/validate-meta.ts",
+    "./fs/inbox-media": "./src/fs/inbox-media.ts",
+    "./fs/upgrade-signal": "./src/fs/upgrade-signal.ts"
   },
   "scripts": {
     "test": "vitest run",

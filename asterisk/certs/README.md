@@ -12,7 +12,10 @@ brew install mkcert nss
 mkcert -install
 mkcert -cert-file asterisk/certs/asterisk.pem -key-file asterisk/certs/asterisk.key \
   localhost 127.0.0.1 host.docker.internal $(hostname -s)
-docker compose restart asterisk
+./scripts/gen-dev-asterisk-certs.sh
+docker compose -f docker-compose.yml -f docker-compose.softphone-dev.yml up -d asterisk
 ```
+
+`docker-compose.softphone-dev.yml` は **8089 をホスト公開**し、`http.dev.conf` で TLS を `0.0.0.0:8089` にバインドします（本番 `docker-compose.yml` だけでは WSS は届きません）。
 
 ブラウザで一度 `https://<host>:8089/` にアクセスして自己署名を承認しておく必要があります。

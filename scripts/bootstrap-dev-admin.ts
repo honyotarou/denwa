@@ -13,9 +13,17 @@ import {
   normalizeNetworkSettingsDraft,
   renderPjsipExtensions,
   renderPjsipTransportsConf,
+  renderEmptyTrunksPjsip,
   toExtensionDraft,
 } from '@openpbx/core';
-import { applySchema, createAccount, getExtension, listExtensions, updateExtension } from '@openpbx/db';
+import {
+  applySchema,
+  createAccount,
+  getExtension,
+  listExtensions,
+  listPickupGroupNamesByExtension,
+  updateExtension,
+} from '@openpbx/db';
 import { writePjsipFile } from '@openpbx/infra';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
@@ -64,6 +72,7 @@ rotateExtensionSecretIfNeeded('1001');
 rotateExtensionSecretIfNeeded('1002');
 
 async function syncPjsip(): Promise<void> {
+  const pickupByExt = listPickupGroupNamesByExtension(db);
   const drafts = listExtensions(db).map((row) =>
     toExtensionDraft(
       normalizeExtensionDraft({
@@ -72,7 +81,7 @@ async function syncPjsip(): Promise<void> {
         secret: row.secret,
         note: row.note,
         webrtc: row.webrtc,
-        pickupGroupNames: [],
+        pickupGroupNames: pickupByExt.get(row.number) ?? [],
       }),
     ),
   );
@@ -87,7 +96,16 @@ async function syncPjsip(): Promise<void> {
   await writePjsipFile(pjsipDir, 'transports.conf', transports);
   const trunksPath = path.join(pjsipDir, 'trunks.conf');
   if (!fs.existsSync(trunksPath)) {
-    fs.writeFileSync(trunksPath, '; AUTO-GENERATED placeholder\n');
+    fs.writeFileSync(trunksPath, renderEmptyTrunksPjsip(stamp));
+  }
+  const dialplanDir = path.join(root, 'data/pbx-out/dialplan.d');
+  fs.mkdirSync(dialplanDir, { recursive: true });
+  const dialplanPlaceholder = path.join(dialplanDir, 'placeholder.conf');
+  if (!fs.existsSync(dialplanPlaceholder)) {
+    fs.writeFileSync(
+      dialplanPlaceholder,
+      '; AUTO-GENERATED placeholder — #include "dialplan.d/*.conf" 用\n',
+    );
   }
   console.log('Synced', path.join(pjsipDir, 'extensions.conf'), 'and transports.conf');
 }

@@ -25,6 +25,7 @@ export function NavBar({ me }: { me: Account | null }) {
       <Link className={linkCls} href="/guidances">ガイダンス</Link>
       <Link className={linkCls} href="/cdr">履歴</Link>
       <Link className={linkCls} href="/recordings">録音</Link>
+      <Link className={linkCls} href="/inbox">Inbox</Link>
       <Link className={linkCls} href="/concurrency">同時通話</Link>
       <Link className={linkCls} href="/triage">問診</Link>
       <Link className={linkCls} href="/patients">患者</Link>

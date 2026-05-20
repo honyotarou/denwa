@@ -29,6 +29,14 @@ export function listBillingRates(db: Database.Database): Array<{ prefix: string;
   }>;
 }
 
+export function listBillingRatesForCost(
+  db: Database.Database,
+): Array<{ prefix: string; perMin: number; setupFee: number }> {
+  return db
+    .prepare('SELECT prefix, per_min AS perMin, setup_fee AS setupFee FROM billing_rates ORDER BY prefix')
+    .all() as Array<{ prefix: string; perMin: number; setupFee: number }>;
+}
+
 export function deleteBillingRate(db: Database.Database, prefix: string): boolean {
   return db.prepare('DELETE FROM billing_rates WHERE prefix = ?').run(prefix).changes > 0;
 }
