@@ -11,7 +11,7 @@ import {
   nextStateOnUnregister,
   validateDialTarget,
   type SoftphoneUiState,
-} from '@openpbx/core';
+} from '@openpbx/core/softphone/state';
 import { createSipJsAdapter } from '@/client/softphone/sip-js-adapter';
 import type { SipAdapter } from '@/client/softphone/types';
 

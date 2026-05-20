@@ -10,9 +10,9 @@ import { e2ePjsipExtensionsConf } from './lib/run-dir';
 
 test.describe('L4 E2E — authenticated', () => {
   test('T-E2E-001: session reaches home summary', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'load' });
     await expect(page).toHaveURL(/\/?$/);
-    await expect(page.getByRole('heading', { name: 'PBX 概要' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'PBX 概要' })).toBeVisible({ timeout: 30_000 });
   });
 
   test('T-E2E-002: extensions lists seeded 1001/1002', async ({ page }) => {

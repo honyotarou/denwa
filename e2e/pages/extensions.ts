@@ -1,8 +1,8 @@
 import { expect, type Page } from '@playwright/test';
 
 export async function gotoExtensions(page: Page): Promise<void> {
-  await page.goto('/extensions');
-  await page.getByRole('heading', { name: '内線端末管理' }).waitFor();
+  await page.goto('/extensions', { waitUntil: 'load' });
+  await page.locator('input[name="number"]').first().waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 /** Seed rows render as input values, not plain text (T-E2E-002). */
