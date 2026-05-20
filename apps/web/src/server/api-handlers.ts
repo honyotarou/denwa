@@ -13,8 +13,8 @@ import { ingestCdrFile } from '@openpbx/infra';
 import { DeviceMap } from '@openpbx/infra';
 import { openRecordingReadStream, resolveRecordingPath, saveGuidanceWav } from '@openpbx/infra';
 import { validateInboxMeta } from '@openpbx/infra';
-import type { AppContext } from './context.js';
-import { AuthError } from './auth.js';
+import type { AppContext } from './context';
+import { AuthError } from './auth';
 
 function maskSecret(role: string, secret: string): string {
   return role === 'admin' ? secret : '***';

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { hashPassword } from '@openpbx/core';
 import { createAccount, listAudit, listLoginHistory } from '@openpbx/db';
-import { createTestContext, loginAsAdmin } from '../context.js';
+import { createTestContext, loginAsAdmin } from '../context';
 import {
   createExtensionActionImpl,
   updateExtensionActionImpl,
@@ -25,8 +25,8 @@ import {
   upsertRateActionImpl,
   upsertTrunkActionImpl,
   scheduleUpgradeActionImpl,
-} from '../actions-handlers.js';
-import { AuthError } from '../auth.js';
+} from '../actions-handlers';
+import { AuthError } from '../auth';
 
 const tmpDirs: string[] = [];
 

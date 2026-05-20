@@ -31,8 +31,8 @@ import {
   DuplicateError,
   NotFoundError,
 } from '@openpbx/db';
-import type { AppContext } from './context.js';
-import { AuthError } from './auth.js';
+import type { AppContext } from './context';
+import { AuthError } from './auth';
 
 function s(v: FormDataEntryValue | null): string {
   return typeof v === 'string' ? v.trim() : '';

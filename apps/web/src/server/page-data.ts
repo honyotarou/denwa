@@ -10,7 +10,7 @@ import {
   listLoginHistory,
   searchPhonebook,
 } from '@openpbx/db';
-import { getAppDb } from './app-context.js';
+import { getAppDb } from './app-context';
 
 export function db(): Database.Database {
   return getAppDb();
