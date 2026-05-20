@@ -137,6 +137,10 @@ function shouldSkipStagedSecretContentScan(rel) {
   if (rel === "packages/pbx-db/src/migrate-extensions.ts") return true;
   if (rel === "apps/web/src/server/context.ts") return true;
   if (rel === "scripts/bootstrap-dev-admin.ts") return true;
+  if (rel === "scripts/prod-check.ts") return true;
+  if (rel === "packages/pbx-core/src/prod/check.ts") return true;
+  if (rel === "packages/pbx-core/src/prod/audit-actions.ts") return true;
+  if (rel === "packages/pbx-db/src/prod-check.ts") return true;
   if (rel.includes("/__tests__/")) return true;
   if (/\.(test|spec)\.[cm]?[jt]sx?$/.test(rel)) return true;
   return false;

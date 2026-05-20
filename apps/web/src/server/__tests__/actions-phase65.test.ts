@@ -150,7 +150,7 @@ describe('Phase 6.5 — Server Actions (T-ACT-001〜040)', () => {
   it('T-ACT-026: updateMyPassword policy', async () => {
     const ctx = await authedCtx();
     await updateMyPasswordActionImpl(ctx, fd({ password: 'Newpass1' }));
-    expect(listAudit(ctx.db, 3)[0]!.action).toBe('self.password');
+    expect(listAudit(ctx.db, 3)[0]!.action).toBe('account.self.password.update');
   });
 
   it('T-ACT-027: createAccount admin only', async () => {
@@ -185,7 +185,7 @@ describe('Phase 6.5 — Server Actions (T-ACT-001〜040)', () => {
     });
     ctx.sessionToken = ctx.auth.createSession(sup.id, ctx.meta);
     await upsertRateActionImpl(ctx, fd({ prefix: '03', perMin: '8' }));
-    expect(listAudit(ctx.db, 2)[0]!.action).toBe('billing.upsert');
+    expect(listAudit(ctx.db, 2)[0]!.action).toBe('billing_rate.upsert');
   });
 
   it('T-ACT-037: upsertTrunk reload', async () => {

@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@openpbx/core": "*",
     "better-sqlite3": "^11.8.1"
   },
   "devDependencies": {
