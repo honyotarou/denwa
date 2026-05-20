@@ -1,6 +1,4 @@
-import { requireRole } from '@/lib/auth';
-import { getAppDb } from '@/server/app-context';
-import { getPasswordPolicy } from '@openpbx/db';
+import { requireRole, getRequestContext } from '@/lib/auth';
 import { listIpAllowRows } from '@/server/page-data';
 import { updatePolicyAction, upsertIpAllowAction, deleteIpAllowAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
@@ -9,7 +7,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function SecurityPage() {
   await requireRole('admin');
-  const policy = getPasswordPolicy(getAppDb());
+  const { auth } = await getRequestContext();
+  const policy = auth.getPasswordPolicy();
   const ips = listIpAllowRows();
   return (
     <div className="space-y-6">

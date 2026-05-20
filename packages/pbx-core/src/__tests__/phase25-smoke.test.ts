@@ -2,13 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { checkAsteriskConfigTree } from '../asterisk/config-check.js';
+import { checkAsteriskConfigTree } from '@openpbx/ops';
 import {
   allRequiredComposePortsPresent,
   composeHasServices,
   composeVolumesMatchSection10,
   readComposeDraftFromFile,
-} from '../docker/compose-file.js';
+} from '@openpbx/ops';
 import { normalizeDockerCompose } from '../docker/compose.js';
 import type { ExtensionDraft } from '../extension.js';
 import { renderPjsipExtensions } from '../pjsip.js';

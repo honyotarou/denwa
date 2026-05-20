@@ -61,6 +61,12 @@ export function updateIvrMenu(
   return getIvrMenu(db, input.number)!;
 }
 
+export function deleteIvrMenu(db: Database.Database, number: string): boolean {
+  const menu = getIvrMenu(db, number);
+  if (!menu) return false;
+  return db.prepare('DELETE FROM ivr_menus WHERE id = ?').run(menu.id).changes > 0;
+}
+
 function replaceOptions(db: Database.Database, menuId: number, opts: readonly IvrOptionRow[]): void {
   const digits = new Set<string>();
   for (const o of opts) {

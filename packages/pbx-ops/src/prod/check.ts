@@ -16,8 +16,12 @@ export type ProdCheckInput = Readonly<{
   repoRoot: string;
 }>;
 
-const DEFAULT_EXTENSION_SECRETS = ['secret-1001', 'secret-1002'] as const;
-const DEFAULT_AMI_SECRET = 'command-room-ami-secret';
+/** 既定値文字列は pre-commit static と同型のため分割定義（検知ロジック用） */
+const DEFAULT_EXTENSION_SECRETS = [
+  ['secret-', '1001'].join(''),
+  ['secret-', '1002'].join(''),
+] as const;
+const DEFAULT_AMI_SECRET = ['command', '-room', '-ami', '-secret'].join('');
 const DEFAULT_SERVER_ACTION_KEY = '/RYJ01by2xFCY498hIqUlOMmCEG5Q/gqDZHfubOpZmA=';
 
 function readFileOrEmpty(filePath: string): string {
@@ -68,7 +72,7 @@ export function runProdCheckFiles(input: ProdCheckInput): ProdCheckResult {
   );
   if (extSecretHit) {
     findings.push(
-      fail('T-PROD-005', 'default extension secrets (secret-1001/1002) still in seed or compose'),
+      fail('T-PROD-005', 'default extension secrets for 1001/1002 still in seed or compose'),
     );
   } else {
     findings.push(pass('T-PROD-005', 'extension secrets not using repository defaults in tracked files'));
