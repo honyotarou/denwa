@@ -192,8 +192,8 @@ function checkMiddleware(root, failures) {
   if (/ipAllowed\s*=\s*true/.test(text)) {
     fail(failures, "T-MW-007", rel, "hardcoded ipAllowed = true forbidden");
   }
-  if (!/clientIpOptional/.test(text)) {
-    fail(failures, "T-MW-007", rel, "must use clientIpOptional from request-ip");
+  if (!/clientIpForMiddleware/.test(text)) {
+    fail(failures, "T-MW-007", rel, "must use clientIpForMiddleware from request-ip");
   }
   if (/from ['"]@\/server\/request-meta['"]/.test(text) || /from ['"]@\/server\/app-context['"]/.test(text)) {
     fail(failures, "T-MW-008", rel, "middleware must not import request-meta/app-context (Edge unsafe)");

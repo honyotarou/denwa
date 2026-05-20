@@ -101,11 +101,11 @@ describe('T-API-IP-001: API routes use buildContextFromRequest', () => {
 });
 
 describe('T-MW-007: middleware uses IP resolver', () => {
-  it('Given middleware.ts When read Then uses clientIpOptional', () => {
+  it('Given middleware.ts When read Then uses clientIpForMiddleware', () => {
     const text = fs.readFileSync(path.join(ROOT, 'middleware.ts'), 'utf8');
     expect(text).not.toMatch(/ipAllowed\s*=\s*true/);
     expect(text).toMatch(/resolveMiddlewareIpAllowed/);
-    expect(text).toMatch(/clientIpOptional/);
+    expect(text).toMatch(/clientIpForMiddleware/);
   });
 });
 

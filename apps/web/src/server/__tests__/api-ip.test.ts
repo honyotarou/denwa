@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { clientIpFromHeaders, clientIpOptional, resolveClientIp } from '../request-ip';
+import {
+  clientIpForMiddleware,
+  clientIpFromHeaders,
+  clientIpOptional,
+  resolveClientIp,
+} from '../request-ip';
 
 describe('T-API-IP-002: request-ip with trusted proxy', () => {
   it('Given TRUSTED_PROXY_COUNT=1 When XFF chain Then rightmost trusted hop', () => {
@@ -19,5 +24,10 @@ describe('T-API-IP-002: request-ip with trusted proxy', () => {
 
   it('Given no proxy headers When clientIpOptional Then undefined', () => {
     expect(clientIpOptional(new Headers(), 0)).toBeUndefined();
+  });
+
+  it('Given no proxy headers When clientIpForMiddleware Then same as fromHeaders (T-MW-007)', () => {
+    const h = new Headers();
+    expect(clientIpForMiddleware(h, 0)).toBe(clientIpFromHeaders(h, 0));
   });
 });
