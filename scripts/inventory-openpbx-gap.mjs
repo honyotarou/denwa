@@ -20,7 +20,8 @@ const EXPECTED = [
 
 function main() {
   if (!fs.existsSync(OPENPBX)) {
-    console.error('[gap-inventory] skip: ../OpenPBX not found');
+    // CI には legacy clone が無い — stdout に skip（T-GAP-INV-002: fail しない）
+    console.log('[gap-inventory] skip: ../OpenPBX not found (optional legacy clone)');
     process.exit(0);
   }
   const missing = [];
