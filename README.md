@@ -9,7 +9,8 @@ npm install          # lefthook を prepare で有効化
 npm test             # @openpbx/core の Vitest
 npm run check:static # 毎編集（Cursor pre/post）・pre-commit
 npm run harness:fast # 手動 TDD（static + typecheck）
-npm run harness      # stop / pre-push / CI（full = test:gate + prod-check + sca）
+npm run harness      # stop / pre-push / CI（full = test:gate + e2e + prod-check + sca）
+npm run test:e2e     # Playwright L4 smoke（初回: npm run test:e2e:install）
 ```
 
 ### ローカル UI のみ（SQLite、Asterisk なし）
