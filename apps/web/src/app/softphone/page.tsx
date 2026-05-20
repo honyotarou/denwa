@@ -1,14 +1,30 @@
-import { guardPage } from '@/lib/auth';
-import { getExtensions } from '@/server/page-data';
+import { headers } from 'next/headers';
+import { guardPage, getCurrentAccount, getRequestContext } from '@/lib/auth';
+import { getSoftphoneProfiles } from '@/server/services/softphone';
+import { SoftphonePanel } from './softphone-panel';
+
 export const dynamic = 'force-dynamic';
+
 export default async function SoftphonePage() {
   await guardPage('user');
-  const exts = getExtensions().filter((e) => e.webrtc);
+  const me = await getCurrentAccount();
+  const ctx = await getRequestContext();
+  const profiles = me ? getSoftphoneProfiles(ctx, me) : [];
+  const h = await headers();
+  const host = h.get('host')?.split(':')[0] ?? 'localhost';
+
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">ソフトフォン (WebRTC)</h2>
-      <p className="text-sm text-slate-600">sip.js 接続は Phase 8 で有効化します。WebRTC 対応内線: {exts.map((e) => e.number).join(', ') || 'なし'}</p>
-      <div className="rounded border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">⚠️ 現在は UI のみです。通話登録は /devices で確認してください。</div>
+      <header>
+        <h2 className="text-lg font-semibold">ブラウザソフトフォン (WebRTC)</h2>
+        <p className="text-xs text-slate-500">
+          admin のみ内線 credential を表示。sip.js は次 PR で npm pin 導入（T-SOFT-016）。
+        </p>
+      </header>
+      <SoftphonePanel profiles={profiles} defaultHost={host} />
+      <p className="text-xs text-slate-500">
+        証明書: <code className="rounded bg-slate-100 px-1">asterisk/certs/README.md</code> を参照。
+      </p>
     </div>
   );
 }

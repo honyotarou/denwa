@@ -1,6 +1,29 @@
 {
   "tables": [
     {
+      "name": "account_extension_grants",
+      "columns": [
+        {
+          "name": "account_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 1
+        },
+        {
+          "name": "extension_number",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 2
+        },
+        {
+          "name": "granted_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
       "name": "accounts",
       "columns": [
         {
@@ -303,6 +326,53 @@
           "name": "imported_at",
           "type": "TEXT",
           "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "click_to_call_tokens",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "account_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "token_hash",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "from_extension",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "revoked_at",
+          "type": "TEXT",
+          "notnull": 0,
           "pk": 0
         }
       ]
@@ -1168,6 +1238,7 @@
     "idx_cdr_dst",
     "idx_cdr_src",
     "idx_cdr_start",
+    "idx_click_tokens_account",
     "idx_login_history_user",
     "idx_patient_records_date",
     "idx_patient_records_pid",

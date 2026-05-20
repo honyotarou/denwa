@@ -249,6 +249,24 @@ CREATE TABLE IF NOT EXISTS version_upgrades (
   created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS account_extension_grants (
+  account_id        INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  extension_number  TEXT NOT NULL,
+  granted_at        TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (account_id, extension_number)
+);
+
+CREATE TABLE IF NOT EXISTS click_to_call_tokens (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  account_id      INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  name            TEXT NOT NULL,
+  token_hash      TEXT NOT NULL UNIQUE,
+  from_extension  TEXT NOT NULL,
+  created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+  revoked_at      TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_click_tokens_account ON click_to_call_tokens(account_id);
+
 CREATE TABLE IF NOT EXISTS sip_trunks (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   name            TEXT NOT NULL UNIQUE,
