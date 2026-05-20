@@ -303,6 +303,12 @@ export async function loginActionImpl(
   const hash = acct ? ctx.auth.getPasswordHash(acct.id) : null;
   if (!acct || !hash || !ctx.auth.verifyPassword(password, hash)) {
     ctx.auth.recordLoginAttempt(username, false);
+    ctx.auth.recordAudit({
+      actor: username,
+      action: 'login.failed',
+      ip: ctx.meta.ip,
+      userAgent: ctx.meta.userAgent,
+    });
     return { ok: false, error: 'invalid credentials' };
   }
   const token = ctx.auth.createSession(acct.id, ctx.meta);
@@ -331,20 +337,20 @@ export async function logoutActionImpl(ctx: AppContext): Promise<void> {
 export async function setupTotpActionImpl(ctx: AppContext): Promise<void> {
   const me = ctx.auth.requireAccount(ctx.sessionToken, ctx.meta);
   ctx.auth.setTotpSecret(me.id, ctx.auth.generateTotpSecret());
-  audit(ctx, me, 'self.totp.enable');
+  audit(ctx, me, 'totp.setup');
 }
 
 export async function disableTotpActionImpl(ctx: AppContext): Promise<void> {
   const me = ctx.auth.requireAccount(ctx.sessionToken, ctx.meta);
   ctx.auth.setTotpSecret(me.id, null);
-  audit(ctx, me, 'self.totp.disable');
+  audit(ctx, me, 'totp.disable');
 }
 
 // T-ACT-025〜026 self
 export async function updateMyDisplayNameActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = ctx.auth.requireAccount(ctx.sessionToken, ctx.meta);
   ctx.auth.updateDisplayName(me.id, s(formData.get('displayName')) || null);
-  audit(ctx, me, 'self.display_name');
+  audit(ctx, me, 'account.self.display_name.update');
 }
 
 export async function updateMyPasswordActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
@@ -353,7 +359,7 @@ export async function updateMyPasswordActionImpl(ctx: AppContext, formData: Form
   const errs = ctx.auth.validatePassword(pw);
   if (errs.length) throw new Error(errs.join('; '));
   ctx.auth.setPasswordHash(me.id, ctx.auth.hashPassword(pw));
-  audit(ctx, me, 'self.password');
+  audit(ctx, me, 'account.self.password.update');
 }
 
 // T-ACT-027〜031 accounts
@@ -377,14 +383,14 @@ export async function updateAccountRoleActionImpl(ctx: AppContext, formData: For
     throw new Error('last admin');
   }
   ctx.auth.updateRole(id, role);
-  audit(ctx, me, 'account.role', String(id));
+  audit(ctx, me, 'account.role.update', String(id));
 }
 
 export async function updateAccountDisplayNameActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireAdmin(ctx);
   const id = Number(s(formData.get('id')));
   ctx.auth.updateDisplayName(id, s(formData.get('displayName')) || null);
-  audit(ctx, me, 'account.display_name', String(id));
+  audit(ctx, me, 'account.display_name.update', String(id));
 }
 
 export async function updateAccountPasswordActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
@@ -394,7 +400,7 @@ export async function updateAccountPasswordActionImpl(ctx: AppContext, formData:
   const errs = ctx.auth.validatePassword(pw);
   if (errs.length) throw new Error(errs.join('; '));
   ctx.auth.setPasswordHash(id, ctx.auth.hashPassword(pw));
-  audit(ctx, me, 'account.password', String(id));
+  audit(ctx, me, 'account.password.update', String(id));
 }
 
 export async function deleteAccountActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
@@ -437,13 +443,13 @@ export async function deleteIpAllowActionImpl(ctx: AppContext, formData: FormDat
 export async function upsertRateActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireSupervisor(ctx);
   upsertBillingRate(ctx.db, { prefix: s(formData.get('prefix')), perMin: Number(s(formData.get('perMin')) || '0') });
-  audit(ctx, me, 'billing.upsert', s(formData.get('prefix')));
+  audit(ctx, me, 'billing_rate.upsert', s(formData.get('prefix')));
 }
 
 export async function deleteRateActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireSupervisor(ctx);
   deleteBillingRate(ctx.db, s(formData.get('prefix')));
-  audit(ctx, me, 'billing.delete', s(formData.get('prefix')));
+  audit(ctx, me, 'billing_rate.delete', s(formData.get('prefix')));
 }
 
 // T-ACT-037〜038 trunks
