@@ -3,6 +3,7 @@ import path from 'node:path';
 import { applySchema } from '@openpbx/db';
 import { createAuthService } from './auth';
 import { createInfraSync, type InfraDirs } from './infra-sync';
+import { createAmiOriginatePort } from './ports/ami-originate';
 import type { AppContext } from './context';
 
 let dbSingleton: Database.Database | null = null;
@@ -36,6 +37,7 @@ export function buildContext(sessionToken: string | null, meta?: { ip?: string }
     sessionToken,
     meta: { ip: meta?.ip ?? '127.0.0.1', userAgent: 'command-room-web' },
     infraDirs,
+    ami: createAmiOriginatePort(),
   };
 }
 

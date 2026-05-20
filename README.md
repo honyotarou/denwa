@@ -64,9 +64,9 @@ docker compose up --build
 
 計画: `docs/OPENPBX-GAP-MIGRATION-TDD-PLAN.md` / `docs/OPENPBX-GAP-MIGRATION-NON-TDD-PLAN.md`
 
-### host-tts（開発のみ）
+### host-tts（開発のみ / T-DOC-004）
 
-カスタム IVR 音声の `say` 生成は **macOS 開発用**。legacy OpenPBX の `host-tts/` を参照。denwa リポには同梱しない。
+macOS で IVR プロンプト WAV を生成: `./host-tts/make-prompts.sh` → `asterisk/sounds/custom/`。詳細は [`host-tts/README.md`](host-tts/README.md)。CI 対象外（manual-only）。
 
 ## 本番化チェック（§11）
 
