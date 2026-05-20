@@ -1,9 +1,11 @@
 import { requireRole } from '@/lib/auth';
-import { listAccounts } from '@/server/page-data';
+import { listAccounts, getExtensions, listExtensionGrantsForAccount } from '@/server/page-data';
 import {
   createAccountAction,
   updateAccountRoleAction,
   deleteAccountAction,
+  grantExtensionAction,
+  revokeExtensionGrantAction,
 } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
 
@@ -12,6 +14,7 @@ export const dynamic = 'force-dynamic';
 export default async function AccountsPage() {
   await requireRole('admin');
   const accounts = listAccounts();
+  const webrtcExts = getExtensions().filter((e) => e.webrtc).map((e) => e.number);
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold">アカウント管理</h2>
@@ -36,11 +39,14 @@ export default async function AccountsPage() {
             <th>ユーザー</th>
             <th>表示名</th>
             <th>ロール</th>
+            <th>WebRTC 割当</th>
             <th />
           </tr>
         </thead>
         <tbody>
-          {accounts.map((a) => (
+          {accounts.map((a) => {
+            const grants = listExtensionGrantsForAccount(a.id);
+            return (
             <tr key={a.id} className="border-t">
               <td className="font-mono">{a.username}</td>
               <td>{a.displayName ?? '—'}</td>
@@ -57,6 +63,37 @@ export default async function AccountsPage() {
                   </button>
                 </form>
               </td>
+              <td className="text-xs align-top">
+                <ul className="mb-1 space-y-0.5">
+                  {grants.map((g) => (
+                    <li key={g} className="flex gap-1">
+                      <span className="font-mono">{g}</span>
+                      <form action={revokeExtensionGrantAction}>
+                        <input type="hidden" name="accountId" value={a.id} />
+                        <input type="hidden" name="extensionNumber" value={g} />
+                        <button type="submit" className="text-red-600">
+                          解除
+                        </button>
+                      </form>
+                    </li>
+                  ))}
+                </ul>
+                {a.role !== 'admin' && webrtcExts.length > 0 && (
+                  <form action={grantExtensionAction} className="flex gap-1">
+                    <input type="hidden" name="accountId" value={a.id} />
+                    <select name="extensionNumber" className="rounded border px-1 text-xs">
+                      {webrtcExts.map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="submit" className="text-blue-600">
+                      割当
+                    </button>
+                  </form>
+                )}
+              </td>
               <td>
                 <form action={deleteAccountAction}>
                   <input type="hidden" name="id" value={a.id} />
@@ -66,7 +103,8 @@ export default async function AccountsPage() {
                 </form>
               </td>
             </tr>
-          ))}
+          );
+          })}
         </tbody>
       </table>
     </div>

@@ -24,4 +24,6 @@ export * from './repos/infra-load.js';
 export * from './repos/network-settings.js';
 export * from './repos/patients.js';
 export * from './repos/patient-records.js';
+export * from './repos/account-extension-grants.js';
+export * from './repos/click-to-call-tokens.js';
 export { runProdCheckDatabase } from './prod-check.js';

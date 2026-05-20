@@ -16,6 +16,8 @@ export type AppContext = ActionContext & {
   db: Database.Database;
   infra: InfraSync;
   infraDirs: InfraDirs;
+  /** Chrome extension Bearer（cookie 不要） */
+  bearerToken?: string | null;
 };
 
 export function createTestContext(opts?: {

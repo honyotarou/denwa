@@ -25,6 +25,20 @@ export function nextStateOnIncoming(): SoftphoneUiState {
   return 'incoming';
 }
 
+export function nextStateOnDialClick(current: SoftphoneUiState): SoftphoneUiState {
+  if (current === 'registered') return 'inCall';
+  return current;
+}
+
+export function nextStateOnHangup(current: SoftphoneUiState): SoftphoneUiState {
+  if (current === 'inCall' || current === 'incoming') return 'registered';
+  return current;
+}
+
+export function nextStateOnUnregister(current: SoftphoneUiState): SoftphoneUiState {
+  return 'disconnected';
+}
+
 export function validateDialTarget(target: string): string | null {
   const t = (target ?? '').trim();
   if (!/^\d{2,6}$/.test(t)) return '発信先は 2〜6 桁の数字';
