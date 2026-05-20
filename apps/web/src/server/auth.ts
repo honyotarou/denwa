@@ -16,10 +16,19 @@ import {
   getAccountBySessionToken,
   getAccountByUsername,
   getPasswordPolicy,
+  getPasswordHash,
+  setPasswordHash,
+  updateAccountDisplayName,
+  updateAccountRole,
+  countAdmins,
+  getTotpSecret,
+  setTotpSecret,
+  deleteAccount,
   listIpAllow,
   recordAudit,
   recordLoginAttempt,
   upsertIpAllow,
+  deleteIpAllow,
 } from '@openpbx/db';
 
 export type Role = 'user' | 'supervisor' | 'admin';
@@ -84,47 +93,15 @@ export function createAuthService(db: Database.Database) {
     getAccountByUsername: (u: string) => getAccountByUsername(db, u),
     getAccountById: (id: number) => getAccountById(db, id),
     createAccount: (input: Parameters<typeof createAccount>[1]) => createAccount(db, input),
-    getPasswordHash(id: number): string | null {
-      const row = db.prepare('SELECT password_hash FROM accounts WHERE id = ?').get(id) as
-        | { password_hash: string }
-        | undefined;
-      return row?.password_hash ?? null;
-    },
-    setPasswordHash(id: number, hash: string) {
-      db.prepare(`UPDATE accounts SET password_hash = ?, updated_at = datetime('now') WHERE id = ?`).run(
-        hash,
-        id,
-      );
-    },
-    updateDisplayName(id: number, displayName: string | null) {
-      db.prepare(`UPDATE accounts SET display_name = ?, updated_at = datetime('now') WHERE id = ?`).run(
-        displayName,
-        id,
-      );
-    },
-    updateRole(id: number, role: Role) {
-      db.prepare(`UPDATE accounts SET role = ?, updated_at = datetime('now') WHERE id = ?`).run(role, id);
-    },
-    countAdmins(excludeId?: number): number {
-      const row = db
-        .prepare(
-          `SELECT COUNT(*) AS c FROM accounts WHERE role = 'admin' ${excludeId ? 'AND id != ?' : ''}`,
-        )
-        .get(...(excludeId ? [excludeId] : [])) as { c: number };
-      return row.c;
-    },
-    getTotpSecret(id: number): string | null {
-      const row = db.prepare('SELECT totp_secret FROM accounts WHERE id = ?').get(id) as
-        | { totp_secret: string | null }
-        | undefined;
-      return row?.totp_secret ?? null;
-    },
-    setTotpSecret(id: number, secret: string | null) {
-      db.prepare(`UPDATE accounts SET totp_secret = ?, updated_at = datetime('now') WHERE id = ?`).run(
-        secret,
-        id,
-      );
-    },
+    getPasswordHash: (id: number) => getPasswordHash(db, id),
+    setPasswordHash: (id: number, hash: string) => setPasswordHash(db, id, hash),
+    updateDisplayName: (id: number, displayName: string | null) =>
+      updateAccountDisplayName(db, id, displayName),
+    updateRole: (id: number, role: Role) => updateAccountRole(db, id, role),
+    countAdmins: (excludeId?: number) => countAdmins(db, excludeId),
+    getTotpSecret: (id: number) => getTotpSecret(db, id),
+    setTotpSecret: (id: number, secret: string | null) => setTotpSecret(db, id, secret),
+    deleteAccount: (id: number) => deleteAccount(db, id),
     validatePassword(plain: string): string[] {
       const p = getPasswordPolicy(db);
       return validatePasswordAgainstPolicy(plain, {
@@ -139,6 +116,7 @@ export function createAuthService(db: Database.Database) {
     validateCidr: isValidCidr,
     listIpAllow: () => listIpAllow(db),
     upsertIpAllow: (cidr: string, note?: string) => upsertIpAllow(db, cidr, note),
+    deleteIpAllow: (cidr: string) => deleteIpAllow(db, cidr),
     generateTotpSecret: generateSecret,
     verifyTotpCode: verifyTotp,
   };

@@ -10,34 +10,29 @@ import {
   inspectManagerConf,
   inspectRtpConf,
   rtpRangeMatchesCompose,
-} from '../asterisk/conf-inspect.js';
+} from '@openpbx/ops';
 import {
   expectedBuildContexts,
   missingEnvKeys,
   parseComposeBuildContexts,
   WEB_REQUIRED_ENV_KEYS,
-} from '../docker/compose-env.js';
-import {
   readComposeDraftFromFile,
   allRequiredComposePortsPresent,
-} from '../docker/compose-file.js';
-import {
   listInboxMetaFiles,
   readInboxMeta,
   runNotifyEventScript,
-} from '../inbox/notify-runner.js';
-import { buildInboxMeta, INBOX_META_SCHEMA } from '../inbox/meta.js';
-import {
-  ALL_AUDIT_ACTIONS,
-  extractAuditActionsFromSource,
-  unknownAuditActions,
-} from '../prod/audit-actions.js';
-import {
   formatProdCheckReport,
   mergeProdCheckResults,
   prodCheckSecretsReady,
   runProdCheckFiles,
-} from '../prod/check.js';
+} from '@openpbx/ops';
+import {
+  buildInboxMeta,
+  INBOX_META_SCHEMA,
+  ALL_AUDIT_ACTIONS,
+  extractAuditActionsFromSource,
+  unknownAuditActions,
+} from '@openpbx/core';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
@@ -240,7 +235,7 @@ describe('Phase 8 — runtime & production', () => {
 
   describe('T-PROD-009: audit action enum', () => {
     it('Given handlers When extract audit actions Then all known', () => {
-      const actions = path.join(ROOT, 'apps/web/src/server/actions-handlers.ts');
+      const actions = path.join(ROOT, 'apps/web/src/server/actions/impl.ts');
       const api = path.join(ROOT, 'apps/web/src/server/api-handlers.ts');
       const used = [
         ...extractAuditActionsFromSource(fs.readFileSync(actions, 'utf8')),

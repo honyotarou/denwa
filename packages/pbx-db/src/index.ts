@@ -18,3 +18,6 @@ export * from './repos/billing.js';
 export * from './repos/concurrency.js';
 export * from './repos/version-upgrades.js';
 export * from './repos/sip-trunks.js';
+export * from './repos/lists.js';
+export * from './repos/infra-load.js';
+export { runProdCheckDatabase } from './prod-check.js';
