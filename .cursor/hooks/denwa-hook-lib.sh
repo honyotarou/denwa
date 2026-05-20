@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Shared helpers for denwa Cursor hooks.
 set -euo pipefail
 
 denwa_root() {
@@ -30,18 +31,22 @@ denwa_is_source_path() {
 }
 
 denwa_mark_dirty() {
-  mkdir -p "$1/.cursor"
-  date +%s >"$1/.cursor/.denwa-dirty"
+  local root="$1"
+  mkdir -p "$root/.cursor"
+  date +%s >"$root/.cursor/.denwa-dirty"
 }
 
 denwa_is_dirty() {
-  [[ -f "$1/.cursor/.denwa-dirty" ]]
+  local root="$1"
+  [[ -f "$root/.cursor/.denwa-dirty" ]]
 }
 
 denwa_clear_dirty() {
-  rm -f "$1/.cursor/.denwa-dirty"
+  local root="$1"
+  rm -f "$root/.cursor/.denwa-dirty"
 }
 
+# Debounce rapid static runs (lock age < 2s)
 denwa_run_static() {
   local root="$1"
   local target="${2:-}"
@@ -65,5 +70,12 @@ denwa_run_static() {
 }
 
 denwa_tool_path() {
-  echo "$1" | jq -r '.tool_input.path // .tool_input.file_path // .tool_input.target_file // empty' 2>/dev/null || true
+  local input="$1"
+  echo "$input" | jq -r '
+    .tool_input.path //
+    .tool_input.file_path //
+    .tool_input.target_file //
+    .tool_input.filePath //
+    empty
+  ' 2>/dev/null || true
 }
