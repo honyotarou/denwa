@@ -1,0 +1,1173 @@
+{
+  "tables": [
+    {
+      "name": "accounts",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "username",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "display_name",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "password_hash",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "role",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "totp_secret",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "audit_log",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "actor",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "action",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "target",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "details",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "ip",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "user_agent",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "billing_rates",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "prefix",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "label",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "per_min",
+          "type": "REAL",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "setup_fee",
+          "type": "REAL",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "cdr_ingest_state",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "source_path",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "inode",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "offset",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "cdr_records",
+      "columns": [
+        {
+          "name": "uniqueid",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "src",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "dst",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "dcontext",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "clid",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "channel",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "dst_channel",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "lastapp",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "lastdata",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "start_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "answer_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "end_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "duration",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "billsec",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "disposition",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "amaflag",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "accountcode",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "userfield",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "imported_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "concurrency_snapshots",
+      "columns": [
+        {
+          "name": "minute_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "channels",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "recorded_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "extensions",
+      "columns": [
+        {
+          "name": "number",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "display_name",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "secret",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "note",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "webrtc",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "guidances",
+      "columns": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "text",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "source",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "size",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "holidays",
+      "columns": [
+        {
+          "name": "date",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "ip_allow_list",
+      "columns": [
+        {
+          "name": "cidr",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "note",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "ivr_menus",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "number",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "welcome_prompt",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "menu_prompt",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "invalid_prompt",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "goodbye_prompt",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "max_retries",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "wait_seconds",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "ivr_options",
+      "columns": [
+        {
+          "name": "ivr_menu_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 1
+        },
+        {
+          "name": "digit",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 2
+        },
+        {
+          "name": "action",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "target",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "label",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "login_history",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "username",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "success",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "ip",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "user_agent",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "network_settings",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "external_ip",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "external_signaling_ip",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "local_net",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "password_policies",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "min_length",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "require_lowercase",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "require_uppercase",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "require_digit",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "require_symbol",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "rotation_days",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "lockout_threshold",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "patient_records",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "patient_id",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "extension",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "recorded_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "summary",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "note",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "recommendations_json",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "patients",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "kana",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "birth_date",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "phone",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "note",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "phonebook",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "number",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "category",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "note",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "pickup_group_members",
+      "columns": [
+        {
+          "name": "pickup_group_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 1
+        },
+        {
+          "name": "extension_number",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 2
+        }
+      ]
+    },
+    {
+      "name": "pickup_groups",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "ring_group_members",
+      "columns": [
+        {
+          "name": "ring_group_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 1
+        },
+        {
+          "name": "extension_number",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 2
+        },
+        {
+          "name": "priority",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "ring_groups",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "number",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "strategy",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "ring_seconds",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "fallback_extension",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "sessions",
+      "columns": [
+        {
+          "name": "token",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "account_id",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "expires_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "user_agent",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "ip",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "sip_trunks",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "host",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "port",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "username",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "secret",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "registration",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "from_user",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "from_domain",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "did_inbound",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "outbound_prefix",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "note",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "time_rules",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "days",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "start_time",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "end_time",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "note",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "version_upgrades",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "scheduled_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "asterisk_image",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "web_image",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "note",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "applied_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    }
+  ],
+  "indexes": [
+    "idx_audit_created",
+    "idx_cdr_dst",
+    "idx_cdr_src",
+    "idx_cdr_start",
+    "idx_login_history_user",
+    "idx_patient_records_date",
+    "idx_patient_records_pid",
+    "idx_patients_kana",
+    "idx_patients_name",
+    "idx_phonebook_name",
+    "idx_phonebook_number"
+  ]
+}

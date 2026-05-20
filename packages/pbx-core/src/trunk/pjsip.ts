@@ -1,4 +1,5 @@
 import type { TrunkDraft } from './types.js';
+import { validateTrunkDraft } from './validate.js';
 
 export function renderTrunksPjsip(
   trunks: readonly TrunkDraft[],
@@ -25,4 +26,14 @@ export function renderTrunksPjsip(
     lines.push(`[${t.name}-identify]`, 'type=identify', `endpoint=${t.name}`, `match=${t.host}`, '');
   }
   return lines.join('\n');
+}
+
+export function renderTrunksPjsipIfValid(
+  trunks: readonly TrunkDraft[],
+  opts?: { updatedAt?: string },
+): string | null {
+  for (const t of trunks) {
+    if (validateTrunkDraft(t).length > 0) return null;
+  }
+  return renderTrunksPjsip(trunks, opts);
 }

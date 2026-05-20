@@ -1,0 +1,76 @@
+{
+  "services": [
+    {
+      "name": "asterisk",
+      "ports": [
+        "10000-10020:10000-10020/udp",
+        "5060:5060/tcp",
+        "5060:5060/udp",
+        "8088:8088/tcp",
+        "8089:8089/tcp"
+      ],
+      "volumes": [
+        "./asterisk/asterisk.conf:/etc/asterisk/asterisk.conf:ro",
+        "./asterisk/cdr.conf:/etc/asterisk/cdr.conf:ro",
+        "./asterisk/certs:/etc/asterisk/certs:ro",
+        "./asterisk/dialplan.d:/etc/asterisk/dialplan.d",
+        "./asterisk/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro",
+        "./asterisk/extensions.conf:/etc/asterisk/extensions.conf:ro",
+        "./asterisk/http.conf:/etc/asterisk/http.conf:ro",
+        "./asterisk/logger.conf:/etc/asterisk/logger.conf:ro",
+        "./asterisk/manager.conf:/etc/asterisk/manager.conf:ro",
+        "./asterisk/modules.conf:/etc/asterisk/modules.conf:ro",
+        "./asterisk/notify-event.sh:/usr/local/bin/notify-event.sh:ro",
+        "./asterisk/pjsip.conf:/etc/asterisk/pjsip.conf:ro",
+        "./asterisk/pjsip.d:/etc/asterisk/pjsip.d",
+        "./asterisk/rtp.conf:/etc/asterisk/rtp.conf:ro",
+        "./asterisk/sounds/custom:/var/lib/asterisk/sounds/custom:ro",
+        "./data/asterisk-cdr:/var/log/asterisk/cdr-csv",
+        "./data/inbox:/inbox",
+        "./data/recordings:/var/spool/asterisk/monitor",
+        "./data/signals:/signals"
+      ],
+      "environmentKeys": [
+        "INBOX_DIR"
+      ]
+    },
+    {
+      "name": "web",
+      "ports": [
+        "3000:3000"
+      ],
+      "volumes": [
+        "./asterisk/dialplan.d:/asterisk/dialplan.d",
+        "./asterisk/pjsip.d:/asterisk/pjsip.d",
+        "./asterisk/sounds:/sounds",
+        "./data/asterisk-cdr:/app/data/asterisk-cdr:ro",
+        "./data/db:/app/data/db",
+        "./data/inbox:/app/data/inbox:ro",
+        "./data/recordings:/app/data/recordings:ro",
+        "./data/signals:/asterisk/signals"
+      ],
+      "environmentKeys": [
+        "AMI_HOST",
+        "AMI_PORT",
+        "AMI_SECRET",
+        "AMI_USERNAME",
+        "ASTERISK_SIGNAL_DIR",
+        "CDR_CSV_PATH",
+        "DATABASE_PATH",
+        "DIALPLAN_OUT_DIR",
+        "INBOX_DIR",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY",
+        "NODE_ENV",
+        "PJSIP_OUT_DIR",
+        "RECORDINGS_DIR",
+        "SOUNDS_DIR"
+      ]
+    }
+  ],
+  "networks": [
+    {
+      "name": "command-room",
+      "driver": "bridge"
+    }
+  ]
+}

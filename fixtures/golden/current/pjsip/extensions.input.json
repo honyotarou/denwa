@@ -1,0 +1,20 @@
+{
+  "id": "T-GM-001",
+  "updatedAt": "2026-05-19T00:00:00.000Z",
+  "extensions": [
+    {
+      "number": "1001",
+      "displayName": "Reception",
+      "secret": "secret-1001",
+      "webrtc": false,
+      "pickupGroupNames": []
+    },
+    {
+      "number": "1002",
+      "displayName": null,
+      "secret": "secret-1002",
+      "webrtc": true,
+      "pickupGroupNames": []
+    }
+  ]
+}
