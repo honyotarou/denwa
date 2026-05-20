@@ -175,6 +175,21 @@ describe('T-PKG-001: actions/forms use db subpaths not barrel', () => {
   });
 });
 
+describe('T-CLIENT-CORE-001: client bundles use core subpaths only', () => {
+  it("Given 'use client' files When import @openpbx/core Then subpath not barrel", () => {
+    const violations: string[] = [];
+    const srcRoot = path.join(ROOT, '..');
+    for (const file of walk(srcRoot, (p) => /\.(tsx?)$/.test(p))) {
+      const text = fs.readFileSync(file, 'utf8');
+      if (!/['"]use client['"]/.test(text)) continue;
+      if (/from\s+['"]@openpbx\/core['"]/.test(text)) {
+        violations.push(path.relative(srcRoot, file));
+      }
+    }
+    expect(violations, violations.join(', ')).toEqual([]);
+  });
+});
+
 describe('T-INFRA-TRUNK-001: trunk sync uses validated render', () => {
   it('Given infra-sync.ts When read Then renderTrunksPjsipIfValid', () => {
     const text = fs.readFileSync(path.join(SERVER, 'infra-sync.ts'), 'utf8');

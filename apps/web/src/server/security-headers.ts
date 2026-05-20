@@ -4,7 +4,8 @@ export function buildSecurityHeaders(isProduction: boolean): Readonly<Record<str
   const headers: Record<string, string> = {
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Content-Security-Policy': "default-src 'self'; script-src 'self'; object-src 'none'",
+    // Next.js App Router は RSC ブートストラップに inline script が必要（nonce 未導入）
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; object-src 'none'",
     'X-Content-Type-Options': 'nosniff',
   };
   if (isProduction) {

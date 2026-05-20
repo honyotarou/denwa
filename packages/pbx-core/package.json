@@ -7,7 +7,9 @@
     ".": "./src/index.ts",
     "./auth/policy": "./src/auth/policy.ts",
     "./auth/middleware-ip-policy": "./src/auth/middleware-ip-policy.ts",
-    "./auth/access": "./src/auth/access.ts"
+    "./auth/access": "./src/auth/access.ts",
+    "./softphone/state": "./src/softphone/state.ts",
+    "./triage/flow-graph": "./src/triage/flow-graph.ts"
   },
   "scripts": {
     "test": "vitest run",

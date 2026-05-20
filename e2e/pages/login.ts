@@ -4,12 +4,14 @@ import { E2E_ADMIN } from '../lib/credentials';
 export type LoginCreds = Readonly<{ username: string; password: string }>;
 
 export async function gotoLogin(page: Page) {
-  return page.goto('/login');
+  const res = await page.goto('/login', { waitUntil: 'load' });
+  await page.locator('input[name="username"]').waitFor({ state: 'visible', timeout: 30_000 });
+  return res;
 }
 
 export async function fillLoginForm(page: Page, creds: LoginCreds = E2E_ADMIN): Promise<void> {
-  await page.getByRole('textbox', { name: 'ユーザー名' }).fill(creds.username);
-  await page.getByLabel('パスワード', { exact: true }).fill(creds.password);
+  await page.locator('input[name="username"]').fill(creds.username);
+  await page.locator('input[name="password"]').fill(creds.password);
 }
 
 export async function submitLogin(page: Page): Promise<void> {

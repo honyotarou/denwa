@@ -26,7 +26,11 @@ export function e2ePjsipExtensionsConf() {
 /** Env for `next start` when cwd is apps/web. */
 export function e2eWebProcessEnv() {
   return {
-    NODE_ENV: 'test',
+    /** next start は production。middleware IP と cookie secure を E2E 用に緩める */
+    NODE_ENV: 'production',
+    IP_ALLOW_CIDRS: '127.0.0.0/8,::1/128',
+    TRUSTED_PROXY_COUNT: '1',
+    COOKIE_SECURE: '0',
     DATABASE_PATH: path.relative(path.join(ROOT, 'apps/web'), e2eDbPath()),
     PJSIP_OUT_DIR: path.relative(path.join(ROOT, 'apps/web'), e2ePjsipDir()),
     DIALPLAN_OUT_DIR: path.relative(path.join(ROOT, 'apps/web'), e2eDialplanDir()),
