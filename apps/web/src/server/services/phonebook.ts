@@ -2,7 +2,7 @@ import { normalizePhonebookNumber, validatePhonebookDraft } from '@openpbx/core'
 import { createPhonebookEntry, deletePhonebookEntry, updatePhonebookEntry } from '@openpbx/db';
 import type { AppContext } from '../context';
 import type { SessionAccount } from '../auth';
-import { audit } from '../actions/shared';
+import { audit } from '../audit';
 import { throwIfInvalid } from './validate';
 
 export function createPhonebookWithAudit(

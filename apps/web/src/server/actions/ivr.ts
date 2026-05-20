@@ -1,7 +1,7 @@
-import { validateIvrMenuDraft, type IvrMenuDraft, type IvrOptionDraft } from '@openpbx/core';
-import { createIvrMenu, updateIvrMenu, deleteIvrMenu, DuplicateError } from '@openpbx/db';
+import type { IvrMenuDraft, IvrOptionDraft } from '@openpbx/core';
 import type { AppContext } from '../context.js';
-import { audit, requireUser, s } from './shared.js';
+import { requireUser, s } from './shared.js';
+import { deleteIvrWithSync, upsertIvrWithSync } from '../services/ivr';
 
 function parseIvrOptions(formData: FormData): readonly IvrOptionDraft[] {
   const json = s(formData.get('optionsJson'));
@@ -31,35 +31,13 @@ function buildIvrDraftFromForm(formData: FormData): IvrMenuDraft {
   };
 }
 
-
 // T-ACT-018〜019 IVR
 export async function upsertIvrActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireUser(ctx);
-  const draft = buildIvrDraftFromForm(formData);
-  const errs = validateIvrMenuDraft(draft);
-  if (errs.length) throw new Error(errs.join('; '));
-  const options = draft.options.map((o) => ({
-    digit: o.digit,
-    action: o.action,
-    target: o.target,
-    label: o.label,
-  }));
-  try {
-    createIvrMenu(ctx.db, { number: draft.number, name: draft.name ?? undefined, options });
-  } catch (e) {
-    if (e instanceof DuplicateError) {
-      updateIvrMenu(ctx.db, { number: draft.number, name: draft.name ?? undefined, options });
-    } else throw e;
-  }
-  await ctx.infra.syncIvr();
-  audit(ctx, me, 'ivr.upsert', draft.number);
+  await upsertIvrWithSync(ctx, me, buildIvrDraftFromForm(formData));
 }
 
 export async function deleteIvrActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireUser(ctx);
-  const number = s(formData.get('number'));
-  deleteIvrMenu(ctx.db, number);
-  await ctx.infra.syncIvr();
-  audit(ctx, me, 'ivr.delete', number);
+  await deleteIvrWithSync(ctx, me, s(formData.get('number')));
 }
-

@@ -5,12 +5,16 @@ import { createInfraSync, type InfraDirs, type InfraSync } from './infra-sync';
 
 export type Role = 'user' | 'supervisor' | 'admin';
 
-export type AppContext = {
-  db: Database.Database;
+/** Actions / auth use-cases: no direct db or infra. */
+export type ActionContext = {
   auth: AuthService;
-  infra: InfraSync;
   sessionToken: string | null;
   meta: RequestMeta;
+};
+
+export type AppContext = ActionContext & {
+  db: Database.Database;
+  infra: InfraSync;
   infraDirs: InfraDirs;
 };
 

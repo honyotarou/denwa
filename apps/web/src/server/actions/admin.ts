@@ -1,16 +1,19 @@
-import { deleteBillingRate, updatePasswordPolicy, upsertBillingRate } from '@openpbx/db';
 import type { AppContext } from '../context.js';
 import { audit, requireAdmin, requireSupervisor, s } from './shared.js';
+import {
+  deleteBillingRateWithAudit,
+  updatePasswordPolicyWithAudit,
+  upsertBillingRateWithAudit,
+} from '../services/admin-policy';
 import { deleteTrunkWithSync, upsertTrunkWithSync } from '../services/trunks';
 import { deleteUpgradeWithAudit, scheduleUpgradeWithAudit } from '../services/upgrades';
 
 export async function updatePolicyActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireAdmin(ctx);
-  updatePasswordPolicy(ctx.db, {
+  updatePasswordPolicyWithAudit(ctx, me, {
     minLength: Number(s(formData.get('minLength')) || '8'),
     requireDigit: formData.get('requireDigit') === 'on',
   });
-  audit(ctx, me, 'policy.update');
 }
 
 export async function upsertIpAllowActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
@@ -30,14 +33,15 @@ export async function deleteIpAllowActionImpl(ctx: AppContext, formData: FormDat
 
 export async function upsertRateActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireSupervisor(ctx);
-  upsertBillingRate(ctx.db, { prefix: s(formData.get('prefix')), perMin: Number(s(formData.get('perMin')) || '0') });
-  audit(ctx, me, 'billing_rate.upsert', s(formData.get('prefix')));
+  upsertBillingRateWithAudit(ctx, me, {
+    prefix: s(formData.get('prefix')),
+    perMin: Number(s(formData.get('perMin')) || '0'),
+  });
 }
 
 export async function deleteRateActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireSupervisor(ctx);
-  deleteBillingRate(ctx.db, s(formData.get('prefix')));
-  audit(ctx, me, 'billing_rate.delete', s(formData.get('prefix')));
+  deleteBillingRateWithAudit(ctx, me, s(formData.get('prefix')));
 }
 
 export async function upsertTrunkActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
