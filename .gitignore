@@ -22,6 +22,11 @@ data/asterisk-cdr/*
 data/pbx-out/**/*
 !data/pbx-out/pjsip.d/.gitkeep
 !data/pbx-out/dialplan.d/.gitkeep
+data/e2e-run/
+
+e2e/.auth/
+e2e/test-results/
+e2e/playwright-report/
 
 asterisk/pjsip.d/*.conf
 !asterisk/pjsip.d/transports.conf
