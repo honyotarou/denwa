@@ -10,11 +10,19 @@
     "postToolUse": [
       {
         "command": ".cursor/hooks/denwa-post-tool.sh",
-        "matcher": "Write|Edit|StrReplace|search_replace"
+        "matcher": "Write|Edit|StrReplace|search_replace|Shell"
       }
     ],
-    "afterFileEdit": [{ "command": ".cursor/hooks/denwa-after-file-edit.sh" }],
-    "afterTabFileEdit": [{ "command": ".cursor/hooks/denwa-after-file-edit.sh" }],
+    "afterFileEdit": [
+      {
+        "command": ".cursor/hooks/denwa-after-file-edit.sh"
+      }
+    ],
+    "afterTabFileEdit": [
+      {
+        "command": ".cursor/hooks/denwa-after-file-edit.sh"
+      }
+    ],
     "stop": [
       {
         "command": ".cursor/hooks/denwa-stop-harness.sh",
@@ -27,6 +35,10 @@
         "matcher": "git commit"
       }
     ],
-    "sessionStart": [{ "command": ".cursor/hooks/denwa-session-context.sh" }]
+    "sessionStart": [
+      {
+        "command": ".cursor/hooks/denwa-session-context.sh"
+      }
+    ]
   }
 }

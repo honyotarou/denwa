@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Lightweight static gate for denwa (pre-commit / harness:fast).
+ * See .cursor/skills/denwa/steps-denwa.md §運用
  */
 import { execSync } from "node:child_process";
 import fs from "node:fs";
@@ -56,13 +57,15 @@ function checkTestFile(file) {
   const text = readSafe(file);
   const rel = path.relative(ROOT, file);
   if (/\bit\.skip\s*\(/.test(text)) {
-    failures.push(`${rel}: it.skip is forbidden`);
+    failures.push(`${rel}: it.skip is forbidden (use manual-only in progress table)`);
   }
   if (!file.includes("roadmap.test")) {
     const todos = [...text.matchAll(/\bit\.todo\s*\(\s*['"`]([^'"`]+)/g)];
     for (const [, label] of todos) {
       if (!/^T-[A-Z]+-\d{3}:/.test(label.trim())) {
-        warnings.push(`${rel}: it.todo without T-XXX-000 prefix`);
+        warnings.push(
+          `${rel}: it.todo without T-XXX-000 prefix — "${label.slice(0, 60)}..."`,
+        );
       }
     }
   }
@@ -72,7 +75,7 @@ function checkWebLibFile(file) {
   const rel = path.relative(ROOT, file);
   const text = readSafe(file);
   if (/export function (validate|render|parse|compute)/.test(text)) {
-    failures.push(`${rel}: domain logic belongs in @openpbx/core`);
+    failures.push(`${rel}: domain-like exports belong in @openpbx/core, not apps/web/src/lib`);
   }
 }
 
@@ -87,6 +90,7 @@ function checkSingleFile(abs) {
   }
 }
 
+// --- it.skip / it.todo / web lib (full tree or single file) ---
 if (targetAbs) {
   checkSingleFile(targetAbs);
 } else {
@@ -101,13 +105,22 @@ if (targetAbs) {
   }
 }
 
-const SECRET_PATTERNS = [/\.env$/, /\.env\./, /credentials\.json$/, /\.pem$/, /\.key$/];
+// --- staged secret patterns ---
+const SECRET_PATTERNS = [
+  /\.env$/,
+  /\.env\./,
+  /credentials\.json$/,
+  /\.pem$/,
+  /\.key$/,
+];
 const SECRET_CONTENT = [
   /admin-please-change/,
   /secret-100[12]/,
   /command-room-ami-secret/,
   /LINE_CHANNEL_ACCESS_TOKEN\s*=/,
 ];
+
+/** 検知ルール・計画書など、パターン文字列を含んでよい staged ファイル */
 const STAGED_SECRET_SCAN_SKIP = new Set([
   "scripts/check-denwa-static.mjs",
   "docs/TDD-REBUILD-PLAN.md",
@@ -116,7 +129,7 @@ const STAGED_SECRET_SCAN_SKIP = new Set([
 
 for (const rel of stagedFiles()) {
   if (SECRET_PATTERNS.some((re) => re.test(rel))) {
-    failures.push(`staged: ${rel} must not be committed`);
+    failures.push(`staged: ${rel} must not be committed (secrets/env)`);
   }
   if (STAGED_SECRET_SCAN_SKIP.has(rel)) continue;
   const abs = path.join(ROOT, rel);
@@ -129,7 +142,10 @@ for (const rel of stagedFiles()) {
   }
 }
 
-for (const w of warnings) console.warn(`[denwa:static:warn] ${w}`);
+// --- report ---
+for (const w of warnings) {
+  console.warn(`[denwa:static:warn] ${w}`);
+}
 if (failures.length) {
   console.error("[denwa:static] FAILED:");
   for (const f of failures) console.error(`  - ${f}`);

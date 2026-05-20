@@ -1,4 +1,12 @@
-# pre-commit: check:static / pre-push: harness
+# https://github.com/evilmartians/lefthook
+# After clone: npm install  (prepare → lefthook install)
+#
+# Cursor hooks (毎回): preToolUse/postToolUse/afterFileEdit → check:static
+#                     stop（ソース変更時）→ npm run harness
+#
+# Git:
+#   pre-commit  → check:static のみ（速い）
+#   pre-push    → npm run harness（full・最終門番）
 pre-commit:
   commands:
     static:
@@ -9,6 +17,7 @@ pre-commit:
         - "scripts/**/*"
         - "docs/**/*"
         - "package.json"
+        - "package-lock.json"
 
 pre-push:
   commands:
