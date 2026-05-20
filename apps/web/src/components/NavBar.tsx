@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Account } from '@/lib/auth';
+import { showNetworkLink } from '@/lib/nav-policy';
 
 const linkCls =
   'rounded px-2 py-1 whitespace-nowrap hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500';
@@ -7,7 +8,7 @@ const linkCls =
 export function NavBar({ me }: { me: Account | null }) {
   if (!me) return null;
   const sup = me.role === 'supervisor' || me.role === 'admin';
-  const adm = me.role === 'admin';
+  const adm = showNetworkLink(me.role);
   return (
     <nav
       className="flex flex-1 items-center gap-3 overflow-x-auto text-sm"
