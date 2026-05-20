@@ -50,6 +50,8 @@ export const SERVER_ACTION_AUDIT_ACTIONS = [
   'patient.record.delete',
   'click2call.token.create',
   'click2call.token.revoke',
+  'extension.grant',
+  'extension.grant.revoke',
 ] as const;
 
 export const API_AUDIT_ACTIONS = [

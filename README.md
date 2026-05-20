@@ -57,8 +57,10 @@ docker compose up --build
 | `/network` | Tailscale / NAT → `data/pbx-out/pjsip.d/transports.conf`（admin） |
 | `/patients` | 患者 CRUD・記録（個人情報は平文+監査。診断ツールではない） |
 | `/triage?patient=12345` | 問診フロー（受付補助）→ 患者記録 `kind=triage` |
-| `/softphone` | WebRTC UI（admin のみ credential。sip.js は次段） |
-| `chrome-extension/` | Click-to-call 雛形（Bearer token は `/me` 発行は次段） |
+| `/softphone` | WebRTC + sip.js（npm pin）。admin 全件 / user は内線割当 |
+| `/me` | Click-to-call Bearer トークン発行・失効 |
+| `chrome-extension/` | MV3 + Bearer → `/api/originate` |
+| `/accounts` | user への WebRTC 内線割当（`account_extension_grants`） |
 
 計画: `docs/OPENPBX-GAP-MIGRATION-TDD-PLAN.md` / `docs/OPENPBX-GAP-MIGRATION-NON-TDD-PLAN.md`
 

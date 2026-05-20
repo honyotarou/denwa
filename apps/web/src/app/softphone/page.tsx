@@ -18,7 +18,7 @@ export default async function SoftphonePage() {
       <header>
         <h2 className="text-lg font-semibold">ブラウザソフトフォン (WebRTC)</h2>
         <p className="text-xs text-slate-500">
-          admin のみ内線 credential を表示。sip.js は次 PR で npm pin 導入（T-SOFT-016）。
+          admin は全 WebRTC 内線。user/supervisor は /accounts の内線割当のみ（T-SOFT-002/003）。
         </p>
       </header>
       <SoftphonePanel profiles={profiles} defaultHost={host} />
