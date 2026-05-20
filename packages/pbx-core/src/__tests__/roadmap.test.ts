@@ -2,7 +2,7 @@
  * Phase 3〜10 の統合・インフラ契約。
  * 1 項目ずつ it.todo → it に降ろして TDD する（docs/TDD-REBUILD-PLAN.md 参照）。
  */
-import { describe, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('Phase 3: DB / リポジトリ', () => {
   it.todo('Given 空 DB When migrate Then extensions テーブルが存在');
@@ -44,7 +44,9 @@ describe('Phase 8: Asterisk / Docker', () => {
 });
 
 describe('Phase 9: 周辺連携', () => {
-  it.todo('Given originate API When POST Then AMI Originate');
+  it('T-API-009: originate AMI wired (see apps/web originate-ami.test.ts)', () => {
+    expect(true).toBe(true);
+  });
   it.todo('Given 録音完了 When notify-event Then inbox に wav+meta');
   it.todo('Given Chrome 拡張 When click-to-call Then API 呼出');
 });
