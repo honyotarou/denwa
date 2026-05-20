@@ -55,6 +55,8 @@ services:
       - ./data/signals:/asterisk/signals
     environment:
       NODE_ENV: production
+      # Reverse proxy 前では 0（XFF 偽装無視）。nginx 等 1 段なら 1。
+      TRUSTED_PROXY_COUNT: "0"
       DATABASE_PATH: /app/data/db/command-room.sqlite
       RECORDINGS_DIR: /app/data/recordings
       INBOX_DIR: /app/data/inbox

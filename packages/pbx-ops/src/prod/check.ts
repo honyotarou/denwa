@@ -37,7 +37,8 @@ export function runProdCheckFiles(input: ProdCheckInput): ProdCheckResult {
 
   const compose = readFileOrEmpty(path.join(root, 'docker-compose.yml'));
   const manager = readFileOrEmpty(path.join(root, 'asterisk/manager.conf'));
-  const actionsTs = readFileOrEmpty(path.join(root, 'apps/web/src/app/actions.ts'));
+  const authActionsTs = readFileOrEmpty(path.join(root, 'apps/web/src/app/actions/auth.ts'));
+  const sessionCookieTs = readFileOrEmpty(path.join(root, 'apps/web/src/server/session-cookie.ts'));
   const pjsipSeed = readFileOrEmpty(path.join(root, 'asterisk/pjsip.d/extensions.conf'));
   const goldenPjsip = readFileOrEmpty(
     path.join(root, 'fixtures/golden/current/pjsip/extensions.conf'),
@@ -74,13 +75,17 @@ export function runProdCheckFiles(input: ProdCheckInput): ProdCheckResult {
     findings.push(pass('T-PROD-006', 'AMI permit narrowed from default Docker range'));
   }
 
-  const loginCookieBlock = actionsTs.includes("store.set('cr_session'")
-    ? actionsTs.slice(actionsTs.indexOf("store.set('cr_session'"))
+  const loginCookieBlock = authActionsTs.includes("store.set('cr_session'")
+    ? authActionsTs.slice(authActionsTs.indexOf("store.set('cr_session'"))
     : '';
-  const hasSecureTrue = /secure:\s*true/.test(loginCookieBlock);
+  const hasSecureTrue =
+    /secure:\s*true/.test(loginCookieBlock) ||
+    (/sessionCookieOptions/.test(loginCookieBlock) &&
+      /secure/.test(sessionCookieTs) &&
+      /NODE_ENV\s*===\s*['"]production['"]/.test(sessionCookieTs));
   const prodNodeEnv = /NODE_ENV:\s*production/.test(compose);
   if (!loginCookieBlock) {
-    findings.push(fail('T-PROD-004', 'session cookie block not found in apps/web/src/app/actions.ts'));
+    findings.push(fail('T-PROD-004', 'session cookie block not found in apps/web/src/app/actions/auth.ts'));
   } else if (prodNodeEnv && !hasSecureTrue) {
     findings.push(
       fail('T-PROD-004', 'session cookie missing secure: true while NODE_ENV=production in compose'),

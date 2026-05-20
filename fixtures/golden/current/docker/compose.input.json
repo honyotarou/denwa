@@ -58,7 +58,8 @@
         "NODE_ENV",
         "PJSIP_OUT_DIR",
         "RECORDINGS_DIR",
-        "SOUNDS_DIR"
+        "SOUNDS_DIR",
+        "TRUSTED_PROXY_COUNT"
       ]
     }
   },

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { loginAction } from '@/app/actions';
 import { getCurrentAccount } from '@/lib/auth';
+import { safeRedirectPath } from '@/server/safe-redirect';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,8 @@ export default async function LoginPage({
 }) {
   const sp = await searchParams;
   const account = await getCurrentAccount();
-  if (account) redirect(sp.next ?? '/');
+  const next = safeRedirectPath(sp.next);
+  if (account) redirect(next);
 
   return (
     <div className="mx-auto max-w-sm space-y-4 py-12">
@@ -20,7 +22,7 @@ export default async function LoginPage({
         <p className="text-xs text-slate-500">Command Room PBX 管理画面</p>
       </header>
       <form action={loginAction} className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
-        <input type="hidden" name="next" value={sp.next ?? '/'} />
+        <input type="hidden" name="next" value={next} />
         <label className="block text-xs text-slate-600">
           ユーザー名
           <input
