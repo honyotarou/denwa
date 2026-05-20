@@ -15,7 +15,10 @@ export default async function UpgradesPage() {
       {due.length > 0 && (
         <section className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm">
           <h3 className="font-semibold text-amber-900">実行時期を過ぎた予約 ({due.length})</h3>
-          <p className="mt-1 text-amber-800">手動で以下を実行してください（自動 pull は行いません）。</p>
+          <p className="mt-1 text-amber-800">
+            <code className="rounded bg-amber-100 px-1">ALLOW_UPGRADE_EXEC=1</code> と docker.sock があれば Web が自動実行します。
+            それ以外は <code className="rounded bg-amber-100 px-1">scripts/upgrade-watcher.sh</code> または以下を手動実行してください。
+          </p>
           <ul className="mt-3 space-y-3">
             {due.map((u) => (
               <li key={u.id} className="rounded border border-amber-200 bg-white p-3">
@@ -49,6 +52,9 @@ export default async function UpgradesPage() {
           <li key={u.id} className="flex justify-between p-3">
             <span>
               {u.asteriskImage} {formatJst(u.scheduledAt)}
+              {u.appliedAt ? (
+                <span className="ml-2 text-emerald-600 text-xs">適用済 {formatJst(u.appliedAt)}</span>
+              ) : null}
             </span>
             <form action={deleteUpgradeAction}>
               <input type="hidden" name="id" value={u.id} />

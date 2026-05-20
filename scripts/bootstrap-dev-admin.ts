@@ -13,6 +13,7 @@ import {
   normalizeNetworkSettingsDraft,
   renderPjsipExtensions,
   renderPjsipTransportsConf,
+  renderEmptyTrunksPjsip,
   toExtensionDraft,
 } from '@openpbx/core';
 import {
@@ -95,7 +96,7 @@ async function syncPjsip(): Promise<void> {
   await writePjsipFile(pjsipDir, 'transports.conf', transports);
   const trunksPath = path.join(pjsipDir, 'trunks.conf');
   if (!fs.existsSync(trunksPath)) {
-    fs.writeFileSync(trunksPath, '; AUTO-GENERATED placeholder\n');
+    fs.writeFileSync(trunksPath, renderEmptyTrunksPjsip(stamp));
   }
   const dialplanDir = path.join(root, 'data/pbx-out/dialplan.d');
   fs.mkdirSync(dialplanDir, { recursive: true });

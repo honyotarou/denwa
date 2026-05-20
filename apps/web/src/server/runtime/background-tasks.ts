@@ -1,9 +1,10 @@
 import type Database from 'better-sqlite3';
-import { filterDueUpgrades } from '@openpbx/core';
+import { spawnSync } from 'node:child_process';
+import { isUpgradeAutoExecEnabled } from '@openpbx/core';
 import { ingestCdrFile, recordConcurrencyFromDevices } from '@openpbx/infra';
-import { listVersionUpgrades, recordAudit } from '@openpbx/db';
 import type { AmiDeviceSession } from '@openpbx/infra/ami/device-session';
 import { getAppDb } from '../app-context';
+import { processDueUpgrades } from '../services/upgrades-runner';
 import path from 'node:path';
 
 const GLOBAL_KEY = '__denwaBackgroundTasksStarted';
@@ -32,22 +33,35 @@ export async function runCdrIngestTick(db: Database.Database, csvPath: string): 
   await ingestCdrFile(db, csvPath);
 }
 
-export function runDueUpgradeAudit(db: Database.Database, nowIso: string): number {
-  const due = filterDueUpgrades(listVersionUpgrades(db), nowIso);
-  for (const row of due) {
-    recordAudit(db, {
-      actor: 'system',
-      action: 'upgrade.due',
-      target: String(row.id),
-      details: { asteriskImage: row.asteriskImage },
-    });
-  }
-  return due.length;
+export function runUpgradeTick(
+  db: Database.Database,
+  signalDir: string,
+  repoRoot: string,
+  nowIso: string,
+): void {
+  const auto = isUpgradeAutoExecEnabled();
+  void processDueUpgrades({
+    db,
+    repoRoot,
+    signalDir,
+    nowIso,
+    autoExec: auto,
+    spawn: auto
+      ? (command, args, options) =>
+          spawnSync(command, args, {
+            cwd: options.cwd,
+            encoding: options.encoding,
+            timeout: options.timeout,
+          })
+      : undefined,
+  });
 }
 
 export type StartBackgroundTasksOpts = Readonly<{
   db?: Database.Database;
   cdrCsvPath?: string;
+  signalDir?: string;
+  repoRoot?: string;
 }>;
 
 /** AMI セッション起動時に一度だけバックグラウンド処理を登録 */
@@ -61,6 +75,8 @@ export function ensureBackgroundTasks(
 
   const db = opts?.db ?? getAppDb();
   const csvPath = opts?.cdrCsvPath ?? defaultCdrCsvPath();
+  const signalDir = opts?.signalDir ?? path.join(process.cwd(), 'data/signals');
+  const repoRoot = opts?.repoRoot ?? process.cwd();
 
   const onConcurrency = () => runConcurrencyTick({ db, session });
   session.onChange(onConcurrency);
@@ -73,10 +89,9 @@ export function ensureBackgroundTasks(
 
   const concTimer = setInterval(onConcurrency, CONCURRENCY_TICK_MS);
 
-  const upgradeTimer = setInterval(() => {
-    runDueUpgradeAudit(db, new Date().toISOString());
-  }, UPGRADE_CHECK_MS);
-  runDueUpgradeAudit(db, new Date().toISOString());
+  const upgradeTick = () => runUpgradeTick(db, signalDir, repoRoot, new Date().toISOString());
+  const upgradeTimer = setInterval(upgradeTick, UPGRADE_CHECK_MS);
+  upgradeTick();
 
   for (const t of [cdrTimer, concTimer, upgradeTimer]) {
     if (typeof t.unref === 'function') t.unref();

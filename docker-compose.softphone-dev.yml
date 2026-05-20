@@ -1,5 +1,9 @@
-# dev のみ: ブラウザソフトフォン用 WSS 8089 をホスト公開（本番 compose には含めない）
+# dev: ブラウザソフトフォン — WSS 8089 公開 + TLS をコンテナ外から到達可能に
+# 事前: ./scripts/gen-dev-asterisk-certs.sh
+# 起動: docker compose -f docker-compose.yml -f docker-compose.softphone-dev.yml up -d asterisk
 services:
   asterisk:
     ports:
       - "8089:8089/tcp"
+    volumes:
+      - ./asterisk/http.dev.conf:/etc/asterisk/http.conf:ro

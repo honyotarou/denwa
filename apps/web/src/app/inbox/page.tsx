@@ -24,6 +24,7 @@ export default async function InboxPage() {
               <th>内線</th>
               <th>発信者</th>
               <th>wav</th>
+              <th>再生</th>
             </tr>
           </thead>
           <tbody>
@@ -34,6 +35,18 @@ export default async function InboxPage() {
                 <td className="font-mono">{r.extension ?? '—'}</td>
                 <td className="font-mono">{r.callerId ?? '—'}</td>
                 <td className="font-mono text-xs">{r.wavName ?? '—'}</td>
+                <td>
+                  {r.wavName ? (
+                    <audio
+                      controls
+                      preload="none"
+                      src={`/api/inbox/${encodeURIComponent(r.wavName)}`}
+                      className="h-8 max-w-xs"
+                    />
+                  ) : (
+                    '—'
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

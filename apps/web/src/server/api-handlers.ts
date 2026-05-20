@@ -7,3 +7,4 @@ export { handleOriginatePost } from './api/handlers/originate';
 export { handlePhonebookLookupGet } from './api/handlers/phonebook';
 export { handleGuidancesPost } from './api/handlers/guidance';
 export { handleRecordingGet, ensureRecordingFixture } from './api/handlers/recording';
+export { handleInboxWavGet, ensureInboxFixture } from './api/handlers/inbox';

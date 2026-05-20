@@ -11,6 +11,11 @@ export default async function TrunksPage() {
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold">SIP Trunk</h2>
+      {trunks.length === 0 && (
+        <p className="text-sm text-slate-600">
+          トランク未設定時は空の <code className="rounded bg-slate-100 px-1">trunks.conf</code> を生成します（プレースホルダではありません）。保存すると PJSIP/dialplan を同期します。
+        </p>
+      )}
       <section className="rounded-lg border bg-white p-4">
         <form action={upsertTrunkAction} className="flex flex-wrap gap-2">
           <input name="name" placeholder="trunk-a" required className="rounded border px-2 py-1" />
