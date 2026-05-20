@@ -79,6 +79,10 @@ description: >-
 | T-PKG-001 | `server/actions/**` と `server/api/handlers/**` で `@openpbx/db` / `@openpbx/infra` **バレル禁止**（subpath のみ） | ✓ | ✓ |
 | T-FORM-001 | Form field 名は `server/actions/forms/*` に単一正本（例: `extension-form.ts`） | — | ✓ |
 | T-ACT-021 | ログインは `services/auth-login.authenticateLogin`（TOTP 含む） | — | ✓ |
+| T-SEC-001 | `TRUSTED_PROXY_COUNT=0` で XFF 無視。>0 なら chain 右端（`request-ip.ts`） | — | ✓ |
+| T-SEC-002 | 本番 session cookie `secure: true`（`session-cookie.ts`） | — | ✓ |
+| T-SEC-003 | ログイン `next` は `safeRedirectPath`（相対パスのみ） | — | ✓ |
+| T-SEC-004 | AMI: 172.16.0.0/12、`write` に `command` なし | — | ✓ (ops) |
 
 **ゲートが赤いとき**: まず `npm run check:static` の `[T-xxx]` 行を読む → 該当ファイルを修正 → `npm run harness:fast`。
 
