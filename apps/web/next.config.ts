@@ -1,9 +1,14 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
 import { buildSecurityHeaders } from './src/server/security-headers';
 
 const isProduction = process.env.NODE_ENV === 'production';
+const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
+  outputFileTracingRoot: repoRoot,
   transpilePackages: ['@openpbx/core', '@openpbx/db', '@openpbx/infra', '@openpbx/ops'],
   serverExternalPackages: ['better-sqlite3'],
   async headers() {

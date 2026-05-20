@@ -12,9 +12,12 @@ import {
   rtpRangeMatchesCompose,
 } from '@openpbx/ops';
 import {
+  composeDefinesWebLocalIpAllowDefault,
   expectedBuildContexts,
+  expectedWebDockerfile,
   missingEnvKeys,
   parseComposeBuildContexts,
+  parseWebBuildDockerfile,
   WEB_REQUIRED_ENV_KEYS,
   readComposeDraftFromFile,
   allRequiredComposePortsPresent,
@@ -117,6 +120,13 @@ describe('Phase 8 — runtime & production', () => {
   describe('T-DOCKER-006: build contexts', () => {
     it('Given compose When parse Then asterisk and web Dockerfiles', () => {
       expect(parseComposeBuildContexts(composeText())).toEqual(expectedBuildContexts());
+      expect(parseWebBuildDockerfile(composeText())).toBe(expectedWebDockerfile());
+    });
+  });
+
+  describe('T-DOCKER-007: web image serves HTTP', () => {
+    it('Given compose When inspect Then IP_ALLOW local default for docker browser', () => {
+      expect(composeDefinesWebLocalIpAllowDefault(composeText())).toBe(true);
     });
   });
 

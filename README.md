@@ -29,8 +29,11 @@ DATABASE_PATH=../../data/db/command-room.sqlite npm run dev
 Asterisk + Web をまとめて起動する。
 
 ```bash
+cp .env.example .env   # AMI_SECRET / NEXT_SERVER_ACTIONS_ENCRYPTION_KEY を設定
 docker compose up --build
 ```
+
+Apple Silicon（M1/M2/M3）でも Asterisk イメージは **arm64** の Ubuntu パッケージでビルドする（`asterisk/Dockerfile` の APT pin を参照）。
 
 | 項目 | 値 |
 |------|-----|
