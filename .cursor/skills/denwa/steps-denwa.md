@@ -1,8 +1,22 @@
 # denwa — 手順詳細（steps-denwa）
 
-**メニュー番号 = §番号。** エージェントは **§N 必読を Read してから** 実装する（SKILL.md [critical]）。
+**メニュー番号 = §番号。** エージェントは **§N 必読を Read してから** 実装する（SKILL.md [critical]）。**`harness` / `check` は独立 Step ではなく §9 と各 Step 内の自動門番。**
 
 **legacy ルート**: `<denwa-root>/../OpenPBX`（以下 `OpenPBX/` と表記）
+
+
+---
+
+## §運用 番号順と門番（読み方）
+
+```text
+Step 0  … フックを有効にする（一度だけ）
+Step 1  … legacy / golden（読む・fixture。編集少 → pre/post ほぼ無し）
+Step 2〜8 … 実装（編集するたび pre/post → turn 末 stop）
+Step 9  … commit / push（pre-commit static → pre-push harness）
+```
+
+**エージェント**: ユーザーが番号 **N** を選んだら **§N だけ Read** して従う。別途 `harness` メニューを勧めない（§9 か turn 末で足りる）。
 
 ---
 
