@@ -1,4 +1,3 @@
-import type Database from 'better-sqlite3';
 import {
   listExtensions,
   listHolidays,
@@ -6,6 +5,7 @@ import {
   listVersionUpgrades,
   listAudit,
   listLoginHistory,
+  listPhonebookEntries,
   searchPhonebook,
   listAccounts as listAccountsRepo,
   listRingGroupsForUi,
@@ -17,11 +17,13 @@ import {
   listIpAllowRows as listIpAllowRowsRepo,
   listSipTrunksForUi,
   listConcurrencySnapshots,
+  getPasswordPolicy,
 } from '@openpbx/db';
 import { listRecordingFiles, countInboxFiles } from '@openpbx/infra';
 import { getAppDb } from './app-context';
+import { inboxDirectory, recordingsDirectory } from './paths';
 
-export function db(): Database.Database {
+function db() {
   return getAppDb();
 }
 
@@ -65,14 +67,16 @@ export function listConcurrency(limit = 48) {
   return listConcurrencySnapshots(db(), limit);
 }
 
-export { listRecordingFiles, countInboxFiles as countInbox };
+export async function countInboxSummary() {
+  return countInboxFiles(inboxDirectory());
+}
+
+export async function listRecordingsForUi() {
+  return listRecordingFiles(recordingsDirectory());
+}
 
 export function listPhonebook(q = '') {
-  if (!q.trim()) {
-    return db()
-      .prepare(`SELECT id, name, number, note FROM phonebook ORDER BY name LIMIT 500`)
-      .all() as Array<{ id: number; name: string; number: string; note: string | null }>;
-  }
+  if (!q.trim()) return listPhonebookEntries(db());
   return searchPhonebook(db(), q);
 }
 
@@ -98,4 +102,8 @@ export function getAuditLog(limit = 200) {
 
 export function getLoginHistory(limit = 100) {
   return listLoginHistory(db(), limit);
+}
+
+export function getPasswordPolicyForUi() {
+  return getPasswordPolicy(db());
 }

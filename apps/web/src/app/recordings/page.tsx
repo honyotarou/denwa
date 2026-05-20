@@ -1,12 +1,10 @@
-import path from 'node:path';
 import { guardPage } from '@/lib/auth';
-import { listRecordingFiles } from '@/server/page-data';
+import { listRecordingsForUi } from '@/server/page-data';
 import { formatBytes } from '@/lib/format';
 export const dynamic = 'force-dynamic';
 export default async function RecordingsPage() {
   await guardPage('user');
-  const dir = process.env.RECORDINGS_DIR ?? path.join(process.cwd(), 'data/recordings');
-  const files = await listRecordingFiles(dir);
+  const files = await listRecordingsForUi();
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold">録音一覧</h2>

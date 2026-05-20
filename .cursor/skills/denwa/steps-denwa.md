@@ -10,7 +10,7 @@
 Step 0  … フックを有効にする（一度だけ）
 Step 1  … legacy / golden（読む・fixture。編集少 → pre/post ほぼ無し）
 Step 2〜8 … 実装（編集するたび pre/post → turn 末 stop）
-Step 9  … commit / push（pre-commit static → pre-push harness）
+Step 9  … commit / push（pre-commit harness:fast → pre-push harness）
 ```
 
 **エージェント**: ユーザーが番号 **N** を選んだら **§N だけ Read** して従う。別途 `harness` メニューを勧めない（§9 か turn 末で足りる）。
@@ -49,7 +49,7 @@ npm run harness
 
 | 操作 | 門番 |
 |------|------|
-| `package.json` 等を編集 | pre/post → static |
+| `package.json` 等を編集 | pre/post → static（**`denwa-architecture-gate.mjs`**: T-ARCH/SOC） |
 | turn 終了 | stop → harness（編集した場合） |
 
 ### 出口
@@ -159,7 +159,7 @@ git clone https://github.com/tanimurahifukka/OpenPBX.git ../OpenPBX
 | スキーマ | `apply-schema.ts`, migrations |
 | 一覧・CRUD | `packages/pbx-db/src/repos/*.ts`（`lists.ts`, `accounts.ts`, `policy.ts` 等） |
 | infra 用読取 | `infra-load.ts` |
-| 本番チェック用 | `prod-check.ts`（既定秘密の検知。文字列は README に直書きしない） |
+| 本番チェック用 | `prod-check.ts`（`fail`/`pass` 型は `@openpbx/core` の `prod/findings`） |
 
 1. workspace / `test:gate` に `@openpbx/db` が含まれること（§0 時点で済ならスキップ）
 2. Red→Green→Refactor（in-memory SQLite fixture）
@@ -198,32 +198,52 @@ git clone https://github.com/tanimurahifukka/OpenPBX.git ../OpenPBX
 
 **目的**: Route Handler、middleware、Server Actions 40 本（`T-MW-*`, `T-API-*`, `T-ACT-*`）。
 
-### ファイル配置
+### 3 層（変更時はこの順）
+
+```text
+server/services/   use-case: validate → db → infra.sync → audit
+server/actions/    薄い *ActionImpl（FormData → service）
+app/api/           buildContextFromRequest(req) 必須（health 除く）
+```
 
 | 関心 | パス |
 |------|------|
-| Actions 本体 | `server/actions/impl.ts` |
-| 共有ヘルパ | `server/actions/shared.ts` |
-| ハンドラ登録 | `server/actions-handlers.ts`（re-export） |
-| ページデータ | `server/page-data.ts` |
-| 認証 | `server/auth.ts` + db `repos/accounts`, `repos/policy` |
-| Middleware IP | `server/middleware-ip.ts` |
+| **Use-case（正本）** | `server/services/extensions.ts` 他 domain 別 |
+| 検証ヘルパ | `server/services/validate.ts`（`throwIfInvalid`） |
+| Actions | `server/actions/*.ts` + `impl.ts`（barrel re-export） |
+| 登録 | `server/actions-handlers.ts` → `app/actions.ts` |
+| 読取 | `server/page-data.ts`（view model。SQL 禁止） |
+| パス | `server/paths.ts`（inbox/recordings。page から使わない） |
+| API 文脈 + IP | `server/request-meta.ts` |
+| Edge IP のみ | `server/request-ip.ts` |
+| Middleware | `middleware.ts` + `middleware-ip.ts`（`@openpbx/core/auth/policy`） |
+| infra 同期 | `server/infra-sync.ts`（trunk: `renderTrunksPjsipIfValid`） |
 
-### 規律
+### 規律（必須）
 
-- **domain logic を `apps/web/src/lib` に書かない**（pre が static で検知）
-- **`page.tsx` / `layout.tsx` は `getRequestContext()` 経由**。`getAppDb()` 直叩き禁止 → **`T-ARCH-002`**
-- Action 契約変更は §7 より先にテスト固定（FormData key 名を勝手に変えない）
-- 拡張・IVR 更新は core の validate を通す（例: `validateIvrMenuDraft`）
+- **mutation は services に1本化** — actions に `createX(ctx.db)` + `sync` を直書きしない
+- 各 service が **core の `validate*`** を呼ぶ（**T-ARCH-004**）
+- **`page.tsx`**: `getRequestContext()` / `page-data` のみ。`process.env`・`node:path`・`getAppDb` 禁止（**T-ARCH-002/003**）
+- **API route**: `buildContextFromRequest(req)`（**T-API-IP-001**）— cookie のみで `127.0.0.1` 固定にしない
+- Action の FormData key は計画・`T-ACT-*` と一致（勝手に変えない）
+- IVR は `validateIvrMenuDraft`（actions/ivr.ts 内で可。将来 services/ivr へ）
 
-### Middleware IP
+### Middleware / IP
 
-- Edge middleware: 環境変数 **`IP_ALLOW_CIDRS`**（未設定時は Edge では許可リストを持たない設計）
-- ログイン・セッション: `AuthService` 側で DB の IP ポリシーを再検証
+- Edge: `IP_ALLOW_CIDRS`（env）+ `clientIpOptional`（`request-ip.ts`）
+- ログイン・API・Actions: DB `ip_allow_list` を `meta.ip` で再検証
+
+### 新規ドメイン追加チェックリスト
+
+- [ ] core: validate + テスト
+- [ ] db: repo
+- [ ] services: `*WithSync` + audit + sync
+- [ ] actions: 薄い wrapper
+- [ ] `import-boundaries.test.ts` が緑
 
 ### 門番
 
-§4 と同じ。Action 契約変更は §7 より先にテスト固定。
+§4 と同じ。
 
 **次: §7**
 
@@ -234,7 +254,7 @@ git clone https://github.com/tanimurahifukka/OpenPBX.git ../OpenPBX
 **目的**: `docs/FRONTEND-PLAN.md` に沿った画面。TDD 強制なし。Action 名・FormData key は変えない。
 
 - 例: IVR 画面は `digit` / `action` / `target` 等、契約どおりの field 名
-- データは server component から `page-data` 関数を呼ぶ（DB 直結しない）
+- データは `page-data` のみ（例: `countInboxSummary`, `listRecordingsForUi`）。`process.env` は `paths.ts` 側
 
 ### 門番
 
@@ -303,10 +323,11 @@ docker compose up            # 9001/9002 inbox 等
 - [ ] `npm run harness` 緑（push でも再実行される）
 - [ ] 触った §7 ID が Green または manual-only 記録
 - [ ] `TDD-REBUILD-PLAN.md` と実装のズレなし
-- [ ] `T-ARCH-001` / `T-ARCH-002` が緑のまま
+- [ ] `T-ARCH-001`〜`005` / `T-API-IP` / `T-INFRA-TRUNK-001` が緑
 - [ ] secret / SQLite / 録音を commit していない
 - [ ] FRONTEND 変更時、Action・FormData key 不変
-- [ ] 新規 SQL は `pbx-db/src/repos` にある（page 直 SQL を増やしていない）
+- [ ] 新規 mutation は `server/services/*` に閉じている
+- [ ] 新規 SQL は `pbx-db/src/repos` のみ
 
 ### PR テンプレ
 
@@ -348,7 +369,7 @@ docker compose up            # 9001/9002 inbox 等
 
 | Git | イベント |
 |-----|----------|
-| `lefthook.yml` | pre-commit static / pre-push harness |
+| `lefthook.yml` | pre-commit harness:fast / pre-push harness |
 
 ---
 
@@ -356,8 +377,14 @@ docker compose up            # 9001/9002 inbox 等
 
 | 症状 | 直し方 |
 |------|--------|
-| `T-ARCH-001` Red | core から fs/SQLite を ops または db へ移す |
-| `T-ARCH-002` Red | page の `getAppDb` を `getRequestContext()` + `page-data` へ |
-| static: domain in web/lib | ロジックを `pbx-core` に移し web は import のみ |
-| staged secret | 既定値をローテーションするか、skip 対象外ファイルから除去 |
-| Action テスト Red | FormData key が計画・`T-ACT-*` と一致しているか確認 |
+| `T-ARCH-001` Red | core から fs/SQLite を ops / db へ |
+| `T-ARCH-002` Red | page の db 直 import → `page-data` |
+| `T-ARCH-003` Red | page の `process.env` → `page-data` + `paths.ts` |
+| `T-ARCH-004` Red | actions の DB 直書き → `services/*` に validate+sync+audit |
+| `T-ARCH-005` Red | `ProdCheckFinding` を core に。db から ops 依存を外す |
+| `T-API-IP-001` Red | API route に `buildContextFromRequest(req)` |
+| `T-INFRA-TRUNK-001` Red | `renderTrunksPjsipIfValid` を使う |
+| static: domain in web/lib | ロジックを core へ |
+| Edge `node:crypto` エラー | middleware は `@openpbx/core/auth/policy` サブパス |
+| staged secret | ローテーション or `prod/check.ts` は分割文字列定義 |
+| Action テスト Red | FormData key・service 経由か確認 |

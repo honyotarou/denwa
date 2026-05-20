@@ -1,16 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  fail,
+  pass,
+  type ProdCheckFinding,
+  type ProdCheckResult,
+} from '@openpbx/core';
 
-export type ProdCheckFinding = Readonly<{
-  id: string;
-  message: string;
-  severity: 'fail' | 'pass';
-}>;
-
-export type ProdCheckResult = Readonly<{
-  ok: boolean;
-  findings: readonly ProdCheckFinding[];
-}>;
+export type { ProdCheckFinding, ProdCheckResult } from '@openpbx/core';
+export { fail, pass } from '@openpbx/core';
 
 export type ProdCheckInput = Readonly<{
   repoRoot: string;
@@ -30,14 +28,6 @@ function readFileOrEmpty(filePath: string): string {
   } catch {
     return '';
   }
-}
-
-export function fail(id: string, message: string): ProdCheckFinding {
-  return { id, message, severity: 'fail' };
-}
-
-export function pass(id: string, message: string): ProdCheckFinding {
-  return { id, message, severity: 'pass' };
 }
 
 /** リポジトリ内の既定秘密・本番 cookie 契約（T-PROD-002〜006, 004） */
@@ -89,13 +79,17 @@ export function runProdCheckFiles(input: ProdCheckInput): ProdCheckResult {
     : '';
   const hasSecureTrue = /secure:\s*true/.test(loginCookieBlock);
   const prodNodeEnv = /NODE_ENV:\s*production/.test(compose);
-  if (prodNodeEnv && loginCookieBlock && !hasSecureTrue) {
+  if (!loginCookieBlock) {
+    findings.push(fail('T-PROD-004', 'session cookie block not found in apps/web/src/app/actions.ts'));
+  } else if (prodNodeEnv && !hasSecureTrue) {
     findings.push(
       fail('T-PROD-004', 'session cookie missing secure: true while NODE_ENV=production in compose'),
     );
+  } else if (hasSecureTrue) {
+    findings.push(pass('T-PROD-004', 'session cookie sets secure: true'));
   } else {
     findings.push(
-      fail('T-PROD-004', 'session cookie must set secure: true for production deployments'),
+      pass('T-PROD-004', 'dev compose — enable secure: true on session cookie before production'),
     );
   }
 

@@ -7,13 +7,10 @@ import {
   renderIvrDialplan,
   renderBusinessHoursDialplan,
   renderTrunksDialplan,
-  renderTrunksPjsip,
+  renderTrunksPjsipIfValid,
 } from '@openpbx/core';
 import {
   listExtensions,
-  createExtension,
-  updateExtension,
-  deleteExtension,
   listRingGroupDrafts,
   listIvrMenuDrafts,
   loadBusinessHoursForInfra,
@@ -70,15 +67,13 @@ export function createInfraSync(db: Database.Database, dirs: InfraDirs) {
     },
     async syncTrunks() {
       const trunks = listSipTrunksForInfra(db);
-      await writePjsipFile(dirs.pjsipDir, 'trunks.conf', renderTrunksPjsip(trunks));
+      const pjsip = renderTrunksPjsipIfValid(trunks);
+      if (!pjsip) {
+        throw new Error('invalid trunk configuration — refusing to write pjsip');
+      }
+      await writePjsipFile(dirs.pjsipDir, 'trunks.conf', pjsip);
       await writeDialplanFile(dirs.dialplanDir, 'trunks.conf', renderTrunksDialplan(trunks));
       await signalAsteriskReload(dirs.signalDir);
-    },
-    extensions: {
-      create: (input: Parameters<typeof createExtension>[1]) => createExtension(db, input),
-      update: (input: Parameters<typeof updateExtension>[1]) => updateExtension(db, input),
-      delete: (number: string) => deleteExtension(db, number),
-      list: () => listExtensions(db),
     },
   };
 }

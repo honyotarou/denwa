@@ -157,7 +157,7 @@ describe('Phase 6 — middleware & API', () => {
       const r = await handleExtensionsGet(ctx);
       expect(r.status).toBe(200);
       const body = r.body as { extensions: Array<{ secret: string }> };
-      expect(body.extensions[0]!.secret).toBe('***');
+      expect(body.extensions[0]!.secret).toBe('••••');
     });
 
     it('Given admin When list Then secret visible', async () => {
@@ -165,7 +165,7 @@ describe('Phase 6 — middleware & API', () => {
       ctx.sessionToken = await loginAsAdmin(ctx);
       const r = await handleExtensionsGet(ctx);
       const body = r.body as { extensions: Array<{ secret: string }> };
-      expect(body.extensions[0]!.secret).not.toBe('***');
+      expect(body.extensions[0]!.secret).not.toBe('••••');
     });
   });
 
