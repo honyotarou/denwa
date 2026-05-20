@@ -16,10 +16,14 @@
     "harness": "bash scripts/harness-check.sh",
     "harness:fast": "bash scripts/harness-fast.sh",
     "check:static": "node scripts/check-denwa-static.mjs",
+    "test:e2e": "playwright test -c e2e/playwright.config.mjs",
+    "test:e2e:install": "playwright install chromium",
     "prod-check": "npx tsx scripts/prod-check.ts",
     "prepare": "lefthook install || true"
   },
   "devDependencies": {
-    "lefthook": "^1.11.14"
+    "@playwright/test": "^1.51.1",
+    "lefthook": "^1.11.14",
+    "tsx": "^4.19.4"
   }
 }

@@ -46,6 +46,12 @@ denwa_harness_test_gate() {
   npm run test:gate
 }
 
+denwa_harness_e2e() {
+  echo "== denwa harness: e2e (Playwright) =="
+  npx playwright install chromium
+  npm run test:e2e
+}
+
 denwa_harness_fast() {
   denwa_harness_static "${1:-}"
   denwa_harness_typechecks
@@ -55,6 +61,7 @@ denwa_harness_full() {
   denwa_harness_static "${1:-}"
   denwa_harness_typechecks
   denwa_harness_test_gate
+  denwa_harness_e2e
   denwa_harness_prod_check
   denwa_harness_sca
 }
