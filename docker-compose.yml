@@ -8,6 +8,9 @@ services:
     ports:
       - "5060:5060/udp"
       - "5060:5060/tcp"
+      # 一部の Wi‑Fi/ルータは 5060 を弾く。Linphone ioerror 時は 15060 も試す。
+      - "15060:5060/udp"
+      - "15060:5060/tcp"
       - "10000-10020:10000-10020/udp"
       # Asterisk HTTP/ARI はホスト公開しない（PBX-AMI-01 / A05）。コンテナ内のみ http.conf 参照。
     volumes:

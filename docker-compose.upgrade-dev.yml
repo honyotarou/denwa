@@ -1,0 +1,7 @@
+# dev: 期限到来 upgrade の自動 compose 実行（ALLOW_UPGRADE_EXEC=1 時）
+services:
+  web:
+    environment:
+      ALLOW_UPGRADE_EXEC: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

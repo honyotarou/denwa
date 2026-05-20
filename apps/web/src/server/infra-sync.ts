@@ -10,6 +10,8 @@ import {
   renderBusinessHoursDialplan,
   renderTrunksDialplan,
   renderTrunksPjsipIfValid,
+  renderEmptyTrunksPjsip,
+  renderEmptyTrunksDialplan,
 } from '@openpbx/core';
 import {
   getNetworkSettings,
@@ -18,6 +20,7 @@ import {
   listIvrMenuDrafts,
   loadBusinessHoursForInfra,
   listSipTrunksForInfra,
+  listPickupGroupNamesByExtension,
 } from '@openpbx/db';
 import { writeDialplanFile, writePjsipFile, signalAsteriskReload } from '@openpbx/infra';
 
@@ -34,6 +37,7 @@ export function createInfraSync(db: Database.Database, dirs: InfraDirs) {
     dirs,
     async syncPjsipExtensions() {
       const rows = listExtensions(db);
+      const pickupByExt = listPickupGroupNamesByExtension(db);
       const drafts = rows.map((r) =>
         toExtensionDraft(
           normalizeExtensionDraft({
@@ -41,7 +45,7 @@ export function createInfraSync(db: Database.Database, dirs: InfraDirs) {
             displayName: r.displayName,
             secret: r.secret,
             webrtc: r.webrtc,
-            pickupGroupNames: [],
+            pickupGroupNames: pickupByExt.get(r.number) ?? [],
           }),
         ),
       );
@@ -72,6 +76,13 @@ export function createInfraSync(db: Database.Database, dirs: InfraDirs) {
     },
     async syncTrunks() {
       const trunks = listSipTrunksForInfra(db);
+      const stamp = new Date().toISOString();
+      if (trunks.length === 0) {
+        await writePjsipFile(dirs.pjsipDir, 'trunks.conf', renderEmptyTrunksPjsip(stamp));
+        await writeDialplanFile(dirs.dialplanDir, 'trunks.conf', renderEmptyTrunksDialplan(stamp));
+        await signalAsteriskReload(dirs.signalDir);
+        return;
+      }
       const pjsip = renderTrunksPjsipIfValid(trunks);
       if (!pjsip) {
         throw new Error('invalid trunk configuration — refusing to write pjsip');

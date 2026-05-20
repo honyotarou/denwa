@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { guardPage } from '@/lib/auth';
-import { getExtensions, countInboxSummary } from '@/server/page-data';
+import { getHomeSummary } from '@/server/page-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +18,8 @@ function Card({ label, value, href, hint }: { label: string; value: string; href
 
 export default async function HomePage() {
   await guardPage('user');
-  const exts = getExtensions();
-  const inbox = await countInboxSummary();
+  const { extensionCount, extensions, inbox, onlineDevices } = await getHomeSummary();
+  const onlineLabel = onlineDevices === null ? '—' : String(onlineDevices);
   return (
     <div className="space-y-6">
       <header>
@@ -27,18 +27,18 @@ export default async function HomePage() {
         <p className="text-xs text-slate-500">Asterisk ベース PBX の状態と設定への入り口。</p>
       </header>
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="サマリー">
-        <Card label="登録済み内線" value={String(exts.length)} href="/extensions" />
-        <Card label="オンライン端末" value="—" href="/devices" hint="AMI SSE" />
-        <Card label="Inbox wav" value={inbox.wav < 0 ? '—' : String(inbox.wav)} hint="待機" />
-        <Card label="Inbox meta" value={inbox.meta < 0 ? '—' : String(inbox.meta)} hint="event JSON" />
+        <Card label="登録済み内線" value={String(extensionCount)} href="/extensions" />
+        <Card label="オンライン端末" value={onlineLabel} href="/devices" hint="AMI" />
+        <Card label="Inbox wav" value={inbox.wav < 0 ? '—' : String(inbox.wav)} href="/inbox" hint="待機" />
+        <Card label="Inbox meta" value={inbox.meta < 0 ? '—' : String(inbox.meta)} href="/inbox" hint="event JSON" />
       </section>
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-2 text-sm font-semibold text-slate-700">登録済み内線 ({exts.length})</h3>
-        {exts.length === 0 ? (
+        <h3 className="mb-2 text-sm font-semibold text-slate-700">登録済み内線 ({extensionCount})</h3>
+        {extensions.length === 0 ? (
           <p className="text-sm text-slate-500">内線がまだ登録されていません。<Link className="text-blue-600 hover:underline" href="/extensions">内線を追加</Link></p>
         ) : (
           <ul className="divide-y divide-slate-200 text-sm">
-            {exts.slice(0, 12).map((e) => (
+            {extensions.slice(0, 12).map((e) => (
               <li key={e.number} className="flex justify-between py-2">
                 <span className="font-mono tabular-nums">{e.number}</span>
                 <span className="text-slate-600">{e.displayName ?? '—'}</span>

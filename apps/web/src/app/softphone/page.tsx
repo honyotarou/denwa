@@ -23,7 +23,9 @@ export default async function SoftphonePage() {
       </header>
       <SoftphonePanel profiles={profiles} defaultHost={host} />
       <p className="text-xs text-slate-500">
-        証明書: <code className="rounded bg-slate-100 px-1">asterisk/certs/README.md</code> を参照。
+        dev: <code className="rounded bg-slate-100 px-1">./scripts/gen-dev-asterisk-certs.sh</code> のあと{' '}
+        <code className="rounded bg-slate-100 px-1">docker compose -f docker-compose.yml -f docker-compose.softphone-dev.yml up -d asterisk</code>
+        （詳細は <code className="rounded bg-slate-100 px-1">asterisk/certs/README.md</code>）。
       </p>
     </div>
   );

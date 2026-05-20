@@ -1,10 +1,13 @@
+import { applyAmiEventFields, type MutableDeviceInfo } from './apply-event.js';
 import type { DeviceState } from './parse.js';
-import { parseDeviceStateChangeEvent, parseAmiBlock } from './parse.js';
+import { parseAmiBlock } from './parse.js';
 
 export type DeviceInfo = Readonly<{
   device: string;
   extension: string | null;
   state: DeviceState;
+  contact: string | null;
+  reachable: boolean | null;
   updatedAt: string;
 }>;
 
@@ -14,31 +17,36 @@ export type DeviceMap = Readonly<{
   snapshot: () => ReadonlyMap<string, DeviceInfo>;
 }>;
 
-/** AMI device 状態 — class なし factory */
+function freeze(d: MutableDeviceInfo): DeviceInfo {
+  return {
+    device: d.device,
+    extension: d.extension,
+    state: d.state,
+    contact: d.contact,
+    reachable: d.reachable,
+    updatedAt: d.updatedAt,
+  };
+}
+
+/** AMI device 状態 — class なし factory（T-AMI-004） */
 export function createDeviceMap(): DeviceMap {
-  const devices = new Map<string, DeviceInfo>();
+  const devices = new Map<string, MutableDeviceInfo>();
 
   return {
     applyBlock(block: string): DeviceInfo | null {
       const fields = parseAmiBlock(block);
-      const parsed = parseDeviceStateChangeEvent(fields);
-      if (!parsed) return null;
-      const cur: DeviceInfo = {
-        device: parsed.device,
-        extension: parsed.extension,
-        state: parsed.state,
-        updatedAt: new Date().toISOString(),
-      };
-      devices.set(parsed.device, cur);
-      return cur;
+      const cur = applyAmiEventFields(devices, fields);
+      return cur ? freeze(cur) : null;
     },
     getDevices(): readonly DeviceInfo[] {
-      return [...devices.values()].sort((a, b) =>
-        (a.extension ?? '').localeCompare(b.extension ?? ''),
-      );
+      return [...devices.values()]
+        .map(freeze)
+        .sort((a, b) => (a.extension ?? '').localeCompare(b.extension ?? ''));
     },
     snapshot(): ReadonlyMap<string, DeviceInfo> {
-      return new Map(devices);
+      return new Map(
+        [...devices.entries()].map(([k, v]) => [k, freeze(v)] as const),
+      );
     },
   };
 }
