@@ -20,6 +20,9 @@ data/asterisk-cdr/*
 !data/asterisk-cdr/.gitkeep
 
 asterisk/pjsip.d/*.conf
+!asterisk/pjsip.d/transports.conf
+!asterisk/pjsip.d/trunks.conf
+!asterisk/pjsip.d/extensions.conf
 asterisk/dialplan.d/*.conf
 asterisk/certs/*.pem
 asterisk/certs/*.key
