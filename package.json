@@ -2,12 +2,15 @@
   "name": "denwa",
   "private": true,
   "workspaces": [
-    "packages/pbx-core"
+    "packages/pbx-core",
+    "packages/pbx-db",
+    "packages/pbx-infra",
+    "apps/web"
   ],
   "scripts": {
     "test": "npm run test -w @openpbx/core",
     "test:watch": "npm run test:watch -w @openpbx/core",
-    "test:gate": "npm run test -w @openpbx/core",
+    "test:gate": "npm run test -w @openpbx/core && npm run test -w @openpbx/db && npm run test -w @openpbx/infra && npm run test -w command-room-web",
     "test:roadmap": "npm run test -w @openpbx/core -- --reporter=verbose",
     "harness": "bash scripts/harness-check.sh",
     "harness:fast": "bash scripts/harness-fast.sh",

@@ -1,0 +1,20 @@
+{
+  "accountcode": "",
+  "src": "1001",
+  "dst": "9000",
+  "dcontext": "internal",
+  "clid": "",
+  "channel": "",
+  "dstchannel": "",
+  "lastapp": "Dial",
+  "lastdata": "",
+  "start": "t1",
+  "answer": "t2",
+  "end": "t3",
+  "duration": "60",
+  "billsec": "55",
+  "disposition": "ANSWERED",
+  "amaflag": "",
+  "userfield": "",
+  "uniqueid": "uid-1"
+}

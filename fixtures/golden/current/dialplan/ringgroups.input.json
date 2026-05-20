@@ -1,0 +1,30 @@
+{
+  "id": "T-GM-002",
+  "updatedAt": "2026-05-19T00:00:00.000Z",
+  "groups": [
+    {
+      "number": "6001",
+      "name": "受付",
+      "strategy": "ringall",
+      "ringSeconds": 25,
+      "fallbackExtension": "1000",
+      "members": ["1001", "1002"]
+    },
+    {
+      "number": "6002",
+      "name": null,
+      "strategy": "linear",
+      "ringSeconds": 30,
+      "fallbackExtension": null,
+      "members": []
+    },
+    {
+      "number": "6003",
+      "name": "順次",
+      "strategy": "linear",
+      "ringSeconds": 20,
+      "fallbackExtension": null,
+      "members": ["1001", "1002"]
+    }
+  ]
+}

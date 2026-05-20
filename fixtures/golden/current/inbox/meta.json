@@ -1,0 +1,11 @@
+{
+  "schema": "command-room-pbx/v1",
+  "source": "asterisk",
+  "kind": "same_day_reservation",
+  "extension": "9001",
+  "callerId": "1001",
+  "callerName": "Reception",
+  "uniqueId": "1700000000.1",
+  "recordingFile": "1700000000.1-9001-1001.wav",
+  "receivedAt": "2026-05-19T00:00:00.000Z"
+}

@@ -7,6 +7,7 @@ const PROMPT_RE = /^[A-Za-z0-9_./-]+$/;
 export function validateIvrMenuDraft(draft: IvrMenuDraft): string[] {
   const errs: string[] = [];
   if (!NUMBER_RE.test(draft.number)) errs.push('IVR 番号は 2〜6 桁');
+  if (draft.options.length === 0) errs.push('options は 1 件以上');
   const prompts = [draft.welcomePrompt, draft.menuPrompt, draft.invalidPrompt, draft.goodbyePrompt];
   for (const p of prompts) {
     if (p && !PROMPT_RE.test(p)) errs.push(`prompt 名が不正: ${p}`);
