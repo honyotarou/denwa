@@ -34,6 +34,54 @@ describe('T-AMI-007/008: apply AMI device events', () => {
     });
     expect(devices.get('PJSIP/1001')?.extension).toBe('1001');
   });
+
+  it('Given EndpointList DeviceState Unavailable When apply Then state and reachable', () => {
+    const devices = new Map();
+    applyAmiEventFields(devices, {
+      Event: 'EndpointList',
+      ObjectName: '1001',
+      DeviceState: 'Unavailable',
+      Contacts: '0',
+    });
+    const d = devices.get('PJSIP/1001')!;
+    expect(d.state).toBe('unavailable');
+    expect(d.reachable).toBe(false);
+  });
+
+  it('Given ContactStatus Reachable after unavailable When apply Then state not_inuse', () => {
+    const devices = new Map();
+    applyAmiEventFields(devices, {
+      Event: 'DeviceStateList',
+      Device: 'PJSIP/1001',
+      State: 'Unavailable',
+    });
+    applyAmiEventFields(devices, {
+      Event: 'ContactStatus',
+      AOR: '1001',
+      Status: 'Reachable',
+      URI: 'sip:1001@192.168.1.1',
+    });
+    const d = devices.get('PJSIP/1001')!;
+    expect(d.reachable).toBe(true);
+    expect(d.state).toBe('not_inuse');
+  });
+
+  it('Given ContactStatus Unreachable after not_inuse When apply Then unavailable', () => {
+    const devices = new Map();
+    applyAmiEventFields(devices, {
+      Event: 'DeviceStateChange',
+      Device: 'PJSIP/1002',
+      State: 'Not inuse',
+    });
+    applyAmiEventFields(devices, {
+      Event: 'ContactStatus',
+      AOR: '1002',
+      Status: 'Unreachable',
+    });
+    const d = devices.get('PJSIP/1002')!;
+    expect(d.reachable).toBe(false);
+    expect(d.state).toBe('unavailable');
+  });
 });
 
 describe('T-AMI-009: AMI login accepted', () => {

@@ -32,6 +32,7 @@ import {
   originateOverSocket,
   parseAmiBlocks,
   parseDeviceStateChangeEvent,
+  parseEndpointListEvent,
   recordConcurrencySnapshot,
   resolveRecordingPath,
   saveGuidanceWav,
@@ -219,6 +220,21 @@ describe('Phase 4–5 — @openpbx/infra', () => {
       const map = createDeviceMap();
       map.applyBlock(blocks[0]!);
       expect(map.getDevices()[0]!.state).toBe('ringing');
+    });
+
+    it('Given EndpointList DeviceState When parseEndpointListEvent Then state and contacts', () => {
+      const parsed = parseEndpointListEvent({
+        Event: 'EndpointList',
+        ObjectName: '1001',
+        DeviceState: 'Unavailable',
+        Contacts: '0',
+      });
+      expect(parsed).toEqual({
+        device: 'PJSIP/1001',
+        extension: '1001',
+        state: 'unavailable',
+        contactCount: 0,
+      });
     });
   });
 
