@@ -59,6 +59,35 @@ export type ParsedDeviceStateChange = Readonly<{
   state: DeviceState;
 }>;
 
+export type ParsedEndpointList = Readonly<{
+  device: string;
+  extension: string;
+  state?: DeviceState;
+  contactCount?: number;
+}>;
+
+/** T-AMI-011: PJSIPShowEndpoints の EndpointList / EndpointDetail */
+export function parseEndpointListEvent(
+  fields: Record<string, string>,
+): ParsedEndpointList | null {
+  const event = fields.Event;
+  if (event !== 'EndpointList' && event !== 'EndpointDetail') return null;
+  const ao = fields.Aor ?? fields.ObjectName;
+  if (!ao || !/^[0-9]+$/.test(ao)) return null;
+  const deviceState = fields.DeviceState ?? fields.State;
+  const contactsRaw = fields.Contacts ?? fields.ActiveContacts;
+  const parsedContacts =
+    contactsRaw !== undefined && contactsRaw !== '' ? Number(contactsRaw) : undefined;
+  return {
+    device: `PJSIP/${ao}`,
+    extension: ao,
+    ...(deviceState ? { state: normalizeDeviceState(deviceState) } : {}),
+    ...(parsedContacts !== undefined && !Number.isNaN(parsedContacts)
+      ? { contactCount: parsedContacts }
+      : {}),
+  };
+}
+
 /** T-AMI-001 */
 export function parseDeviceStateChangeEvent(
   fields: Record<string, string>,

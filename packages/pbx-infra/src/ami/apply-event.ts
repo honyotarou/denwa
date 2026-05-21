@@ -1,8 +1,12 @@
+import {
+  reconcileStateWithReachability,
+  resolveContactReachable,
+} from '@openpbx/core';
 import type { DeviceState } from './parse.js';
 import {
   extractExtensionFromDevice,
-  normalizeDeviceState,
   parseDeviceStateChangeEvent,
+  parseEndpointListEvent,
 } from './parse.js';
 
 export type MutableDeviceInfo = {
@@ -33,6 +37,15 @@ function upsert(
   return cur;
 }
 
+function applyReachability(
+  cur: MutableDeviceInfo,
+  reachable: boolean | null,
+): void {
+  if (reachable === null) return;
+  cur.reachable = reachable;
+  cur.state = reconcileStateWithReachability(cur.state, reachable);
+}
+
 function applyContactStatus(
   devices: Map<string, MutableDeviceInfo>,
   fields: Readonly<Record<string, string>>,
@@ -45,8 +58,7 @@ function applyContactStatus(
   const status = fields.Status ?? fields.ContactStatus;
   const cur = upsert(devices, device, /^[0-9]+$/.test(ao) ? ao : extractExtensionFromDevice(device));
   cur.contact = fields.URI ?? cur.contact;
-  cur.reachable =
-    status === 'Reachable' || status === 'Created' || status === 'Updated';
+  applyReachability(cur, resolveContactReachable(status));
   return cur;
 }
 
@@ -54,14 +66,17 @@ function applyEndpointList(
   devices: Map<string, MutableDeviceInfo>,
   fields: Readonly<Record<string, string>>,
 ): MutableDeviceInfo | null {
-  const event = fields.Event;
-  if (event !== 'EndpointList' && event !== 'EndpointDetail') return null;
-  const ao = fields.Aor ?? fields.ObjectName;
-  if (!ao || !/^[0-9]+$/.test(ao)) return null;
-  return upsert(devices, `PJSIP/${ao}`, ao);
+  const parsed = parseEndpointListEvent(fields);
+  if (!parsed) return null;
+  const cur = upsert(devices, parsed.device, parsed.extension);
+  if (parsed.state) cur.state = parsed.state;
+  if (parsed.contactCount === 0 && cur.reachable === null) {
+    applyReachability(cur, false);
+  }
+  return cur;
 }
 
-/** AMI 1 イベント分を端末マップへ反映（純関数・T-AMI-001/007/008） */
+/** AMI 1 イベント分を端末マップへ反映（純関数・T-AMI-001/007/008/011） */
 export function applyAmiEventFields(
   devices: Map<string, MutableDeviceInfo>,
   fields: Readonly<Record<string, string>>,
@@ -70,6 +85,9 @@ export function applyAmiEventFields(
   if (stateChange) {
     const cur = upsert(devices, stateChange.device, stateChange.extension);
     cur.state = stateChange.state;
+    if (cur.reachable !== null) {
+      cur.state = reconcileStateWithReachability(cur.state, cur.reachable);
+    }
     return cur;
   }
   const contact = applyContactStatus(devices, fields);
