@@ -3,6 +3,8 @@ import { listCdrForUiWithFilter } from '@/server/page-data';
 import { formatJst, formatDurationSeconds } from '@/lib/datetime';
 import Link from 'next/link';
 import { ingestCdrNowAction } from '@/app/actions';
+import { CDR_DISPOSITION_OPTIONS } from '@openpbx/core';
+import { CdrDispositionBadge } from '@/components/CdrDispositionBadge';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +43,13 @@ export default async function CdrPage({
         <input name="to" type="datetime-local" defaultValue={sp.to ?? ''} placeholder="to" className="rounded border px-2 py-1" />
         <input name="src" defaultValue={sp.src ?? ''} placeholder="src" className="rounded border px-2 py-1 font-mono" />
         <input name="dst" defaultValue={sp.dst ?? ''} placeholder="dst" className="rounded border px-2 py-1 font-mono" />
-        <input name="disposition" defaultValue={sp.disposition ?? ''} placeholder="disposition" className="rounded border px-2 py-1" />
+        <select name="disposition" defaultValue={sp.disposition ?? ''} className="rounded border px-2 py-1 text-sm">
+          {CDR_DISPOSITION_OPTIONS.map((v) => (
+            <option key={v || 'all'} value={v}>
+              {v || '— 全 disposition —'}
+            </option>
+          ))}
+        </select>
         <button type="submit" className="col-span-2 rounded bg-slate-700 px-3 py-1 text-xs font-semibold text-white sm:col-span-1">
           検索
         </button>
@@ -83,7 +91,9 @@ export default async function CdrPage({
                       {full?.channel ?? '—'}
                     </td>
                     <td>{formatDurationSeconds(r.billsec)}</td>
-                    <td>{r.disposition}</td>
+                    <td>
+                      <CdrDispositionBadge disposition={r.disposition} />
+                    </td>
                     <td className="font-mono text-xs">
                       {r.recordingFile ? (
                         <Link

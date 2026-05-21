@@ -9,6 +9,8 @@ export type AccountListRow = Readonly<{
   displayName: string | null;
   role: string;
   updatedAt: string;
+  createdAt: string;
+  totpEnabled: boolean;
 }>;
 
 export type RingGroupListRow = Readonly<{
@@ -43,7 +45,10 @@ export type IvrMenuListRow = Readonly<{
 export function listAccounts(db: Database.Database): readonly AccountListRow[] {
   return db
     .prepare(
-      `SELECT id, username, display_name AS displayName, role, updated_at AS updatedAt FROM accounts ORDER BY username`,
+      `SELECT id, username, display_name AS displayName, role,
+              updated_at AS updatedAt, created_at AS createdAt,
+              CASE WHEN totp_secret IS NOT NULL THEN 1 ELSE 0 END AS totpEnabled
+       FROM accounts ORDER BY username`,
     )
     .all() as AccountListRow[];
 }
