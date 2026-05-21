@@ -1,5 +1,7 @@
 import type Database from 'better-sqlite3';
 import { listCdrRecordsFiltered } from './cdr.js';
+import { getIvrMenu } from './ivr.js';
+import { listSipTrunks, type SipTrunkRow } from './sip-trunks.js';
 
 export type AccountListRow = Readonly<{
   id: number;
@@ -29,8 +31,13 @@ export type IvrMenuListRow = Readonly<{
   id: number;
   number: string;
   name: string | null;
+  welcomePrompt: string | null;
+  menuPrompt: string | null;
+  invalidPrompt: string | null;
+  goodbyePrompt: string | null;
   maxRetries: number;
   waitSeconds: number;
+  options: readonly { digit: string; action: string; target: string | null; label: string | null }[];
 }>;
 
 export function listAccounts(db: Database.Database): readonly AccountListRow[] {
@@ -95,11 +102,10 @@ export function listTimeRules(db: Database.Database) {
 }
 
 export function listIvrMenusForUi(db: Database.Database): readonly IvrMenuListRow[] {
-  return db
-    .prepare(
-      `SELECT id, number, name, max_retries AS maxRetries, wait_seconds AS waitSeconds FROM ivr_menus ORDER BY number`,
-    )
-    .all() as IvrMenuListRow[];
+  const numbers = db.prepare('SELECT number FROM ivr_menus ORDER BY number').all() as Array<{ number: string }>;
+  return numbers
+    .map((r) => getIvrMenu(db, r.number))
+    .filter((m): m is NonNullable<typeof m> => m != null);
 }
 
 export function listGuidanceNames(db: Database.Database) {
@@ -118,10 +124,8 @@ export function listIpAllowRows(db: Database.Database) {
     .all() as Array<{ cidr: string; note: string | null }>;
 }
 
-export function listSipTrunksForUi(db: Database.Database) {
-  return db
-    .prepare(`SELECT name, host, port, username, did_inbound AS inboundDid FROM sip_trunks ORDER BY name`)
-    .all() as Array<{ name: string; host: string; port: number; username: string | null; inboundDid: string | null }>;
+export function listSipTrunksForUi(db: Database.Database): SipTrunkRow[] {
+  return listSipTrunks(db);
 }
 
 export function listConcurrencySnapshots(db: Database.Database, limit = 48) {

@@ -30,12 +30,12 @@ export function listIvrMenuDrafts(db: Database.Database): IvrMenuDraft[] {
       toIvrMenuDraft({
         number: m.number,
         name: m.name,
-        welcomePrompt: null,
-        menuPrompt: null,
-        invalidPrompt: null,
-        goodbyePrompt: null,
-        maxRetries: 3,
-        waitSeconds: 6,
+        welcomePrompt: m.welcomePrompt,
+        menuPrompt: m.menuPrompt,
+        invalidPrompt: m.invalidPrompt,
+        goodbyePrompt: m.goodbyePrompt,
+        maxRetries: m.maxRetries,
+        waitSeconds: m.waitSeconds,
         options: m.options.map((o) => ({
           digit: o.digit,
           action: o.action as IvrMenuDraft['options'][number]['action'],

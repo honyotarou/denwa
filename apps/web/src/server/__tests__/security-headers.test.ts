@@ -6,6 +6,7 @@ describe('T-SEC-HEADERS-001: security headers single source', () => {
     const h = buildSecurityHeaders(true);
     expect(h['X-Frame-Options']).toBe('DENY');
     expect(h['Content-Security-Policy']).toContain("script-src 'self' 'unsafe-inline'");
+    expect(h['Content-Security-Policy']).toContain("connect-src 'self' wss:");
     expect(h['Strict-Transport-Security']).toBeTruthy();
   });
 

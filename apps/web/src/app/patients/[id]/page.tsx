@@ -73,6 +73,7 @@ export default async function PatientDetailPage({
             <option value="triage">問診</option>
           </select>
           <textarea name="summary" rows={4} placeholder="サマリ" className="w-full rounded border px-2 py-1 text-sm" />
+          <textarea name="note" rows={2} placeholder="短いメモ (任意)" className="w-full rounded border px-2 py-1 text-sm" />
           <input name="extension" placeholder="内線 (任意)" className="w-full rounded border px-2 py-1 font-mono text-sm" />
           <button type="submit" className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
             記録を保存
@@ -110,6 +111,13 @@ export default async function PatientDetailPage({
                           name="summary"
                           rows={3}
                           defaultValue={r.summary ?? ''}
+                          className="w-full rounded border px-2 py-1 text-xs"
+                        />
+                        <textarea
+                          name="note"
+                          rows={2}
+                          defaultValue={r.note ?? ''}
+                          placeholder="短いメモ"
                           className="w-full rounded border px-2 py-1 text-xs"
                         />
                         <input

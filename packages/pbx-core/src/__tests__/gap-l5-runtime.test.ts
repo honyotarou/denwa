@@ -12,7 +12,7 @@ import {
   shouldStopContentScan,
 } from '../click2call/content-scan.js';
 import { classifySipRegisterFailure } from '../softphone/register-error.js';
-import { buildWssTransportUrl } from '../softphone/wss.js';
+import { buildSipJsTransportOptions, buildWssTransportUrl } from '../softphone/wss.js';
 
 describe('T-CHX L5 contracts', () => {
   it('T-CHX-002: +81 domestic', () => {
@@ -87,6 +87,13 @@ describe('T-CHX L5 contracts', () => {
 describe('T-SOFT L5 runtime', () => {
   it('T-SOFT-016: WSS URL', () => {
     expect(buildWssTransportUrl('pbx.local')).toBe('wss://pbx.local:8089/ws');
+  });
+
+  it('T-SOFT-017: sip.js transport options include timeout', () => {
+    expect(buildSipJsTransportOptions('localhost')).toEqual({
+      server: 'wss://localhost:8089/ws',
+      connectionTimeout: 5,
+    });
   });
 
   it('cert error classification', () => {

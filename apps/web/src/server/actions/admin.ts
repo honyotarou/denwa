@@ -46,7 +46,19 @@ export async function deleteRateActionImpl(ctx: AppContext, formData: FormData):
 
 export async function upsertTrunkActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireAdmin(ctx);
-  await upsertTrunkWithSync(ctx, me, { name: s(formData.get('name')), host: s(formData.get('host')) });
+  await upsertTrunkWithSync(ctx, me, {
+    name: s(formData.get('name')),
+    host: s(formData.get('host')),
+    port: Number(s(formData.get('port'))) || 5060,
+    username: s(formData.get('username')) || null,
+    secret: s(formData.get('secret')) || null,
+    registration: formData.get('registration') === 'on',
+    fromUser: s(formData.get('fromUser')) || null,
+    fromDomain: s(formData.get('fromDomain')) || null,
+    didInbound: s(formData.get('didInbound')) || null,
+    outboundPrefix: s(formData.get('outboundPrefix')) || null,
+    note: s(formData.get('note')) || null,
+  });
 }
 
 export async function deleteTrunkActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
@@ -56,9 +68,13 @@ export async function deleteTrunkActionImpl(ctx: AppContext, formData: FormData)
 
 export async function scheduleUpgradeActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireAdmin(ctx);
+  const scheduledLocal = s(formData.get('scheduledAt'));
+  const scheduledAt = scheduledLocal.length === 16 ? `${scheduledLocal}:00Z` : scheduledLocal;
   scheduleUpgradeWithAudit(ctx, me, {
-    scheduledAt: s(formData.get('scheduledAt')),
+    scheduledAt,
     asteriskImage: s(formData.get('asteriskImage')),
+    webImage: s(formData.get('webImage')) || null,
+    note: s(formData.get('note')) || null,
   });
 }
 

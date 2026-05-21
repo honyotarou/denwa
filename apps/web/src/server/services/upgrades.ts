@@ -8,10 +8,15 @@ import { throwIfInvalid } from './validate';
 export function scheduleUpgradeWithAudit(
   ctx: AppContext,
   me: SessionAccount,
-  input: { scheduledAt: string; asteriskImage: string },
+  input: { scheduledAt: string; asteriskImage: string; webImage?: string | null; note?: string | null },
 ): void {
   throwIfInvalid(validateUpgradeDraft(input));
-  scheduleVersionUpgrade(ctx.db, input);
+  scheduleVersionUpgrade(ctx.db, {
+    scheduledAt: input.scheduledAt,
+    asteriskImage: input.asteriskImage,
+    webImage: input.webImage ?? undefined,
+    note: input.note ?? undefined,
+  });
   audit(ctx, me, 'upgrade.schedule');
 }
 

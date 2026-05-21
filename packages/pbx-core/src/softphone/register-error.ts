@@ -17,7 +17,14 @@ export function classifySipRegisterFailure(raw: string): SipRegisterFailure {
     return {
       kind: 'cert',
       userMessage:
-        'TLS 証明書が信頼されていません。開発時は ./scripts/gen-dev-asterisk-certs.sh のあと https://<host>:8089/ を一度開いて承認してください。',
+        'TLS 証明書が信頼されていません。ターミナルで mkcert -install（Mac パスワード入力）を実行するか、mkcert の rootCA.pem をキーチェーンで「常に信頼」に設定してから再試行してください。https://<host>:8089/ の Not Found 表示だけでは WSS が信頼されないことがあります。',
+    };
+  }
+  if (/content.security.policy|content-security-policy|connect-src/i.test(m)) {
+    return {
+      kind: 'wss',
+      userMessage:
+        'WSS が Content-Security-Policy でブロックされています。connect-src に wss: が含まれる buildSecurityHeaders をデプロイしてください。',
     };
   }
   if (/websocket|wss|econnrefused|failed to connect|network|timeout|8089/i.test(m)) {
