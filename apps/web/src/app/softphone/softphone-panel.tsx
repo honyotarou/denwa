@@ -13,6 +13,7 @@ import {
   type SoftphoneUiState,
 } from '@openpbx/core/softphone/state';
 import { classifySipRegisterFailure } from '@openpbx/core/softphone/register-error';
+import { buildWssTransportUrl } from '@openpbx/core/softphone/wss';
 import { createSipJsAdapter } from '@/client/softphone/sip-js-adapter';
 import type { SipAdapter } from '@/client/softphone/types';
 
@@ -56,13 +57,31 @@ export function SoftphonePanel({
       return;
     }
     const adapter = ensureAdapter();
+    const certHint = classifySipRegisterFailure('NET::ERR_CERT_AUTHORITY_INVALID').userMessage;
+    let settled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      setStatus(nextStateOnRegisterFail());
+      setError(
+        `${certHint} または WSS 8089 / softphone-dev overlay が起動しているか確認してください。`,
+      );
+    }, 12_000);
+    const done = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      fn();
+    };
     await adapter.register(
       { extension: profile.number, secret: profile.secret, host },
       {
-        onRegistered: () => setStatus(nextStateOnRegisterOk()),
+        onRegistered: () => done(() => setStatus(nextStateOnRegisterOk())),
         onRegisterFailed: (msg) => {
-          setStatus(nextStateOnRegisterFail());
-          setError(classifySipRegisterFailure(msg).userMessage);
+          done(() => {
+            setStatus(nextStateOnRegisterFail());
+            setError(classifySipRegisterFailure(msg).userMessage);
+          });
         },
         onIncoming: (from) => {
           setIncomingFrom(from);
@@ -205,7 +224,17 @@ export function SoftphonePanel({
       </div>
       <audio ref={audioRef} autoPlay playsInline />
       <p className="text-xs text-slate-400">
-        WSS: wss://{host}:8089/ws — 証明書は legacy OpenPBX README / mkcert 手順を参照
+        WSS: {buildWssTransportUrl(host)} — 初回は{' '}
+        <a
+          href={`https://${host}:8089/`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-blue-600 underline"
+        >
+          https://{host}:8089/
+        </a>{' '}
+        を開いて証明書を承認（またはターミナルで <code className="rounded bg-slate-100 px-1">mkcert -install</code>
+        ）してから「SIP 登録」
       </p>
     </div>
   );

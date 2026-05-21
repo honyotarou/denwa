@@ -9,28 +9,42 @@ import type { SessionAccount } from '../auth';
 import { audit } from '../audit';
 import { throwIfInvalid } from './validate';
 
+function toDbInput(input: IvrMenuDraftInput) {
+  const draft = toIvrMenuDraft(input);
+  return {
+    number: draft.number,
+    name: draft.name,
+    welcomePrompt: draft.welcomePrompt,
+    menuPrompt: draft.menuPrompt,
+    invalidPrompt: draft.invalidPrompt,
+    goodbyePrompt: draft.goodbyePrompt,
+    maxRetries: draft.maxRetries,
+    waitSeconds: draft.waitSeconds,
+    options: draft.options.map((o) => ({
+      digit: o.digit,
+      action: o.action,
+      target: o.target,
+      label: o.label,
+    })),
+  };
+}
+
 export async function upsertIvrWithSync(
   ctx: AppContext,
   me: SessionAccount,
   input: IvrMenuDraftInput,
 ): Promise<void> {
   throwIfInvalid(validateIvrMenuDraftInput(input));
-  const draft = toIvrMenuDraft(input);
-  const options = draft.options.map((o) => ({
-    digit: o.digit,
-    action: o.action,
-    target: o.target,
-    label: o.label,
-  }));
+  const dbInput = toDbInput(input);
   try {
-    createIvrMenu(ctx.db, { number: draft.number, name: draft.name ?? undefined, options });
+    createIvrMenu(ctx.db, dbInput);
   } catch (e) {
     if (isDuplicateError(e)) {
-      updateIvrMenu(ctx.db, { number: draft.number, name: draft.name ?? undefined, options });
+      updateIvrMenu(ctx.db, dbInput);
     } else throw e;
   }
   await ctx.infra.syncIvr();
-  audit(ctx, me, 'ivr.upsert', draft.number);
+  audit(ctx, me, 'ivr.upsert', dbInput.number);
 }
 
 export async function deleteIvrWithSync(

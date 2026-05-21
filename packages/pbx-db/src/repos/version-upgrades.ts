@@ -4,6 +4,7 @@ export type VersionUpgradeRow = Readonly<{
   id: number;
   scheduledAt: string;
   asteriskImage: string;
+  webImage: string | null;
   note: string | null;
   appliedAt: string | null;
 }>;
@@ -12,6 +13,7 @@ type Raw = {
   id: number;
   scheduled_at: string;
   asterisk_image: string;
+  web_image: string | null;
   note: string | null;
   applied_at: string | null;
 };
@@ -21,6 +23,7 @@ function map(r: Raw): VersionUpgradeRow {
     id: r.id,
     scheduledAt: r.scheduled_at,
     asteriskImage: r.asterisk_image,
+    webImage: r.web_image,
     note: r.note,
     appliedAt: r.applied_at,
   };
@@ -42,7 +45,7 @@ export function scheduleVersionUpgrade(
 export function getVersionUpgrade(db: Database.Database, id: number): VersionUpgradeRow | null {
   const row = db
     .prepare(
-      'SELECT id, scheduled_at, asterisk_image, note, applied_at FROM version_upgrades WHERE id = ?',
+      'SELECT id, scheduled_at, asterisk_image, web_image, note, applied_at FROM version_upgrades WHERE id = ?',
     )
     .get(id) as Raw | undefined;
   return row ? map(row) : null;
@@ -52,7 +55,7 @@ export function listVersionUpgrades(db: Database.Database): VersionUpgradeRow[] 
   return (
     db
       .prepare(
-        'SELECT id, scheduled_at, asterisk_image, note, applied_at FROM version_upgrades ORDER BY scheduled_at',
+        'SELECT id, scheduled_at, asterisk_image, web_image, note, applied_at FROM version_upgrades ORDER BY scheduled_at',
       )
       .all() as Raw[]
   ).map(map);
@@ -62,7 +65,7 @@ export function listDueUnappliedUpgrades(db: Database.Database, nowIso: string):
   return (
     db
       .prepare(
-        `SELECT id, scheduled_at, asterisk_image, note, applied_at
+        `SELECT id, scheduled_at, asterisk_image, web_image, note, applied_at
          FROM version_upgrades
          WHERE applied_at IS NULL AND scheduled_at <= ?
          ORDER BY scheduled_at`,

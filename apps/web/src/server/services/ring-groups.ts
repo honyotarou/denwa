@@ -3,7 +3,6 @@ import { createRingGroup, deleteRingGroup, getRingGroup, updateRingGroup } from 
 import type { AppContext } from '../context';
 import type { SessionAccount } from '../auth';
 import { audit } from '../audit';
-import { parseCommaSeparatedExtensions } from './form-helpers';
 import { throwIfInvalid } from './validate';
 
 export async function createRingGroupWithSync(
@@ -14,6 +13,7 @@ export async function createRingGroupWithSync(
     name: string | null;
     strategy: RingStrategy;
     ringSeconds: number;
+    fallbackExtension: string | null;
     members: readonly string[];
   },
 ): Promise<void> {
@@ -22,7 +22,7 @@ export async function createRingGroupWithSync(
     name: input.name,
     strategy: input.strategy,
     ringSeconds: input.ringSeconds,
-    fallbackExtension: null,
+    fallbackExtension: input.fallbackExtension,
     members: input.members,
   };
   throwIfInvalid(validateRingGroupDraft(draft));
@@ -31,6 +31,7 @@ export async function createRingGroupWithSync(
     name: draft.name,
     strategy: draft.strategy,
     ringSeconds: draft.ringSeconds,
+    fallbackExtension: draft.fallbackExtension,
     members: draft.members,
   });
   await ctx.infra.syncRingGroups();
@@ -41,20 +42,34 @@ export async function updateRingGroupWithSync(
   ctx: AppContext,
   me: SessionAccount,
   number: string,
-  members: readonly string[],
+  patch: {
+    members?: readonly string[];
+    name?: string | null;
+    strategy?: RingStrategy;
+    ringSeconds?: number;
+    fallbackExtension?: string | null;
+  },
 ): Promise<void> {
   const existing = getRingGroup(ctx.db, number);
   if (!existing) throw new Error('not found');
   const draft: RingGroupDraft = {
     number: existing.number,
-    name: existing.name,
-    strategy: existing.strategy as RingStrategy,
-    ringSeconds: existing.ringSeconds,
-    fallbackExtension: existing.fallbackExtension,
-    members,
+    name: patch.name !== undefined ? patch.name : existing.name,
+    strategy: (patch.strategy ?? existing.strategy) as RingStrategy,
+    ringSeconds: patch.ringSeconds ?? existing.ringSeconds,
+    fallbackExtension:
+      patch.fallbackExtension !== undefined ? patch.fallbackExtension : existing.fallbackExtension,
+    members: patch.members ?? existing.members,
   };
   throwIfInvalid(validateRingGroupDraft(draft));
-  updateRingGroup(ctx.db, { number, members });
+  updateRingGroup(ctx.db, {
+    number,
+    name: draft.name,
+    strategy: draft.strategy,
+    ringSeconds: draft.ringSeconds,
+    fallbackExtension: draft.fallbackExtension,
+    members: draft.members,
+  });
   await ctx.infra.syncRingGroups();
   audit(ctx, me, 'ring_group.update', number);
 }

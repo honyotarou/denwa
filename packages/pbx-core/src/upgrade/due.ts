@@ -2,6 +2,7 @@ export type UpgradeScheduleRow = Readonly<{
   id: number;
   scheduledAt: string;
   asteriskImage: string;
+  webImage?: string | null;
 }>;
 
 /** 予約時刻 <= now のアップグレード（UTC ISO 比較） */
@@ -20,9 +21,11 @@ export function filterDueUpgrades(
 export function formatUpgradeRunCommands(
   row: UpgradeScheduleRow,
 ): readonly string[] {
-  return [
+  const lines = [
     `docker compose pull`,
     `# asterisk image tag: ${row.asteriskImage}`,
-    `docker compose up -d --build asterisk web`,
   ];
+  if (row.webImage) lines.push(`# web image tag: ${row.webImage}`);
+  lines.push(`docker compose up -d --build asterisk web`);
+  return lines;
 }

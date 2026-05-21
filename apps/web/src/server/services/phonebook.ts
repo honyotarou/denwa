@@ -5,14 +5,30 @@ import type { SessionAccount } from '../auth';
 import { audit } from '../audit';
 import { throwIfInvalid } from './validate';
 
+type PhonebookInput = Readonly<{
+  name: string;
+  number: string;
+  category?: string | null;
+  note?: string | null;
+}>;
+
+function toDbInput(input: PhonebookInput) {
+  const number = normalizePhonebookNumber(input.number);
+  throwIfInvalid(validatePhonebookDraft({ name: input.name, number }));
+  return {
+    name: input.name.trim(),
+    number,
+    category: input.category?.trim() || undefined,
+    note: input.note?.trim() || undefined,
+  };
+}
+
 export function createPhonebookWithAudit(
   ctx: AppContext,
   me: SessionAccount,
-  input: { name: string; number: string },
+  input: PhonebookInput,
 ): void {
-  const number = normalizePhonebookNumber(input.number);
-  throwIfInvalid(validatePhonebookDraft({ name: input.name, number }));
-  createPhonebookEntry(ctx.db, { name: input.name.trim(), number });
+  createPhonebookEntry(ctx.db, toDbInput(input));
   audit(ctx, me, 'phonebook.create');
 }
 
@@ -20,11 +36,9 @@ export function updatePhonebookWithAudit(
   ctx: AppContext,
   me: SessionAccount,
   id: number,
-  input: { name: string; number: string },
+  input: PhonebookInput,
 ): void {
-  const number = normalizePhonebookNumber(input.number);
-  throwIfInvalid(validatePhonebookDraft({ name: input.name, number }));
-  updatePhonebookEntry(ctx.db, id, { name: input.name.trim(), number });
+  updatePhonebookEntry(ctx.db, id, toDbInput(input));
   audit(ctx, me, 'phonebook.update');
 }
 

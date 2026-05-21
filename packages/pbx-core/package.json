@@ -15,7 +15,8 @@
     "./softphone/wss-readiness": "./src/softphone/wss-readiness.ts",
     "./triage/flow-graph": "./src/triage/flow-graph.ts",
     "./triage/ui-state": "./src/triage/ui-state.ts",
-    "./home/device-present": "./src/home/device-present.ts"
+    "./home/device-present": "./src/home/device-present.ts",
+    "./prod/content-security-policy": "./src/prod/content-security-policy.ts"
   },
   "scripts": {
     "test": "vitest run",
