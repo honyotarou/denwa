@@ -48,6 +48,7 @@ export * from './billing/detail-rows.js';
 export * from './runtime/poll-intervals.js';
 export * from './concurrency/chart.js';
 export * from './home/device-summary.js';
+export * from './home/device-present.js';
 export * from './media/uniqueid.js';
 export * from './media/cdr-links.js';
 export * from './originate/ami.js';
