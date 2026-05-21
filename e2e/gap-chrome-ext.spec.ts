@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { E2E_ADMIN } from './lib/credentials';
 import {
   configureExtensionViaOptions,
+  chromeExtensionSkipReason,
   launchContextWithExtension,
   openFixtureWithOriginateCapture,
   readClick2CallE2eConfig,
@@ -19,6 +20,9 @@ async function loginInContext(baseUrl: string, context: Awaited<ReturnType<typeo
 
 test.describe('L5 E2E — G5b Chrome extension', () => {
   test('T-CHX-G5b: tel link sends Bearer originate', async () => {
+    const skip = chromeExtensionSkipReason();
+    test.skip(Boolean(skip), skip ?? undefined);
+
     const cfg = readClick2CallE2eConfig();
     const context = await launchContextWithExtension();
     try {

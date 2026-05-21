@@ -3,9 +3,27 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, type BrowserContext, type Page } from '@playwright/test';
+import {
+  buildExtensionLoadArgs,
+  resolveExtensionE2eLaunch,
+  shouldSkipChromeExtensionE2e,
+} from '../../packages/pbx-core/src/click2call/extension-e2e-launch.ts';
 
 const E2E_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ROOT = path.join(E2E_DIR, '..');
+
+export function chromeExtensionE2eEnv() {
+  return {
+    ci: Boolean(process.env.CI),
+    display: process.env.DISPLAY,
+    skipFlag: process.env.E2E_SKIP_CHROME_EXT === '1',
+    platform: process.platform,
+  };
+}
+
+export function chromeExtensionSkipReason(): string | null {
+  return shouldSkipChromeExtensionE2e(chromeExtensionE2eEnv());
+}
 
 export function chromeExtensionDir(): string {
   return path.join(ROOT, 'chrome-extension');
@@ -22,14 +40,14 @@ export function readClick2CallE2eConfig(): Click2CallE2eConfig {
   return JSON.parse(raw) as Click2CallE2eConfig;
 }
 
-/** MV3 拡張は persistent context + headless:false が必要（Playwright 公式） */
 export async function launchContextWithExtension(): Promise<BrowserContext> {
   const ext = chromeExtensionDir();
+  const launch = resolveExtensionE2eLaunch(chromeExtensionE2eEnv());
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'denwa-pw-ext-'));
   return chromium.launchPersistentContext(userDataDir, {
-    headless: false,
-    ignoreDefaultArgs: ['--disable-component-extensions-with-background-pages', '--enable-automation'],
-    args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`],
+    headless: launch.headless,
+    ignoreDefaultArgs: [...launch.ignoreDefaultArgs],
+    args: [...launch.extraArgs, ...buildExtensionLoadArgs(ext)],
   });
 }
 
