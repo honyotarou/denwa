@@ -1,3 +1,4 @@
+import { parsePasswordPolicyForm } from '@openpbx/core';
 import type { AppContext } from '../context.js';
 import { audit, requireAdmin, requireSupervisor, s } from './shared.js';
 import {
@@ -10,10 +11,16 @@ import { deleteUpgradeWithAudit, scheduleUpgradeWithAudit } from '../services/up
 
 export async function updatePolicyActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireAdmin(ctx);
-  updatePasswordPolicyWithAudit(ctx, me, {
+  const settings = parsePasswordPolicyForm({
     minLength: Number(s(formData.get('minLength')) || '8'),
+    requireLowercase: formData.get('requireLowercase') === 'on',
+    requireUppercase: formData.get('requireUppercase') === 'on',
     requireDigit: formData.get('requireDigit') === 'on',
+    requireSymbol: formData.get('requireSymbol') === 'on',
+    rotationDays: Number(s(formData.get('rotationDays')) || '0'),
+    lockoutThreshold: Number(s(formData.get('lockoutThreshold')) || '5'),
   });
+  updatePasswordPolicyWithAudit(ctx, me, settings);
 }
 
 export async function upsertIpAllowActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
@@ -35,7 +42,9 @@ export async function upsertRateActionImpl(ctx: AppContext, formData: FormData):
   const me = requireSupervisor(ctx);
   upsertBillingRateWithAudit(ctx, me, {
     prefix: s(formData.get('prefix')),
+    label: s(formData.get('label')) || null,
     perMin: Number(s(formData.get('perMin')) || '0'),
+    setupFee: Number(s(formData.get('setupFee')) || '0'),
   });
 }
 

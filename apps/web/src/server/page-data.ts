@@ -1,7 +1,7 @@
 import {
   listExtensions,
   listHolidays,
-  listBillingRates,
+  listBillingRatesForUi,
   listVersionUpgrades,
   listAudit,
   listLoginHistory,
@@ -173,7 +173,7 @@ export function getHolidays() {
 }
 
 export function getBillingRates() {
-  return listBillingRates(db());
+  return listBillingRatesForUi(db());
 }
 
 export function getVersionUpgrades() {

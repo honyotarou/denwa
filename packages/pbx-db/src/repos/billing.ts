@@ -23,10 +23,22 @@ export function upsertBillingRate(
 }
 
 export function listBillingRates(db: Database.Database): Array<{ prefix: string; per_min: number }> {
-  return db.prepare('SELECT prefix, per_min FROM billing_rates ORDER BY prefix').all() as Array<{
-    prefix: string;
-    per_min: number;
-  }>;
+  return listBillingRatesForUi(db).map((r) => ({ prefix: r.prefix, per_min: r.perMin }));
+}
+
+export type BillingRateUiRow = Readonly<{
+  prefix: string;
+  label: string | null;
+  perMin: number;
+  setupFee: number;
+}>;
+
+export function listBillingRatesForUi(db: Database.Database): BillingRateUiRow[] {
+  return db
+    .prepare(
+      'SELECT prefix, label, per_min AS perMin, setup_fee AS setupFee FROM billing_rates ORDER BY prefix',
+    )
+    .all() as BillingRateUiRow[];
 }
 
 export function listBillingRatesForCost(
