@@ -38,6 +38,7 @@ import {
   listLoginHistory,
   listVersionUpgrades,
   migrateExtensions,
+  reconcileCdrIngestOffset,
   resolveIngestOffset,
   scheduleVersionUpgrade,
   seedExtensions,
@@ -121,10 +122,10 @@ describe('Phase 3 — @openpbx/db (T-DB-001〜026)', () => {
   });
 
   describe('T-DB-004: seed', () => {
-    it('Given empty db When seedExtensions Then 1001/1002', () => {
+    it('Given empty db When seedExtensions Then 1001/1002/1003', () => {
       const db = createInMemoryDb();
       seedExtensions(db);
-      expect(listExtensions(db).map((e) => e.number).sort()).toEqual(['1001', '1002']);
+      expect(listExtensions(db).map((e) => e.number).sort()).toEqual(['1001', '1002', '1003']);
     });
   });
 
@@ -234,6 +235,16 @@ describe('Phase 3 — @openpbx/db (T-DB-001〜026)', () => {
       advanceCdrIngestOffset(db, '/tmp/Master.csv', 1, 500);
       const offset = resolveIngestOffset(db, '/tmp/Master.csv', 2, 1000);
       expect(offset).toBe(0);
+    });
+  });
+
+  describe('T-DB-014b: reconcile stale ingest', () => {
+    it('Given EOF offset and 0 cdr_records When reconcile Then offset 0', () => {
+      const db = createInMemoryDb();
+      advanceCdrIngestOffset(db, '/tmp/Master.csv', 1, 500);
+      const offset = reconcileCdrIngestOffset(db, '/tmp/Master.csv', 1, 500);
+      expect(offset).toBe(0);
+      expect(getCdrIngestState(db).offset).toBe(0);
     });
   });
 

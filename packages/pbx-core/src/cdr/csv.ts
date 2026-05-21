@@ -65,9 +65,18 @@ export function parseCdrCsvLine(line: string): string[] {
   return out;
 }
 
+/** Asterisk は空の userfield を省略して 17 列になることがある */
+export function normalizeCdrCsvColumns(cols: readonly string[]): string[] | null {
+  if (cols.length === CDR_FIELD_NAMES.length) return [...cols];
+  if (cols.length === CDR_FIELD_NAMES.length - 1) {
+    return [...cols.slice(0, CDR_FIELD_NAMES.length - 2), '', cols[cols.length - 1] ?? ''];
+  }
+  return null;
+}
+
 export function cdrRowFromCsvLine(line: string): CdrCsvRow | null {
-  const cols = parseCdrCsvLine(line);
-  if (cols.length < CDR_FIELD_NAMES.length) return null;
+  const cols = normalizeCdrCsvColumns(parseCdrCsvLine(line));
+  if (!cols) return null;
   const row = {} as Record<CdrFieldName, string>;
   for (let i = 0; i < CDR_FIELD_NAMES.length; i++) {
     row[CDR_FIELD_NAMES[i]] = cols[i] ?? '';

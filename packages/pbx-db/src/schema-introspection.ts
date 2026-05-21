@@ -30,6 +30,9 @@ export const EXPECTED_TABLES = [
   'sip_trunks',
   'account_extension_grants',
   'click_to_call_tokens',
+  'recording_files',
+  'inbox_events',
+  'device_snapshots',
 ] as const;
 
 export const REQUIRED_INDEXES = [
@@ -45,6 +48,9 @@ export const REQUIRED_INDEXES = [
   'idx_patient_records_pid',
   'idx_patient_records_date',
   'idx_click_tokens_account',
+  'idx_recording_uniqueid',
+  'idx_inbox_uniqueid',
+  'idx_device_snap_at',
 ] as const;
 
 export const REQUIRED_FK_TABLES = [

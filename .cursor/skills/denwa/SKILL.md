@@ -1,15 +1,16 @@
 ---
 name: denwa
 description: >-
-  OpenPBX TDD 再構築（/denwa）。0→9。SOC/カプセル化/T-TS(§5.4.1)/T-SEC(ペネトレ)は denwa-architecture-gate + Vitest + prod-check で強制。
-  層: core / ops / db / infra / web(services→actions→pages)。pre static / post harness:fast / push harness。
-  Use when: /denwa, denwa, pentest, OWASP, ITIL, T-ARCH, T-SOC, T-SEC, T-TS, harness, legacy OpenPBX, SECURITY-MAP.
+  OpenPBX TDD 再構築（/denwa）。0→9。legacy parity B（CDR検索・課金明細・同時通話等）は steps 付録 D。
+  SOC/カプセル化/T-TS(§5.4.1)/T-SEC(ペネトレ)は denwa-architecture-gate + Vitest + prod-check で強制。
+  層: core / ops / db / infra / web(services→actions→pages)。pre static / post harness:fast / push harness。test:coverage:parity-b。
+  Use when: /denwa, denwa, parity B, pentest, OWASP, ITIL, T-ARCH, T-SOC, T-SEC, T-TS, harness, legacy OpenPBX, SECURITY-MAP.
   正本 .cursor/skills/denwa。手順 steps-denwa.md。地図 docs/SECURITY-MAP.md。
 ---
 
 # denwa — OpenPBX TDD 再構築（`/denwa`）
 
-**正本**: 本 SKILL → **`steps-denwa.md` §{番号}`** → `docs/TDD-REBUILD-PLAN.md` / セキュリティ地図 **`docs/SECURITY-MAP.md`**
+**正本**: 本 SKILL → **`steps-denwa.md` §{番号}`**（レガシー parity B → **付録 D**）→ `docs/TDD-REBUILD-PLAN.md` / **`docs/SECURITY-MAP.md`**
 
 **番号だけでよい**。`harness` / `check` は独立メニューにしない。編集時 **pre→static** / **post→harness:fast**、turn 末 **stop→harness**、push で **harness**。
 
@@ -49,6 +50,7 @@ description: >-
 | `npm run check:static` | `scripts/check-denwa-static.mjs` → secrets + `denwa-architecture-gate.mjs` |
 | `npm run harness:fast` | static + 全 workspace typecheck |
 | `npm run harness` | fast + `test:gate` + `prod-check --expect-pass` + `sca-audit` |
+| `npm run test:coverage:parity-b` | `@openpbx/core` の parity B 6 モジュール branch ≥90%（`vitest --coverage`） |
 
 編集 **1 ファイル** 時も pre/post で該当ルールのみ再検査（`check:static -- <path>`）。
 
@@ -231,7 +233,8 @@ apps/web     services → actions → pages / app/actions
 | API barrel | `server/api-handlers.ts` | **re-export のみ**（T-SOC-005） |
 | API 認可 | `server/api/with-auth.ts` | `withAuth` / `authErrorResponse` |
 | API CSRF 門番 | `server/api/post-origin.ts` | POST route から呼ぶ（T-SEC-CSRF-001） |
-| 画面データ | `server/page-data.ts` | repo 経由。SQL 禁止 |
+| 画面データ | `server/page-data.ts` | repo 経由。SQL 禁止。parity B は `services/*` 委譲（付録 D） |
+| parity B UC | `server/services/home-summary.ts`, `concurrency-ui.ts`, `billing-detail.ts`, `cdr-list.ts`, `cdr-sync.ts`, `media-sync.ts` | OpenPBX レガシー画面ギャップ（steps 付録 D） |
 | パス | `server/paths.ts` | env は server のみ。**page 禁止** |
 | API 文脈 | `server/request-meta.ts` | `buildContextFromRequest(req)` |
 | Edge IP | `server/request-ip.ts` | middleware 専用 |
@@ -241,6 +244,14 @@ apps/web     services → actions → pages / app/actions
 ### services（mutation 一覧）
 
 `extensions`, `ring-groups`, `pickup`, `phonebook`, `business-hours`, `trunks`, `upgrades`, `guidance`, `ivr`, `admin-policy`, `auth-login`
+
+**読取・集計（mutation 以外）**: `home-summary`, `concurrency-ui`, `billing-detail`, `cdr-list`, `cdr-sync`, `media-sync`, `health`, `dashboard`
+
+### API（parity B 追加分）
+
+| Route | Handler | 契約 |
+|-------|---------|------|
+| `GET/PUT/DELETE` `/api/extensions/[number]` | `handlers/extension-by-number.ts` | T-API-EXT-NUM。PUT/DELETE は `rejectDisallowedPostOrigin` + `PBX_CONFIG_WRITE_MIN_ROLE` |
 
 domain mutation は **T-ARCH-004**（core `validate*`）。`auth-login` / `guidance` delete / `admin-policy` は例外。
 
@@ -286,7 +297,8 @@ domain mutation は **T-ARCH-004**（core `validate*`）。`auth-login` / `guida
 10. [ ] POST API なら `rejectDisallowedPostOrigin`（T-SEC-CSRF-001）
 11. [ ] 機微 API なら `pbx-api-policy` の `minRole` + gate `SENSITIVE_API_*`（必要時）
 12. [ ] `docs/SECURITY-MAP.md` にゲート ID を 1 行追記（セキュリティ変更時）
-13. [ ] `npm run harness` 緑
+13. [ ] parity B 系 core 変更なら `npm run test:coverage:parity-b`（branch 90%）
+14. [ ] `npm run harness` 緑
 
 ---
 
@@ -318,7 +330,21 @@ domain mutation は **T-ARCH-004**（core `validate*`）。`auth-login` / `guida
 
 ---
 
-## 8. 関連スキル
+## 8. OpenPBX legacy parity B（レガシー画面ギャップ）
+
+**gap 計画**（`/network`・患者・問診・Chrome）とは別。**既存 PBX 画面**で OpenPBX にあった CDR 検索・課金明細・同時通話グラフ・ホーム X/Y・softphone 2 列・内線 REST など。
+
+| 詳細 | パス |
+|------|------|
+| 手順・Test ID・層マップ | **`steps-denwa.md` 付録 D** |
+| gap 移植進捗（Phase 0〜6） | `docs/OPENPBX-GAP-PROGRESS.md` |
+| 差分機能 TDD 計画 | `docs/OPENPBX-GAP-MIGRATION-TDD-PLAN.md` |
+
+**seed 内線**: `1001` / `1002` / `1003`（E2E `登録済み (3)`）。**ポーリング**: CDR 10s・concurrency 30s（`CDR_POLL_INTERVAL_MS` / `CONCURRENCY_POLL_INTERVAL_MS`）。
+
+---
+
+## 9. 関連スキル
 
 | スキル | 用途 |
 |--------|------|
@@ -332,3 +358,5 @@ domain mutation は **T-ARCH-004**（core `validate*`）。`auth-login` / `guida
 - `/denwa 2` + 「T-SEC-AMI-002 context allowlist Red→Green」
 - `/denwa 8` + 「T-SEC-A05-001 prod-check 通す」
 - 「ペネトレ ITIL 第4章」→ 付録 C Treatment、Ch3 まで Red テストを増やさない
+- `/denwa` + 「parity B / レガシー画面ギャップ」→ **付録 D** を Read してから TDD
+- `/denwa 2` + 「T-CDR-FILT-001」→ `core/cdr/filter.ts` + `openpbx-parity-b.test.ts`

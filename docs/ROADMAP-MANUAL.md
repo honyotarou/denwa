@@ -2,6 +2,8 @@
 
 `docs/TDD-REBUILD-PLAN.md` Phase 8 の **実機・Docker ランタイム** は Vitest では代替しません。リリース前に人が以下を確認します。
 
+OpenPBX gap 機能（network / patients / triage / softphone / Chrome）の tick 表は [`OPENPBX-GAP-SMOKE-CHECKLIST.md`](OPENPBX-GAP-SMOKE-CHECKLIST.md) を使う。
+
 ## 前提
 
 ```bash

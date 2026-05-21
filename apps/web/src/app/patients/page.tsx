@@ -13,7 +13,7 @@ export default async function PatientsPage({
   await guardPage('user');
   const sp = await searchParams;
   const patients = listPatientsForUi(sp.q);
-  const recent = listRecentPatientRecordsForUi(30);
+  const recent = listRecentPatientRecordsForUi(30, 14);
 
   return (
     <div className="space-y-6">
@@ -50,7 +50,7 @@ export default async function PatientsPage({
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">最近の記録</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-700">最近の記録（14 日以内・最大 30 件）</h3>
         {recent.length === 0 ? (
           <p className="text-sm text-slate-500">記録がありません。</p>
         ) : (

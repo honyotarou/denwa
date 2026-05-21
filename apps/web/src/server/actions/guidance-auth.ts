@@ -6,7 +6,7 @@ import { deleteGuidanceWithAudit } from '../services/guidance';
 // T-ACT-020 guidance
 export async function deleteGuidanceActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireUser(ctx);
-  deleteGuidanceWithAudit(ctx, me, s(formData.get('name')));
+  await deleteGuidanceWithAudit(ctx, me, s(formData.get('name')));
 }
 
 // T-ACT-021 login

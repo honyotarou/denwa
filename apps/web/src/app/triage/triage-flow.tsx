@@ -8,6 +8,11 @@ import {
   type Recommendation,
   type FlowOption,
 } from '@openpbx/core/triage/flow-graph';
+import {
+  captureTriageSnapshot,
+  restorePreviousTriageSnapshot,
+  type TriageUiSnapshot,
+} from '@openpbx/core/triage/ui-state';
 
 interface Step {
   nodeId: string;
@@ -19,19 +24,26 @@ interface Step {
 interface TriageProps {
   patientId?: string;
   extension?: string;
+  /** /triage ページは外側 header があるため false */
+  showHeading?: boolean;
 }
 
-export function TriageFlow({ patientId, extension }: TriageProps = {}) {
+export function TriageFlow({ patientId, extension, showHeading = true }: TriageProps = {}) {
   const [currentId, setCurrentId] = useState<string>('start');
   const [history, setHistory] = useState<Step[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [endText, setEndText] = useState<string | null>(null);
   const [memo, setMemo] = useState<string>('');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [undoSnapshots, setUndoSnapshots] = useState<TriageUiSnapshot[]>([]);
 
   const node = FLOW[currentId];
 
   function pick(opt: FlowOption) {
+    setUndoSnapshots((s) => [
+      ...s,
+      captureTriageSnapshot({ currentId, history, recommendations, endText }),
+    ]);
     const nextId = opt.next;
     const next = FLOW[nextId];
     setHistory((h) => [
@@ -52,17 +64,17 @@ export function TriageFlow({ patientId, extension }: TriageProps = {}) {
     setHistory([]);
     setRecommendations([]);
     setEndText(null);
+    setUndoSnapshots([]);
   }
 
   function back() {
-    setHistory((h) => {
-      if (h.length === 0) return h;
-      const prev = h[h.length - 1];
-      setCurrentId(prev.nodeId);
-      setEndText(null);
-      // 推奨を巻き戻すのは複雑なので、ユーザに任せる (履歴に残す方が安全)
-      return h.slice(0, -1);
-    });
+    const { restored, snapshots } = restorePreviousTriageSnapshot(undoSnapshots);
+    if (!restored) return;
+    setUndoSnapshots([...snapshots]);
+    setCurrentId(restored.currentId);
+    setHistory([...restored.history]);
+    setRecommendations([...restored.recommendations]);
+    setEndText(restored.endText);
   }
 
   function pushRecommendation(r: Recommendation) {
@@ -104,7 +116,9 @@ export function TriageFlow({ patientId, extension }: TriageProps = {}) {
       {/* 左: 現在の質問 / フロー */}
       <section className="space-y-3">
         <header className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">問診フロー（受付補助）</h2>
+          {showHeading && (
+            <h2 className="text-lg font-semibold">問診フロー（受付補助）</h2>
+          )}
           <button
             type="button"
             onClick={reset}
@@ -315,7 +329,7 @@ export function TriageFlow({ patientId, extension }: TriageProps = {}) {
   );
 }
 
-function CopyButton({ text }: { text: string }) {
+export function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button

@@ -1,7 +1,9 @@
 import type Database from 'better-sqlite3';
 import {
   validateCreatePatientRecordInput,
+  validateUpdatePatientRecordInput,
   type CreatePatientRecordInput,
+  type UpdatePatientRecordInput,
 } from '@openpbx/core';
 import { ensurePatientExists } from './patients.js';
 
@@ -57,10 +59,22 @@ export function listRecentPatientRecords(
   db: Database.Database,
   limit = 20,
 ): PatientRecordRow[] {
+  return listRecentPatientRecordsSince(db, 365, limit);
+}
+
+export function listRecentPatientRecordsSince(
+  db: Database.Database,
+  days: number,
+  limit = 30,
+): PatientRecordRow[] {
   return (
     db
-      .prepare(`SELECT * FROM patient_records ORDER BY recorded_at DESC LIMIT ?`)
-      .all(limit) as RRow[]
+      .prepare(
+        `SELECT * FROM patient_records
+         WHERE recorded_at >= datetime('now', ?)
+         ORDER BY recorded_at DESC LIMIT ?`,
+      )
+      .all(`-${Math.max(1, days)} days`, limit) as RRow[]
   ).map(map);
 }
 
@@ -88,6 +102,33 @@ export function createPatientRecord(
     .prepare('SELECT * FROM patient_records WHERE id = ?')
     .get(info.lastInsertRowid) as RRow;
   return map(row);
+}
+
+export function getPatientRecord(db: Database.Database, id: number): PatientRecordRow | null {
+  const row = db.prepare('SELECT * FROM patient_records WHERE id = ?').get(id) as RRow | undefined;
+  return row ? map(row) : null;
+}
+
+export function updatePatientRecord(
+  db: Database.Database,
+  input: UpdatePatientRecordInput,
+): PatientRecordRow | null {
+  const errs = validateUpdatePatientRecordInput(input);
+  if (errs.length) throw new Error(errs.join('; '));
+  const existing = getPatientRecord(db, input.id);
+  if (!existing || existing.patientId !== input.patientId) return null;
+  db.prepare(
+    `UPDATE patient_records SET extension = ?, kind = ?, summary = ?, note = ?
+     WHERE id = ? AND patient_id = ?`,
+  ).run(
+    input.extension ?? null,
+    input.kind,
+    input.summary ?? null,
+    input.note ?? null,
+    input.id,
+    input.patientId,
+  );
+  return getPatientRecord(db, input.id);
 }
 
 export function deletePatientRecord(db: Database.Database, id: number): boolean {

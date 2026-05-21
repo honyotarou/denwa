@@ -303,6 +303,10 @@ describe('Phase 4–5 — @openpbx/infra', () => {
         startOffset: 0,
       });
       expect(getCdrRecord(db, 'uid-1')!.src).toBe('1001');
+      const withStart = db
+        .prepare('SELECT start_at FROM cdr_records WHERE uniqueid = ?')
+        .get('uid-1') as { start_at: string | null };
+      expect(withStart.start_at).toBe('t1');
       const line2 = line.replace('1001', '1002');
       ingestCdrChunk(db, {
         sourcePath: '/tmp/Master.csv',

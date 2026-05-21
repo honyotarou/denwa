@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { validateChromeExtensionManifest } from '@openpbx/core';
+import { validateChromeExtensionManifest, validateExtensionUsesLocalStorage } from '@openpbx/core';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
@@ -12,6 +12,20 @@ describe('T-CHX-006 chrome-extension', () => {
       fs.readFileSync(path.join(ROOT, 'chrome-extension/manifest.json'), 'utf8'),
     );
     expect(validateChromeExtensionManifest(raw)).toEqual([]);
+  });
+
+  it('T-SEC-EXT-001: no wildcard host permissions', () => {
+    const raw = JSON.parse(
+      fs.readFileSync(path.join(ROOT, 'chrome-extension/manifest.json'), 'utf8'),
+    );
+    expect(raw.host_permissions).not.toContain('https://*/*');
+  });
+
+  it('T-SEC-EXT-002: bundled scripts use local storage', () => {
+    const bg = fs.readFileSync(path.join(ROOT, 'chrome-extension/background.js'), 'utf8');
+    const opts = fs.readFileSync(path.join(ROOT, 'chrome-extension/options.js'), 'utf8');
+    expect(validateExtensionUsesLocalStorage(bg)).toEqual([]);
+    expect(validateExtensionUsesLocalStorage(opts)).toEqual([]);
   });
 
   it('T-GAP-SEC-003: no CDN sip.js in apps/web', () => {

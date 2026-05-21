@@ -24,6 +24,7 @@ export function seedDevExtensions(db: Database.Database): void {
   const rows = [
     { number: '1001', displayName: 'Reception 1001', note: '受付', webrtc: 0 },
     { number: '1002', displayName: 'Doctor 1002', note: '診察室', webrtc: 1 },
+    { number: '1003', displayName: 'Staff 1003', note: 'スタッフ', webrtc: 0 },
   ] as const;
   const ins = db.prepare(
     `INSERT OR IGNORE INTO extensions (number, display_name, secret, note, webrtc, updated_at)
