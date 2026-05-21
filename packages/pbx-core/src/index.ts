@@ -70,6 +70,7 @@ export * from './click2call/token.js';
 export * from './click2call/manifest.js';
 export * from './click2call/originate-client.js';
 export * from './click2call/extension-message.js';
+export * from './click2call/extension-e2e-launch.js';
 export * from './click2call/content-scan.js';
 export * from './softphone/state.js';
 export * from './softphone/policy.js';

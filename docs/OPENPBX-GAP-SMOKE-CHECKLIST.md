@@ -24,6 +24,6 @@
 | G4b | softphone **実 SIP** | dev certs + overlay → `E2E_WSS_PROBE=1 npm run test:e2e` または手動 REGISTER | UI `registered` |
 | G5b | Chrome **実ブラウザ** | `gap-chrome-ext.spec.ts`（Playwright + unpacked ext） | tel: → Bearer POST |
 
-G4b/G5b は [`ROADMAP-MANUAL.md`](ROADMAP-MANUAL.md) の runtime 節を参照。契約・分類・バンドルは CI で担保。
+G5b は [`ROADMAP-MANUAL.md`](ROADMAP-MANUAL.md) の runtime 節を参照。CI では `xvfb-run` + headed 拡張 E2E。
 
 **完了定義**: harness Green。G4b/G5b は初回セットアップ時のみ tick、以降は regress で `harness` を優先。
