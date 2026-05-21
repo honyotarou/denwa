@@ -4,6 +4,7 @@ import {
   upsertHolidayAction,
   deleteHolidayAction,
   createTimeRuleAction,
+  updateTimeRuleAction,
   deleteTimeRuleAction,
 } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
@@ -55,10 +56,17 @@ export default async function BusinessHoursPage() {
         </form>
         <ul className="text-sm">
           {rules.map((r) => (
-            <li key={r.id} className="flex items-center justify-between border-t py-2">
-              <span>
-                {r.name} {r.days} {r.startTime}-{r.endTime}
-              </span>
+            <li key={r.id} className="border-t py-3 space-y-2">
+              <form action={updateTimeRuleAction} className="grid gap-2 sm:grid-cols-2">
+                <input type="hidden" name="id" value={r.id} />
+                <input name="name" defaultValue={r.name} required className="rounded border px-2 py-1 text-sm" />
+                <input name="days" defaultValue={r.days} className="rounded border px-2 py-1 text-sm" />
+                <input name="startTime" defaultValue={r.startTime} className="rounded border px-2 py-1 text-sm" />
+                <input name="endTime" defaultValue={r.endTime} className="rounded border px-2 py-1 text-sm" />
+                <button type="submit" className="rounded border px-2 py-1 text-sm sm:col-span-2">
+                  保存
+                </button>
+              </form>
               <form action={deleteTimeRuleAction}>
                 <input type="hidden" name="id" value={r.id} />
                 <ConfirmButton confirmText="ルールを削除しますか？" className="text-xs text-red-600">
@@ -72,4 +80,3 @@ export default async function BusinessHoursPage() {
     </div>
   );
 }
-

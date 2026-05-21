@@ -1,10 +1,11 @@
 #!/usr/bin/env npx tsx
-/** T-SCA-001 + T-SEC-SCA-002/003 */
+/** T-SCA-001 + T-SEC-SCA-002/003/004 */
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { collectBlockedAdvisories } from '../packages/pbx-core/src/prod/sca-audit-filter.ts';
+import { classifyNpmAuditExecError } from '../packages/pbx-core/src/prod/sca-audit-network.ts';
 import {
   collectEsbuildInstallViolations,
   collectPostcssInstallViolations,
@@ -41,12 +42,21 @@ function collectPinnedInstalls(): InstalledPackage[] {
   return out;
 }
 
-function npmAuditJson(args: string): unknown {
+function npmAuditJson(args: string): { data: unknown } | { skip: true; detail: string } {
   try {
-    return JSON.parse(execSync(`npm audit ${args} --json`, { cwd: ROOT, encoding: 'utf8' }));
+    const stdout = execSync(`npm audit ${args} --json`, { cwd: ROOT, encoding: 'utf8' });
+    return { data: JSON.parse(stdout) };
   } catch (e) {
-    const err = e as { stdout?: string };
-    if (err.stdout) return JSON.parse(err.stdout);
+    const err = e as { stdout?: string; stderr?: string; message?: string; status?: number };
+    if (err.stdout) {
+      try {
+        return { data: JSON.parse(err.stdout) };
+      } catch {
+        /* fall through */
+      }
+    }
+    const outcome = classifyNpmAuditExecError(err);
+    if (outcome.kind === 'skip') return { skip: true, detail: outcome.detail };
     throw e;
   }
 }
@@ -78,19 +88,38 @@ const installErrors = [
 failIfAny('T-SEC-SCA install pins', installErrors);
 
 try {
-  execSync('npm audit --audit-level=high', { cwd: ROOT, stdio: 'inherit' });
-} catch {
+  execSync('npm audit --audit-level=high', { cwd: ROOT, stdio: 'pipe', encoding: 'utf8' });
+} catch (e) {
+  const outcome = classifyNpmAuditExecError(e as { status?: number; stderr?: string; stdout?: string; message?: string });
+  if (outcome.kind === 'skip') {
+    console.warn('[denwa:sca] SKIP T-SEC-SCA-002/003: npm registry unavailable (offline?)');
+    console.warn(`[denwa:sca] ${outcome.detail.split('\n').find(Boolean) ?? outcome.detail}`);
+    console.log('[denwa:sca] OK (install pins only)');
+    process.exit(0);
+  }
   console.error('[denwa:sca] FAILED: high+ vulnerabilities (all deps)');
   process.exit(1);
 }
 
+const prodResult = npmAuditJson('--omit=dev');
+if ('skip' in prodResult && prodResult.skip) {
+  console.warn('[denwa:sca] SKIP T-SEC-SCA-002/003: npm registry unavailable (offline?)');
+  console.log('[denwa:sca] OK (install pins only)');
+  process.exit(0);
+}
 const prodBlocked = collectBlockedAdvisories(
-  parseAdvisories(npmAuditJson('--omit=dev') as { vulnerabilities?: Record<string, unknown> }),
+  parseAdvisories(prodResult.data as { vulnerabilities?: Record<string, unknown> }),
 );
 failIfAny('T-SEC-SCA-002 prod moderate+', prodBlocked);
 
+const devResult = npmAuditJson('');
+if ('skip' in devResult && devResult.skip) {
+  console.warn('[denwa:sca] SKIP T-SEC-SCA-002/003: npm registry unavailable (offline?)');
+  console.log('[denwa:sca] OK (install pins only)');
+  process.exit(0);
+}
 const devBlocked = collectBlockedAdvisories(
-  parseAdvisories(npmAuditJson('') as { vulnerabilities?: Record<string, unknown> }),
+  parseAdvisories(devResult.data as { vulnerabilities?: Record<string, unknown> }),
 );
 failIfAny('T-SEC-SCA-003 dev moderate+', devBlocked);
 

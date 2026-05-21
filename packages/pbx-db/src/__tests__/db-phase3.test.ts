@@ -335,6 +335,36 @@ describe('Phase 3 — @openpbx/db (T-DB-001〜026)', () => {
       upsertSipTrunk(db, { name: 'carrier-a', host: 'updated.example.com' });
       expect(deleteSipTrunk(db, 'carrier-a')).toBe(true);
     });
+
+    it('Given full trunk fields When upsert Then persisted', () => {
+      const db = createInMemoryDb();
+      const row = upsertSipTrunk(db, {
+        name: 'carrier-b',
+        host: 'sip.carrier.example',
+        port: 5061,
+        username: 'u1',
+        secret: 's1',
+        registration: true,
+        fromUser: '050',
+        fromDomain: 'carrier.example',
+        didInbound: '0311112222',
+        outboundPrefix: '0',
+        note: 'test trunk',
+      });
+      expect(row).toMatchObject({
+        name: 'carrier-b',
+        host: 'sip.carrier.example',
+        port: 5061,
+        username: 'u1',
+        secret: 's1',
+        registration: true,
+        fromUser: '050',
+        fromDomain: 'carrier.example',
+        didInbound: '0311112222',
+        outboundPrefix: '0',
+        note: 'test trunk',
+      });
+    });
   });
 
   describe('T-DB-024: transaction rollback', () => {

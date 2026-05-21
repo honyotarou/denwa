@@ -87,10 +87,10 @@ export function updateRingGroup(db: Database.Database, input: UpsertRingGroupInp
   db.prepare(
     `UPDATE ring_groups SET name = ?, strategy = ?, ring_seconds = ?, fallback_extension = ?, updated_at = datetime('now') WHERE number = ?`,
   ).run(
-    input.name ?? null,
+    input.name !== undefined ? input.name : existing.name,
     input.strategy ?? existing.strategy,
     input.ringSeconds ?? existing.ringSeconds,
-    input.fallbackExtension ?? null,
+    input.fallbackExtension !== undefined ? input.fallbackExtension : existing.fallbackExtension,
     input.number,
   );
   replaceMembers(db, existing.id, input.members ?? existing.members);

@@ -11,7 +11,12 @@ export default async function UpgradesPage() {
   const { scheduled, due } = getUpgradesForUi();
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold">バージョンアップ予約</h2>
+      <header>
+        <h2 className="text-lg font-semibold">バージョンアップ予約</h2>
+        <p className="text-xs text-slate-500">
+          Asterisk / Web イメージの基底タグ切替予定を記録します。実際の docker compose pull / up はホスト側で実行する必要があります。
+        </p>
+      </header>
       {due.length > 0 && (
         <section className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm">
           <h3 className="font-semibold text-amber-900">実行時期を過ぎた予約 ({due.length})</h3>
@@ -23,8 +28,10 @@ export default async function UpgradesPage() {
             {due.map((u) => (
               <li key={u.id} className="rounded border border-amber-200 bg-white p-3">
                 <div className="font-mono text-xs">
-                  #{u.id} {u.asteriskImage} — {formatJst(u.scheduledAt)}
+                  #{u.id} {u.asteriskImage}
+                  {u.webImage ? ` / ${u.webImage}` : ''} — {formatJst(u.scheduledAt)}
                 </div>
+                {u.note ? <p className="mt-1 text-xs text-slate-600">{u.note}</p> : null}
                 <pre className="mt-2 overflow-x-auto rounded bg-slate-900 p-2 text-xs text-slate-100">
                   {u.commands.join('\n')}
                 </pre>
@@ -34,15 +41,41 @@ export default async function UpgradesPage() {
         </section>
       )}
       <section className="rounded-lg border bg-white p-4">
-        <form action={scheduleUpgradeAction} className="flex flex-wrap gap-2">
-          <input name="asteriskImage" placeholder="v1.2.0" required className="rounded border px-2 py-1" />
-          <input
-            name="scheduledAt"
-            placeholder="2026-06-01T02:00:00Z"
-            required
-            className="rounded border px-2 py-1 font-mono text-sm"
-          />
-          <button type="submit" className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white">
+        <h3 className="mb-3 text-sm font-semibold text-slate-700">新規予約</h3>
+        <form action={scheduleUpgradeAction} className="grid grid-cols-1 gap-3 sm:grid-cols-[200px_1fr_1fr_1fr_auto]">
+          <label className="text-xs text-slate-600">
+            予定日時 (UTC)
+            <input
+              name="scheduledAt"
+              required
+              type="datetime-local"
+              className="mt-1 w-full rounded border border-slate-300 px-2 py-1 font-mono text-sm"
+            />
+          </label>
+          <label className="text-xs text-slate-600">
+            asterisk image
+            <input
+              name="asteriskImage"
+              required
+              placeholder="例: ubuntu:24.04"
+              defaultValue="ubuntu:22.04"
+              className="mt-1 w-full rounded border border-slate-300 px-2 py-1 font-mono text-sm"
+            />
+          </label>
+          <label className="text-xs text-slate-600">
+            web image
+            <input
+              name="webImage"
+              placeholder="例: node:22-bookworm-slim"
+              defaultValue="node:20-bookworm-slim"
+              className="mt-1 w-full rounded border border-slate-300 px-2 py-1 font-mono text-sm"
+            />
+          </label>
+          <label className="text-xs text-slate-600">
+            メモ
+            <input name="note" className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm" />
+          </label>
+          <button type="submit" className="self-end rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white">
             予約
           </button>
         </form>
@@ -51,7 +84,9 @@ export default async function UpgradesPage() {
         {scheduled.map((u) => (
           <li key={u.id} className="flex justify-between p-3">
             <span>
-              {u.asteriskImage} {formatJst(u.scheduledAt)}
+              {u.asteriskImage}
+              {u.webImage ? ` / ${u.webImage}` : ''} {formatJst(u.scheduledAt)}
+              {u.note ? <span className="ml-2 text-slate-500">{u.note}</span> : null}
               {u.appliedAt ? (
                 <span className="ml-2 text-emerald-600 text-xs">適用済 {formatJst(u.appliedAt)}</span>
               ) : null}
