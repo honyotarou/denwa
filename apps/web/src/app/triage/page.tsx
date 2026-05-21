@@ -40,7 +40,7 @@ export default async function TriagePage({
           </p>
         )}
       </header>
-      <TriageFlow patientId={patientId} extension={sp.ext} />
+      <TriageFlow patientId={patientId} extension={sp.ext} showHeading={false} />
     </div>
   );
 }

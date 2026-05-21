@@ -6,7 +6,7 @@ import {
   verifyClickToCallTokenPlain,
   parseBearerAuthorization,
 } from '../click2call/token.js';
-import { validateChromeExtensionManifest } from '../click2call/manifest.js';
+import { validateChromeExtensionManifest, validateExtensionHostPattern } from '../click2call/manifest.js';
 import { filterSoftphoneProfiles } from '../softphone/policy.js';
 
 describe('T-SOFT policy', () => {
@@ -64,9 +64,21 @@ describe('T-CHX-006 manifest', () => {
     expect(
       validateChromeExtensionManifest({
         manifest_version: 3,
-        permissions: ['storage', 'contextMenus'],
+        permissions: ['storage', 'contextMenus', 'scripting'],
+        host_permissions: ['http://localhost:3000/*'],
       }),
     ).toEqual([]);
+  });
+
+  it('T-SEC-EXT-001: rejects wildcard host', () => {
+    expect(validateExtensionHostPattern('https://*/*')).not.toBeNull();
+    expect(
+      validateChromeExtensionManifest({
+        manifest_version: 3,
+        permissions: ['storage', 'contextMenus', 'scripting'],
+        host_permissions: ['https://*/*'],
+      }),
+    ).not.toEqual([]);
   });
 
   it('rejects extra permissions', () => {

@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import Database from 'better-sqlite3';
 import path from 'node:path';
 import { applySchema } from '@openpbx/db';
@@ -11,6 +12,9 @@ let dbSingleton: Database.Database | null = null;
 export function getAppDb(): Database.Database {
   if (!dbSingleton) {
     const file = process.env.DATABASE_PATH ?? path.join(process.cwd(), 'data/db/command-room.sqlite');
+    if (file !== ':memory:') {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+    }
     dbSingleton = new Database(file);
     applySchema(dbSingleton);
   }

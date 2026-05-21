@@ -21,6 +21,6 @@
     "@openpbx/infra": "*",
     "@types/node": "^22.10.0",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.5"
+    "vitest": "^3.2.4"
   }
 }

@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3';
+import { listCdrRecordsFiltered } from './cdr.js';
 
 export type AccountListRow = Readonly<{
   id: number;
@@ -108,19 +109,7 @@ export function listGuidanceNames(db: Database.Database) {
 }
 
 export function listCdrRecords(db: Database.Database, limit = 200) {
-  return db
-    .prepare(
-      `SELECT uniqueid, start_at AS startTime, src, dst, billsec, disposition
-       FROM cdr_records ORDER BY start_at DESC LIMIT ?`,
-    )
-    .all(limit) as Array<{
-    uniqueid: string;
-    startTime: string | null;
-    src: string | null;
-    dst: string | null;
-    billsec: number;
-    disposition: string | null;
-  }>;
+  return listCdrRecordsFiltered(db, { limit });
 }
 
 export function listIpAllowRows(db: Database.Database) {

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { guardPage } from '@/lib/auth';
+import { formatJst } from '@/lib/datetime';
 import { getHomeSummary } from '@/server/page-data';
 
 export const dynamic = 'force-dynamic';
@@ -18,8 +19,12 @@ function Card({ label, value, href, hint }: { label: string; value: string; href
 
 export default async function HomePage() {
   await guardPage('user');
-  const { extensionCount, extensions, inbox, onlineDevices } = await getHomeSummary();
-  const onlineLabel = onlineDevices === null ? '—' : String(onlineDevices);
+  const { extensionCount, extensions, inbox, deviceSummary, extensionsMtime } = await getHomeSummary();
+  const onlineLabel =
+    !deviceSummary.amiReady || deviceSummary.online === null
+      ? '—'
+      : `${deviceSummary.online} / ${deviceSummary.total ?? 0}`;
+  const mtimeHint = extensionsMtime ? `PJSIP 更新 ${formatJst(extensionsMtime)}` : 'extensions.conf 未取得';
   return (
     <div className="space-y-6">
       <header>
@@ -27,8 +32,8 @@ export default async function HomePage() {
         <p className="text-xs text-slate-500">Asterisk ベース PBX の状態と設定への入り口。</p>
       </header>
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="サマリー">
-        <Card label="登録済み内線" value={String(extensionCount)} href="/extensions" />
-        <Card label="オンライン端末" value={onlineLabel} href="/devices" hint="AMI" />
+        <Card label="登録済み内線" value={String(extensionCount)} href="/extensions" hint={mtimeHint} />
+        <Card label="オンライン端末" value={onlineLabel} href="/devices" hint="PJSIP / AMI" />
         <Card label="Inbox wav" value={inbox.wav < 0 ? '—' : String(inbox.wav)} href="/inbox" hint="待機" />
         <Card label="Inbox meta" value={inbox.meta < 0 ? '—' : String(inbox.meta)} href="/inbox" hint="event JSON" />
       </section>

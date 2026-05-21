@@ -12,6 +12,7 @@ import {
   validateDialTarget,
   type SoftphoneUiState,
 } from '@openpbx/core/softphone/state';
+import { classifySipRegisterFailure } from '@openpbx/core/softphone/register-error';
 import { createSipJsAdapter } from '@/client/softphone/sip-js-adapter';
 import type { SipAdapter } from '@/client/softphone/types';
 
@@ -61,7 +62,7 @@ export function SoftphonePanel({
         onRegistered: () => setStatus(nextStateOnRegisterOk()),
         onRegisterFailed: (msg) => {
           setStatus(nextStateOnRegisterFail());
-          setError(msg);
+          setError(classifySipRegisterFailure(msg).userMessage);
         },
         onIncoming: (from) => {
           setIncomingFrom(from);
@@ -74,7 +75,7 @@ export function SoftphonePanel({
         },
         onError: (msg) => {
           setStatus('error');
-          setError(msg);
+          setError(classifySipRegisterFailure(msg).userMessage);
         },
       },
     );

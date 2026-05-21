@@ -8,8 +8,12 @@
     "./auth/policy": "./src/auth/policy.ts",
     "./auth/middleware-ip-policy": "./src/auth/middleware-ip-policy.ts",
     "./auth/access": "./src/auth/access.ts",
+    "./auth/rate-limit": "./src/auth/rate-limit.ts",
     "./softphone/state": "./src/softphone/state.ts",
-    "./triage/flow-graph": "./src/triage/flow-graph.ts"
+    "./softphone/register-error": "./src/softphone/register-error.ts",
+    "./softphone/wss": "./src/softphone/wss.ts",
+    "./triage/flow-graph": "./src/triage/flow-graph.ts",
+    "./triage/ui-state": "./src/triage/ui-state.ts"
   },
   "scripts": {
     "test": "vitest run",
@@ -18,7 +22,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.5"
+    "vitest": "^3.2.4"
   }
 }

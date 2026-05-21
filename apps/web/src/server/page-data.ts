@@ -13,8 +13,6 @@ import {
   listTimeRules as listTimeRulesRepo,
   listIvrMenusForUi,
   listGuidanceNames,
-  listCdrRecords,
-  listBillingRatesForCost,
   listDueUnappliedUpgrades,
   listIpAllowRows as listIpAllowRowsRepo,
   listSipTrunksForUi,
@@ -24,15 +22,23 @@ import {
   listPatients,
   getPatient,
   listPatientRecords,
-  listRecentPatientRecords,
+  listRecentPatientRecordsSince,
   listClickToCallTokens,
   listGrantedExtensionNumbers,
+  listRecordingFilesForUi,
+  listInboxEventsForUi,
+  listDeviceSnapshots,
+  listCdrRecords,
 } from '@openpbx/db';
-import { enrichCdrRowsForUi, formatUpgradeRunCommands } from '@openpbx/core';
-import { listRecordingFiles, countInboxFiles, listInboxEntries } from '@openpbx/infra';
+import { formatUpgradeRunCommands } from '@openpbx/core';
+import { countInboxFiles } from '@openpbx/infra';
+import path from 'node:path';
+import type { CdrListFilter } from '@openpbx/core';
 import { getAppDb } from './app-context';
-import { inboxDirectory, recordingsDirectory } from './paths';
-import { getDashboardOnlineCount } from './services/dashboard';
+import { inboxDirectory } from './paths';
+import { getBillingDetailForUi as loadBillingDetail } from './services/billing-detail';
+import type { CdrSearchParams } from './services/cdr-list';
+import { syncMediaIndexes } from './services/media-sync';
 
 function db() {
   return getAppDb();
@@ -74,14 +80,18 @@ export function listCdr(limit = 200) {
   return listCdrRecords(db(), limit);
 }
 
-export function listCdrForUi(limit = 200) {
-  const rows = listCdrRecords(db(), limit);
-  const rates = listBillingRatesForCost(db()).map((r) => ({
-    prefix: r.prefix,
-    perMin: r.perMin,
-    setupFee: r.setupFee,
-  }));
-  return enrichCdrRowsForUi(rows, rates);
+export async function listCdrForUi(limit = 200) {
+  const { rows } = await listCdrForUiWithFilter({ limit });
+  return rows;
+}
+
+export async function listCdrForUiWithFilter(sp: CdrSearchParams | CdrListFilter = {}) {
+  const { listCdrForUiFiltered, cdrFilterFromSearchParams } = await import('./services/cdr-list');
+  const filter =
+    'limit' in sp && typeof sp.limit === 'number'
+      ? sp
+      : cdrFilterFromSearchParams(sp as CdrSearchParams);
+  return listCdrForUiFiltered(db(), filter);
 }
 
 export function listIpAllowRows() {
@@ -101,24 +111,52 @@ export async function countInboxSummary() {
 }
 
 export async function listInboxForUi(limit = 50) {
-  return listInboxEntries(inboxDirectory(), limit);
+  const d = db();
+  await syncMediaIndexes(d);
+  return listInboxEventsForUi(d, limit);
 }
 
 export async function getHomeSummary() {
   const { getAmiDeviceSession } = await import('./ports/ami-devices');
-  const exts = getExtensions();
-  const inbox = await countInboxSummary();
-  const onlineDevices = getDashboardOnlineCount(getAmiDeviceSession());
+  const {
+    countInboxSummaryFromDir,
+    getDeviceOnlineSummary,
+    getPjsipExtensionsMtime,
+    listExtensionsForHome,
+  } = await import('./services/home-summary');
+  const d = db();
+  const exts = listExtensionsForHome(d);
+  const inbox = await countInboxSummaryFromDir();
+  const deviceSummary = getDeviceOnlineSummary(getAmiDeviceSession());
+  const pjsipDir = process.env.PJSIP_OUT_DIR ?? path.join(process.cwd(), 'asterisk/pjsip.d');
+  const extensionsMtime = await getPjsipExtensionsMtime(pjsipDir);
   return {
     extensionCount: exts.length,
     extensions: exts,
     inbox,
-    onlineDevices,
+    deviceSummary,
+    extensionsMtime,
   };
 }
 
+export async function getConcurrencyForUi(limit = 180) {
+  const { getAmiDeviceSession } = await import('./ports/ami-devices');
+  const { getConcurrencyUiData } = await import('./services/concurrency-ui');
+  return getConcurrencyUiData(db(), getAmiDeviceSession(), limit);
+}
+
+export function getBillingDetailForUi(filter: CdrListFilter = {}) {
+  return loadBillingDetail(db(), filter);
+}
+
 export async function listRecordingsForUi() {
-  return listRecordingFiles(recordingsDirectory());
+  const d = db();
+  await syncMediaIndexes(d);
+  return listRecordingFilesForUi(d);
+}
+
+export function listDeviceSnapshotsForUi(limit = 24) {
+  return listDeviceSnapshots(db(), limit);
 }
 
 export function listPhonebook(q = '') {
@@ -180,6 +218,6 @@ export function listPatientRecordsForUi(patientId: string) {
   return listPatientRecords(db(), patientId);
 }
 
-export function listRecentPatientRecordsForUi(limit = 20) {
-  return listRecentPatientRecords(db(), limit);
+export function listRecentPatientRecordsForUi(limit = 30, days = 14) {
+  return listRecentPatientRecordsSince(db(), days, limit);
 }

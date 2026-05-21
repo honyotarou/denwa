@@ -22,3 +22,14 @@ export async function saveGuidanceWav(
   await fs.writeFile(out, wavBytes);
   return out;
 }
+
+/** T-GUID-DEL-001: DB 削除とセットで wav を除去 */
+export async function deleteGuidanceWav(soundsDir: string, name: string): Promise<void> {
+  if (!NAME_RE.test(name)) throw invalidFilenameError('name は英数字 / _ / - / / のみ');
+  const out = resolveUnderBase(soundsDir, `${name}.wav`);
+  try {
+    await fs.unlink(out);
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+  }
+}

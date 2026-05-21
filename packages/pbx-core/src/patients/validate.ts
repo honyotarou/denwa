@@ -70,3 +70,26 @@ export function validateCreatePatientRecordInput(
   if (eErr) errs.push(eErr);
   return errs;
 }
+
+export type UpdatePatientRecordInput = Readonly<{
+  id: number;
+  patientId: string;
+  extension?: string | null;
+  kind: string;
+  summary?: string | null;
+  note?: string | null;
+}>;
+
+export function validateUpdatePatientRecordInput(
+  input: UpdatePatientRecordInput,
+): readonly string[] {
+  const errs: string[] = [];
+  if (!Number.isFinite(input.id) || input.id < 1) errs.push('記録 ID が不正です');
+  const idErr = validatePatientId(input.patientId);
+  if (idErr) errs.push(idErr);
+  const kErr = validateRecordKind(input.kind);
+  if (kErr) errs.push(kErr);
+  const eErr = validatePatientRecordExtension(input.extension);
+  if (eErr) errs.push(eErr);
+  return errs;
+}

@@ -1,8 +1,13 @@
-import type { CreatePatientRecordInput, UpsertPatientInput } from '@openpbx/core';
+import type {
+  CreatePatientRecordInput,
+  UpdatePatientRecordInput,
+  UpsertPatientInput,
+} from '@openpbx/core';
 import {
   createPatientRecord,
   deletePatient,
   deletePatientRecord,
+  updatePatientRecord,
   upsertPatient,
 } from '@openpbx/db';
 import type { AppContext } from '../context';
@@ -44,4 +49,14 @@ export function deletePatientRecordWithAudit(
 ): void {
   deletePatientRecord(ctx.db, id);
   audit(ctx, me, 'patient.record.delete', String(id));
+}
+
+export function updatePatientRecordWithAudit(
+  ctx: AppContext,
+  me: SessionAccount,
+  input: UpdatePatientRecordInput,
+): void {
+  const row = updatePatientRecord(ctx.db, input);
+  if (!row) throw new Error('記録が見つかりません');
+  audit(ctx, me, 'patient.record.update', `${input.patientId}:${input.id}`);
 }

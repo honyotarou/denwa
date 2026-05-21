@@ -3,6 +3,11 @@ export { handleHealthGet } from './api/handlers/health';
 export { handleCdrIngestPost, handleCdrExportGet, getCdr } from './api/handlers/cdr';
 export { handleDevicesStreamGet } from './api/handlers/devices';
 export { handleExtensionsGet, handleExtensionsPost } from './api/handlers/extensions';
+export {
+  handleExtensionByNumberGet,
+  handleExtensionByNumberPut,
+  handleExtensionByNumberDelete,
+} from './api/handlers/extension-by-number';
 export { handleOriginatePost } from './api/handlers/originate';
 export { handlePhonebookLookupGet } from './api/handlers/phonebook';
 export { handleGuidancesPost } from './api/handlers/guidance';

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { guardPage } from '@/lib/auth';
 import { listInboxForUi } from '@/server/page-data';
 import { formatJst } from '@/lib/datetime';
@@ -12,7 +13,7 @@ export default async function InboxPage() {
       <header>
         <h2 className="text-lg font-semibold">Inbox（Asterisk イベント）</h2>
         <p className="text-xs text-slate-500">
-          9001/9002 等の録音終了後、notify-event.sh が meta.json と wav を data/inbox に投下します。
+          notify-event.sh が meta.json と wav を data/inbox に投下。表示時に SQLite へ索引同期します。
         </p>
       </header>
       <div className="overflow-x-auto rounded border bg-white">
@@ -23,6 +24,7 @@ export default async function InboxPage() {
               <th>kind</th>
               <th>内線</th>
               <th>発信者</th>
+              <th>uniqueid</th>
               <th>wav</th>
               <th>再生</th>
             </tr>
@@ -34,6 +36,15 @@ export default async function InboxPage() {
                 <td className="font-mono text-xs">{r.kind ?? '—'}</td>
                 <td className="font-mono">{r.extension ?? '—'}</td>
                 <td className="font-mono">{r.callerId ?? '—'}</td>
+                <td className="font-mono text-xs">
+                  {r.uniqueid ? (
+                    <Link href="/cdr" className="text-blue-600 hover:underline">
+                      {r.uniqueid}
+                    </Link>
+                  ) : (
+                    '—'
+                  )}
+                </td>
                 <td className="font-mono text-xs">{r.wavName ?? '—'}</td>
                 <td>
                   {r.wavName ? (

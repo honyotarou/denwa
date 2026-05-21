@@ -13,7 +13,14 @@ Step 2〜8 … 実装（編集するたび pre/post → turn 末 stop）
 Step 9  … commit / push（pre-commit harness:fast → pre-push harness）
 ```
 
-**エージェント**: ユーザーが番号 **N** を選んだら **§N だけ Read** して従う。別途 `harness` メニューを勧めない（§9 か turn 末で足りる）。
+**エージェント**: ユーザーが番号 **N** を選んだら **§N だけ Read** して従う。別途 `harness` メニューを勧めない（§9 か turn 末で足りる）。**OpenPBX レガシー画面ギャップ（CDR 検索・課金明細・同時通話グラフ等）**は **付録 D**。
+
+| トピック | Read 先 |
+|----------|---------|
+| メニュー 0〜9 | 本ファイル §N |
+| parity B（レガシー PBX 画面） | **付録 D**（gap Phase 0〜6 とは別） |
+| ペネトレ | 付録 C |
+| 層違反の直し方 | 付録 B |
 
 **完了定義**: 0→9 を各1回やっただけでは計画完了にならない。各 Step で `docs/TDD-REBUILD-PLAN.md` §7 の `T-XXX-000` を **Red→Green し尽くす**（§1.4）。
 
@@ -139,6 +146,8 @@ git clone https://github.com/tanimurahifukka/OpenPBX.git ../OpenPBX
 - [ ] stop の harness が緑（または直前に `npm run harness` 手動で確認）
 - [ ] `roadmap.test.ts` の該当 todo を ID 付き `it` に降ろす（該当時）
 
+**parity B の pure 追加**（CDR filter・課金明細行・poll interval 等）も §2。Test ID は **付録 D**、`openpbx-parity-b.test.ts`。
+
 **次: §3**（早期 smoke）または並行で §4 準備
 
 ---
@@ -166,7 +175,8 @@ git clone https://github.com/tanimurahifukka/OpenPBX.git ../OpenPBX
 
 ## §4 DB 層（@openpbx/db · Phase 3）
 
-**目的**: `applySchema`, migrations, **repositories**（`T-DB-*`）。
+**目的**: `applySchema`, migrations, **repositories**（`T-DB-*`）。  
+**parity B**: `repos/cdr.ts`（全列 upsert・`listCdrRecordsFiltered`・ingest offset）、`patient-records.ts`（`listRecentPatientRecordsSince`）、seed **1001/1002/1003**（付録 D）。
 
 ### 慣例
 
@@ -236,10 +246,13 @@ server/api/handlers/    JSON 業務（withAuth T-API-AUTH-001、barrel: api-hand
 | API 認可 | `server/api/with-auth.ts` |
 | API CSRF | `server/api/post-origin.ts` → `rejectDisallowedPostOrigin`（T-SEC-CSRF-001） |
 | API 実装 | `server/api/handlers/*.ts` |
-| 読取 | `server/page-data.ts` |
+| 読取 | `server/page-data.ts`（parity B は `listCdrForUiWithFilter` / `getConcurrencyForUi` / `getBillingDetailForUi` 等） |
 | 認証 UC | `server/services/auth-login.ts` → `authenticateLogin`（T-ACT-021） |
 | ロール契約 | `@openpbx/core/auth/pbx-api-policy.ts`（`RECORDING_READ_MIN_ROLE` 等） |
 | CDR export | `services/cdr-export.ts` → `handlers/cdr.ts`（T-SEC-CSV-001） |
+| CDR 一覧 UI | `services/cdr-list.ts` + `actions/cdr.ts`（ingest） |
+| 内線 REST | `api/extensions/[number]/route.ts` + `handlers/extension-by-number.ts`（T-API-EXT-NUM） |
+| バックグラウンド | `runtime/periodic-tasks.ts`（CDR 10s）、`runtime/background-tasks.ts`（concurrency 30s） |
 
 ### コンテキスト
 
@@ -309,6 +322,7 @@ FormData key を変えるときは **forms/ と page の input を同時**（T-F
 
 - 例: IVR 画面は `digit` / `action` / `target` 等、契約どおりの field 名
 - データは `page-data` のみ（例: `countInboxSummary`, `listRecordingsForUi`）。`process.env` は `paths.ts` 側
+- **parity B 画面**（付録 D）: `/cdr` 検索フォーム、`/billing` 明細表、`/concurrency` 棒グラフ、`/` オンライン X/Y、`/softphone` 2 列 + `TriageFlow`、`/patients` 14 日 recent
 
 ### 門番
 
@@ -396,6 +410,9 @@ docker compose up            # 9001/9002 inbox 等
 - [ ] 新 POST API に CSRF 門番（T-SEC-CSRF-001）
 - [ ] セキュリティ変更なら `docs/SECURITY-MAP.md` 同期
 - [ ] 新規 SQL は `pbx-db/src/repos` のみ
+- [ ] parity B の core 変更なら `npm run test:coverage:parity-b` 緑（branch 90% on 6 modules）
+- [ ] 内線 seed / E2E が **3 本**（1001/1002/1003）と一致
+- [ ] gap 変更時は `docs/OPENPBX-GAP-SMOKE-CHECKLIST.md` G1〜G5 を tick または PR に未実施理由
 
 ### PR テンプレ
 
@@ -494,3 +511,79 @@ docker compose up            # 9001/9002 inbox 等
 **TDD 順（Treatment）**: `packages/pbx-core` の契約テスト → `pbx-db` / `pbx-infra` → `server/services` → `api/handlers` → `denwa-architecture-gate.mjs` → `apps/web/src/server/__tests__/pentest-ch*.test.ts`（ch1/ch3 はアクセス・compose の回帰）。
 
 **意図的残存**（台帳に書く）: 開発 compose の SIP `:5060` 公開（本番 overlay で除去）、WSS 自己署名 cert（F-010）、A09 SIEM は次回 PT（`PENTEST-NEXT-SCOPE.md`）。
+
+---
+
+## 付録 D: OpenPBX legacy parity B（レガシー画面ギャップ）
+
+**目的**: `../OpenPBX` の **既存 PBX 管理画面**（CDR・課金・同時通話・ホーム・softphone 横並び等）で denwa が弱かった差分を、**TDD + SOC** で埋める。  
+**`docs/OPENPBX-GAP-MIGRATION-TDD-PLAN.md` の Phase 0〜6**（network / patients / triage / Chrome）は **別トラック**。本付録はその完了を待たず進めてよい。
+
+### 対象と実装マップ（Green 基準 2026-05）
+
+| 領域 | OpenPBX 相当 | denwa 正本パス | 層 |
+|------|--------------|----------------|-----|
+| CDR 一覧 | 検索・全列 ingest・録音/Inbox 列 | `core/cdr/filter.ts`, `record-input.ts` → `db/repos/cdr.ts` → `infra/cdr/ingest.ts` → `services/cdr-list.ts` → `app/cdr/page.tsx` | core→db→infra→web |
+| CDR ポーリング | 約 10s | `core/runtime/poll-intervals.ts` → `runtime/periodic-tasks.ts` | core→web |
+| 課金 | レート + CDR 明細（最大 1000・合計） | `core/billing/detail-rows.ts` → `services/billing-detail.ts` → `app/billing/page.tsx` | core→db→web |
+| 同時通話 | 現在値 + 棒グラフ + 30s tick | `core/concurrency/chart.ts` → `services/concurrency-ui.ts` → `runtime/background-tasks.ts` → `app/concurrency/page.tsx` | core→infra→web |
+| ホーム | オンライン X/Y、PJSIP `extensions.conf` mtime | `core/home/device-summary.ts` → `services/home-summary.ts` → `page-data.getHomeSummary` → `app/page.tsx` | core→web |
+| softphone | WebRTC + 問診 2 カラム | `app/softphone/page.tsx` + `triage/triage-flow.tsx`（client） | web |
+| 患者 recent | 14 日 / 最大 30 | `db/repos/patient-records.ts` `listRecentPatientRecordsSince` → `page-data` → `app/patients/page.tsx` | db→web |
+| 内線 REST | `GET/PUT/DELETE /api/extensions/:number` | `api/handlers/extension-by-number.ts` + `app/api/extensions/[number]/route.ts` | web |
+| dev seed | 内線 1003 | `db/apply-schema.ts` `seedDevExtensions` | db |
+
+### 意図的に B 外（取り込まない）
+
+- Chrome **cookie** 前提の originate（denwa は **Bearer** + `originate-bearer.test.ts`）
+- `/inbox`（denwa 専用。OpenPBX に無い）
+
+### 環境変数
+
+| 変数 | 既定 (ms) | 用途 |
+|------|-----------|------|
+| `CDR_POLL_INTERVAL_MS` | `10000` | `ensurePeriodicTasks` の Master.csv ingest |
+| `CONCURRENCY_POLL_INTERVAL_MS` | `30000` | `ensureBackgroundTasks` の AMI スナップショット |
+
+無効・下限未満の値は core `resolve*PollIntervalMs` が既定にフォールバック（T-POLL-001）。
+
+### Test ID → Vitest（分岐カバレッジ含む）
+
+| ID | パッケージ | テストファイル |
+|----|------------|----------------|
+| T-CDR-FILT-001 | core | `src/__tests__/openpbx-parity-b.test.ts` |
+| T-CDR-REC-001 | core | 同上 |
+| T-BILL-DET-001 | core | 同上 |
+| T-POLL-001 | core | 同上 |
+| T-CONC-CHART-001 | core | 同上 |
+| T-HOME-DEV-001 | core | 同上 |
+| T-CDR-FILT-DB-001 | db | `src/__tests__/cdr-filter.test.ts` |
+| T-CDR-INGEST-DB-002 | db | 同上（offset / reconcile 分岐） |
+| T-HOME-SVC-001 | web | `server/__tests__/openpbx-parity-b-services.test.ts` |
+| T-CONC-SVC-001 | web | 同上 |
+| T-BILL-SVC-001 | web | 同上 |
+| T-CDR-SVC-001 | web | 同上 |
+| T-POLL-RUNTIME-001 | web | `server/__tests__/parity-runtime-intervals.test.ts` |
+| T-API-EXT-NUM | web | `server/__tests__/extension-by-number.test.ts` |
+
+```bash
+npm run test:coverage:parity-b   # core parity 6 ファイル branch ≥90%（vitest --coverage）
+```
+
+`packages/pbx-core/vitest.config.ts` の `coverage.include` にモジュールを足すときは上記 6 ファイルと同型。
+
+### 新規 parity を足す手順（TDD / SOC）
+
+1. `../OpenPBX` の該当 `app/**/page.tsx` と `app/api/**` を Read（§1 legacy）
+2. **Red**: core `__tests__/openpbx-parity-b.test.ts` または db `cdr-filter.test.ts` 型
+3. **Green**: `pbx-db/repos` → `pbx-infra`（I/O のみ）→ **`server/services/<uc>.ts`** → `page-data.ts` → `page.tsx`
+4. API なら `handlers/` + `route.ts`；**PUT/DELETE** は `rejectDisallowedPostOrigin`（T-SEC-CSRF-001）と `PBX_CONFIG_WRITE_MIN_ROLE`
+5. page に `getAppDb` / SQL を書かない（T-ARCH-002/003）
+6. E2E の内線件数・見出し `登録済み (N)` を seed と揃える
+7. `npm run test:coverage:parity-b`（core 触った場合）→ `npm run harness`
+
+### Docker で UI 確認
+
+```bash
+docker compose up -d --build web
+```

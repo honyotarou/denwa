@@ -1,6 +1,7 @@
 import { DUMMY_PASSWORD_HASH, isIpAllowed } from '@openpbx/core';
 import type { AppContext } from '../context';
 import { audit } from '../audit';
+import { rejectIfAppRateLimited } from './app-rate-limit';
 
 export type LoginInput = Readonly<{
   username: string;
@@ -20,6 +21,9 @@ export function authenticateLogin(
   const username = input.username.trim();
   const password = input.password;
   const meta = { ip: ctx.meta.ip, userAgent: ctx.meta.userAgent };
+
+  const rateDenied = rejectIfAppRateLimited(ctx, 'login', ctx.meta.ip);
+  if (rateDenied) return { ok: false, error: 'too many requests' };
 
   if (ctx.auth.isLoginLocked(username, ctx.meta.ip)) {
     ctx.auth.recordLoginAttempt(username, false, meta);

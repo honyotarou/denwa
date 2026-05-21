@@ -6,7 +6,7 @@ alwaysApply: true
 # denwa（毎セッション）
 
 契約: `docs/TDD-REBUILD-PLAN.md`。セキュリティ地図: `docs/SECURITY-MAP.md`。legacy: `docs/LEGACY.md` → `../OpenPBX`。  
-手順: `.cursor/skills/denwa/SKILL.md` / `steps-denwa.md`（ペネトレ → steps 付録 C）。
+手順: `.cursor/skills/denwa/SKILL.md` / `steps-denwa.md`（ペネトレ → 付録 C、**レガシー画面 parity B → 付録 D**）。
 
 ## メニュー 0→9
 
@@ -52,7 +52,7 @@ API: `server/api/handlers/*` + `withAuth`（barrel: `api-handlers.ts`）。
 
 ## エージェント
 
-1. 番号 **N** → `steps-denwa.md` §N のみ Read
+1. 番号 **N** → `steps-denwa.md` §N のみ Read（parity B / CDR 検索・課金明細等 → **付録 D**）
 2. **1 turn = 1 T-XXX-000**
 3. mutation → **services**（audit は `server/audit.ts`）
 4. 新 domain → gate の `MUTATION_SERVICES` / `ACTIONS_SERVICE_ROUTED` 更新
@@ -65,3 +65,4 @@ API: `server/api/handlers/*` + `withAuth`（barrel: `api-handlers.ts`）。
 - `/denwa 9` + 「harness 確認して push」
 - 「ペネトレ ITIL 第4章」→ steps 付録 C Treatment（Ch3 まで Red 増やさない）
 - `/denwa 6` + 「T-SEC-CSRF-001 POST Origin 門番」
+- 「parity B」→ steps **付録 D** → `npm run test:coverage:parity-b`（core 触った場合）

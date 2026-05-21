@@ -267,6 +267,34 @@ CREATE TABLE IF NOT EXISTS click_to_call_tokens (
 );
 CREATE INDEX IF NOT EXISTS idx_click_tokens_account ON click_to_call_tokens(account_id);
 
+CREATE TABLE IF NOT EXISTS recording_files (
+  name           TEXT PRIMARY KEY,
+  uniqueid       TEXT,
+  size_bytes     INTEGER NOT NULL DEFAULT 0,
+  discovered_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_recording_uniqueid ON recording_files(uniqueid);
+
+CREATE TABLE IF NOT EXISTS inbox_events (
+  meta_name      TEXT PRIMARY KEY,
+  uniqueid       TEXT,
+  kind           TEXT,
+  extension      TEXT,
+  caller_id      TEXT,
+  wav_name       TEXT,
+  received_at    TEXT,
+  discovered_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_inbox_uniqueid ON inbox_events(uniqueid);
+
+CREATE TABLE IF NOT EXISTS device_snapshots (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  snapshot_at    TEXT NOT NULL,
+  channels_json  TEXT NOT NULL,
+  online_count   INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_device_snap_at ON device_snapshots(snapshot_at DESC);
+
 CREATE TABLE IF NOT EXISTS sip_trunks (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   name            TEXT NOT NULL UNIQUE,
