@@ -70,6 +70,10 @@ describe('T-CHX-006 manifest', () => {
     ).toEqual([]);
   });
 
+  it('T-SEC-EXT-001: allows e2e origin', () => {
+    expect(validateExtensionHostPattern('http://127.0.0.1:3010/*')).toBeNull();
+  });
+
   it('T-SEC-EXT-001: rejects wildcard host', () => {
     expect(validateExtensionHostPattern('https://*/*')).not.toBeNull();
     expect(
