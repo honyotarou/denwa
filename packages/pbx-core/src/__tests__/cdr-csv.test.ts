@@ -25,6 +25,17 @@ describe('CDR CSV 1 行パース', () => {
   it('Given フィールド不足 When cdrRowFromCsvLine Then null', () => {
     expect(cdrRowFromCsvLine('a,b,c')).toBeNull();
   });
+
+  it('Given 17 列（userfield 省略）When cdrRowFromCsvLine Then uniqueid と clid', () => {
+    const line =
+      '"","1001","1002","internal","""Reception 1001"" <1001>","PJSIP/1001-00000000","PJSIP/1002-00000001","Dial","PJSIP/1002,30","2026-05-20 20:25:28",,"2026-05-20 20:25:34",6,0,"NO ANSWER","DOCUMENTATION","1779308728.0"';
+    const row = cdrRowFromCsvLine(line);
+    expect(row).not.toBeNull();
+    expect(row!.userfield).toBe('');
+    expect(row!.uniqueid).toBe('1779308728.0');
+    expect(row!.clid).toBe('"Reception 1001" <1001>');
+    expect(row!.start).toBe('2026-05-20 20:25:28');
+  });
 });
 
 describe('T-CDR-005: duration / billsec 数値化', () => {

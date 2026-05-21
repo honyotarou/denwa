@@ -7,7 +7,8 @@ export function normalizeClickToCallNumber(raw: string): string | null {
   const digits = t.replace(/[^\d+]/g, '');
   if (!digits) return null;
   if (digits.startsWith('+81')) {
-    const rest = digits.slice(3).replace(/^0/, '');
+    let rest = digits.slice(3).replace(/^0/, '');
+    if (/^\d{9,10}$/.test(rest) && !rest.startsWith('0')) rest = `0${rest}`;
     if (/^\d{9,11}$/.test(rest)) return rest;
     return null;
   }

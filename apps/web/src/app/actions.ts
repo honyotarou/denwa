@@ -15,3 +15,4 @@ export * from './actions/network';
 export * from './actions/patients';
 export * from './actions/click-to-call';
 export * from './actions/extension-grants';
+export * from './actions/cdr';

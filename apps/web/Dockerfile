@@ -1,5 +1,5 @@
 # Monorepo build (context: repo root). Replaces Phase 2.5 stub that did not listen on :3000.
-FROM node:22-bookworm-slim AS base
+FROM node:22-bookworm-slim@sha256:7af03b14a13c8cdd38e45058fd957bf00a72bbe17feac43b1c15a689c029c732 AS base
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*

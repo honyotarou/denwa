@@ -10,6 +10,7 @@ import {
   upsertPatientWithAudit,
   deletePatientWithAudit,
   createPatientRecordWithAudit,
+  updatePatientRecordWithAudit,
 } from '../services/patients';
 
 describe('T-NET: network web boundary', () => {
@@ -121,6 +122,30 @@ describe('T-PAT: patient web boundary', () => {
     });
     expect(r.status).toBe(201);
     expect((r.body as { recordId: number }).recordId).toBeGreaterThan(0);
+  });
+
+  it('T-PAT-020: Given record When updatePatientRecordWithAudit Then audit', async () => {
+    const ctx = createTestContext();
+    ctx.sessionToken = await loginAsAdmin(ctx);
+    const me = ctx.auth.requireAccount(ctx.sessionToken, ctx.meta);
+    const id = createPatientRecordWithAudit(ctx, me, {
+      patientId: '12345',
+      kind: 'note',
+      summary: 'old',
+    });
+    updatePatientRecordWithAudit(ctx, me, {
+      id,
+      patientId: '12345',
+      kind: 'call',
+      summary: 'new',
+    });
+    expect(listAudit(ctx.db).some((a) => a.action === 'patient.record.update')).toBe(true);
+    const row = ctx.db.prepare('SELECT summary, kind FROM patient_records WHERE id = ?').get(id) as {
+      summary: string;
+      kind: string;
+    };
+    expect(row.summary).toBe('new');
+    expect(row.kind).toBe('call');
   });
 });
 

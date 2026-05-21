@@ -37,7 +37,7 @@ export default defineConfig({
     { name: 'public', testMatch: /smoke-public\.spec\.ts/ },
     {
       name: 'authenticated',
-      testMatch: /smoke-authenticated\.spec\.ts/,
+      testMatch: /(smoke|gap)-(authenticated|softphone)\.spec\.ts/,
       dependencies: ['setup'],
       use: { storageState: ADMIN_STORAGE },
     },

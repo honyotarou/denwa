@@ -3,12 +3,12 @@
   "name": "denwa Click-to-call",
   "version": "0.1.0",
   "description": "denwa PBX へ Bearer token で originate する（開発用 unpacked）",
-  "permissions": ["storage", "contextMenus"],
-  "host_permissions": ["http://localhost:3000/*", "https://*/*"],
+  "permissions": ["storage", "contextMenus", "scripting"],
+  "host_permissions": ["http://localhost:3000/*"],
   "background": { "service_worker": "background.js" },
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*"],
+      "matches": ["http://localhost:3000/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

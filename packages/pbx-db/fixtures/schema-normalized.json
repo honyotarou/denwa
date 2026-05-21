@@ -401,6 +401,35 @@
       ]
     },
     {
+      "name": "device_snapshots",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "snapshot_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "channels_json",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "online_count",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
       "name": "extensions",
       "columns": [
         {
@@ -493,6 +522,59 @@
         },
         {
           "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
+      "name": "inbox_events",
+      "columns": [
+        {
+          "name": "meta_name",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "uniqueid",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "extension",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "caller_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "wav_name",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "received_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "discovered_at",
           "type": "TEXT",
           "notnull": 1,
           "pk": 0
@@ -945,6 +1027,35 @@
       ]
     },
     {
+      "name": "recording_files",
+      "columns": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 1
+        },
+        {
+          "name": "uniqueid",
+          "type": "TEXT",
+          "notnull": 0,
+          "pk": 0
+        },
+        {
+          "name": "size_bytes",
+          "type": "INTEGER",
+          "notnull": 1,
+          "pk": 0
+        },
+        {
+          "name": "discovered_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "pk": 0
+        }
+      ]
+    },
+    {
       "name": "ring_group_members",
       "columns": [
         {
@@ -1239,12 +1350,15 @@
     "idx_cdr_src",
     "idx_cdr_start",
     "idx_click_tokens_account",
+    "idx_device_snap_at",
+    "idx_inbox_uniqueid",
     "idx_login_history_user",
     "idx_patient_records_date",
     "idx_patient_records_pid",
     "idx_patients_kana",
     "idx_patients_name",
     "idx_phonebook_name",
-    "idx_phonebook_number"
+    "idx_phonebook_number",
+    "idx_recording_uniqueid"
   ]
 }

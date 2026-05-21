@@ -5,6 +5,7 @@ import {
   createPatientRecordWithAudit,
   deletePatientRecordWithAudit,
   deletePatientWithAudit,
+  updatePatientRecordWithAudit,
   upsertPatientWithAudit,
 } from '@/server/services/patients';
 import { flash, formString } from './_flash';
@@ -54,5 +55,21 @@ export async function deletePatientRecordAction(formData: FormData): Promise<voi
     const ctx = await getRequestContext();
     const me = ctx.auth.requireRole(ctx.sessionToken, ctx.meta, 'supervisor');
     deletePatientRecordWithAudit(ctx, me, Number(formData.get('recordId')));
+  });
+}
+
+export async function updatePatientRecordAction(formData: FormData): Promise<void> {
+  const patientId = formString(formData.get('patientId'));
+  await flash(`/patients/${patientId}`, '記録を更新しました', async () => {
+    const ctx = await getRequestContext();
+    const me = ctx.auth.requireAccount(ctx.sessionToken, ctx.meta);
+    updatePatientRecordWithAudit(ctx, me, {
+      id: Number(formData.get('recordId')),
+      patientId,
+      extension: formString(formData.get('extension')) || null,
+      kind: formString(formData.get('kind')) || 'note',
+      summary: formString(formData.get('summary')) || null,
+      note: formString(formData.get('note')) || null,
+    });
   });
 }

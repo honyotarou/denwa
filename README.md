@@ -66,7 +66,25 @@ Apple Silicon（M1/M2/M3）でも Asterisk イメージは **arm64** の Ubuntu 
 | `chrome-extension/` | MV3 + Bearer → `/api/originate` |
 | `/accounts` | user への WebRTC 内線割当（`account_extension_grants`） |
 
-計画: `docs/OPENPBX-GAP-MIGRATION-TDD-PLAN.md` / `docs/OPENPBX-GAP-MIGRATION-NON-TDD-PLAN.md`
+計画: `docs/OPENPBX-GAP-MIGRATION-TDD-PLAN.md` / `docs/OPENPBX-GAP-MIGRATION-NON-TDD-PLAN.md`  
+L5 手動 smoke: [`docs/OPENPBX-GAP-SMOKE-CHECKLIST.md`](docs/OPENPBX-GAP-SMOKE-CHECKLIST.md)
+
+### WebRTC ソフトフォン（開発証明書）
+
+```bash
+./scripts/gen-dev-asterisk-certs.sh
+docker compose -f docker-compose.yml -f docker-compose.softphone-dev.yml up -d asterisk
+```
+
+- WSS: `wss://<host>:8089/ws`（`asterisk/certs/README.md`）
+- `/accounts` で user に WebRTC 内線を割当してから `/softphone`
+
+### Chrome 拡張（Click-to-call）
+
+1. `chrome://extensions` → デベロッパーモード →「パッケージ化されていない拡張機能を読み込む」→ リポの `chrome-extension/`
+2. 管理画面 `/me` で Click-to-call Bearer トークンを発行
+3. 拡張 options に baseUrl（例 `http://localhost:3000`）、発信元内線、token を保存
+4. 任意ページの `tel:` または選択テキストから発信（`/api/originate`、audit `click2call:`）
 
 ### host-tts（開発のみ / T-DOC-004）
 
