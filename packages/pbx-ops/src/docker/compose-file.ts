@@ -30,9 +30,52 @@ const REQUIRED_PORTS = [
 /** ホストに公開してはいけない Asterisk 管理 HTTP（PBX-AMI-01） */
 export const FORBIDDEN_HOST_PUBLISHED_PORTS = ['8088:8088/tcp', '8089:8089/tcp'] as const;
 
+/** prod overlay 後も asterisk が外部公開してはいけない SIP/RTP/WS（T-SEC-COMPOSE-002） */
+export const FORBIDDEN_ASTERISK_TELEPHONY_PORTS = [
+  '5060:5060/tcp',
+  '5060:5060/udp',
+  '10000-10020:10000-10020/udp',
+  ...FORBIDDEN_HOST_PUBLISHED_PORTS,
+] as const;
+
 export function composePublishesForbiddenAsteriskHttp(draft: ComposeDraft): readonly string[] {
   const asteriskPorts = draft.services.asterisk?.ports ?? [];
   return FORBIDDEN_HOST_PUBLISHED_PORTS.filter((p) => asteriskPorts.includes(p));
+}
+
+export function mergeComposeOverlay(base: ComposeDraft, overlay: ComposeDraft): ComposeDraft {
+  const services: Record<string, MutableServiceDraft> = {};
+  for (const [name, svc] of Object.entries(base.services)) {
+    services[name] = {
+      ports: svc.ports ? [...svc.ports] : undefined,
+      volumes: svc.volumes ? [...svc.volumes] : undefined,
+      environmentKeys: svc.environmentKeys ? [...svc.environmentKeys] : undefined,
+    };
+  }
+  for (const [name, oSvc] of Object.entries(overlay.services)) {
+    const bSvc = services[name] ?? {};
+    services[name] = {
+      ...bSvc,
+      ...oSvc,
+      ports: oSvc.ports !== undefined ? [...oSvc.ports] : bSvc.ports,
+      volumes: oSvc.volumes !== undefined ? [...oSvc.volumes] : bSvc.volumes,
+      environmentKeys:
+        oSvc.environmentKeys !== undefined ? [...oSvc.environmentKeys] : bSvc.environmentKeys,
+    };
+  }
+  return { services: services as ComposeDraft['services'], networks: base.networks ?? overlay.networks };
+}
+
+export function composeAsteriskPublishesTelephonyPorts(draft: ComposeDraft): readonly string[] {
+  const asteriskPorts = draft.services.asterisk?.ports ?? [];
+  return FORBIDDEN_ASTERISK_TELEPHONY_PORTS.filter((p) => asteriskPorts.includes(p));
+}
+
+export function readMergedProdComposeDraft(repoRoot: string): ComposeDraft {
+  const base = readComposeDraftFromFile(repoRoot);
+  const overlayPath = path.join(repoRoot, 'docker-compose.prod.yml');
+  const overlay = parseDenwaComposeYaml(fs.readFileSync(overlayPath, 'utf8'));
+  return mergeComposeOverlay(base, overlay);
 }
 
 /** リポ root の docker-compose.yml を ComposeDraft に変換（Phase 2.5 smoke） */

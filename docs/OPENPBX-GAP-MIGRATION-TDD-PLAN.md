@@ -7,18 +7,20 @@
 
 ---
 
-## 1. 現状差分
+## 1. 現状差分（2026-05 更新 — 契約テスト済み、L5 は §13）
 
-| 領域 | OpenPBX | denwa 現状 | 移植方針 |
-|------|---------|------------|----------|
-| ブラウザソフトフォン | `/softphone/softphone.tsx` が sip.js + WSS で登録/発信/応答 | `/softphone` は UI placeholder。PJSIP WebRTC テンプレートと `webrtc` flag は存在 | SIP クライアント状態機械と UI を TDD。secret 露出は権限/割当で制限 |
-| `/network` | NAT / Tailscale 用 external address 設定 | `network_settings` schema は存在。repo/action/page/動的 transport 連携が不足 | strict validation、repo、transport renderer、admin UI、reload を TDD |
-| `/triage` | 整形外科問診フロー UI + 患者記録保存 | なし | flow engine と summary builder を pure domain 化。UI と保存連携を別テスト |
-| `/patients` | 患者 CRUD、記録 CRUD、問診保存先 | `patients` / `patient_records` schema は存在。repo/action/page/API が不足 | domain validation、DB repo、Action/API、ページを段階実装 |
-| Chrome 拡張 | MV3 Click-to-call、tel link、選択番号発信 | なし。`/api/originate` は存在するが mocked | 拡張用の安全な認証契約を先に固定し、manifest/content/background を TDD |
-| コード構成 | web 内 lib 集中 | packages 分離済み | OpenPBX の構造は移植しない。仕様と fixtures だけ抽出 |
-| 既定 secret | README に `secret-1001` 等が残る | bootstrap / prod check / forbidden secrets あり | OpenPBX 互換より denwa gate を優先。回帰テストを追加 |
-| セキュリティ gate | 手動中心 | harness / static gate / prod check / pentest tests | 新機能ごとに gate 対象を追加 |
+| 領域 | OpenPBX | denwa 現状 | 残り |
+|------|---------|------------|------|
+| ブラウザソフトフォン | sip.js + WSS | **`SoftphonePanel` + npm sip.js**、grant 制限（T-SOFT） | 実 Asterisk WSS・証明書は **§13 G4** |
+| `/network` | NAT / Tailscale | **page + transport 同期**（T-NET） | Tailscale 越し実話は **§13 G1** |
+| `/triage` | 問診 UI + 保存 | **`TriageFlow` + core flow**、snapshot 戻る（T-TRIAGE） | print は手動確認 |
+| `/patients` | CRUD + 記録 | **pages + API + 日付グループ**（T-PAT） | 実運用データは **§13 G2** |
+| Chrome 拡張 | cookie 発信 | **`chrome-extension/` + Bearer token**（T-CHX） | 実ブラウザ **§13 G5** |
+| コード構成 | web lib 集中 | **packages 分離**（維持） | — |
+| 既定 secret | README 平文 | **prod-check / gate** | ローテーション運用 |
+| セキュリティ gate | 手動 | **harness + SECURITY-MAP** | 継続追加 |
+
+進捗正本: [`OPENPBX-GAP-PROGRESS.md`](OPENPBX-GAP-PROGRESS.md)。L5 手動: [`OPENPBX-GAP-SMOKE-CHECKLIST.md`](OPENPBX-GAP-SMOKE-CHECKLIST.md)。
 
 ---
 
@@ -210,7 +212,7 @@
 1. flow graph の全 `next` は存在する node を指す。
 2. recommend node は 0 件 recommendations を許可しない。
 3. urgent / red flags は summary に保持する。
-4. 戻る操作では current node と history が戻る。recommendation の自動巻き戻しは仕様化してから実装する。
+4. 戻る操作では snapshot で current / history / recommendations / endText をまとめて復元する（`triage/ui-state.ts`、T-TRIAGE-004）。
 5. manual recommendation 追加は重複排除する。
 6. `patient` query がある場合だけ保存ボタンを出す。
 7. 保存時は `kind=triage` の patient record を作る。
@@ -229,8 +231,8 @@
 | T-TRIAGE-008 | no patient query | page render | 保存ボタンなし、案内あり |
 | T-TRIAGE-009 | valid patient query | page render | 患者情報と保存ボタン |
 | T-TRIAGE-010 | save triage | POST patient record | `kind=triage` で保存 |
-| T-TRIAGE-011 | copy button | client state | copied state が戻る |
-| T-TRIAGE-012 | print button | client action | `window.print` が呼ばれる |
+| T-TRIAGE-011 | copy button | client state | copied state が戻る（`triage-copy.test.tsx`） |
+| T-TRIAGE-012 | print button | client action | `window.print`（手動 smoke 可） |
 | T-TRIAGE-013 | nav user | render | `/triage` link が見える |
 
 ---

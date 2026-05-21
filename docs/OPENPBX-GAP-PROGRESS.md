@@ -8,43 +8,45 @@
 |------|----------|
 | static + architecture | `npm run check:static` |
 | 契約 Vitest | `npm run test:gate` |
-| L4 E2E smoke | `npm run test:e2e`（`next build` → `next start`） |
+| L4 E2E smoke | `npm run test:e2e`（`smoke-*` + `gap-authenticated`） |
+| gap doc 契約 | `pbx-ops/.../openpbx-gap-doc.test.ts` |
 | 本番化 | `npm run prod-check -- --expect-pass` |
 | 一式 | `npm run harness` |
 
 ## テスト ID カバレッジ
 
-| Phase | ID 範囲 | 主なテストファイル | 備考 |
-|-------|---------|-------------------|------|
-| 0 | T-GAP-INV, T-GAP-GM | `pbx-ops/.../openpbx-gap-inventory.test.ts` | CI は OpenPBX 無しで skip 可 |
-| 1 | T-NET-001〜009 | `pbx-core/.../network-validate.test.ts`, `pbx-db/.../gap-patients-network.test.ts` | |
-| 1 | T-NET-010〜011 | `apps/web/.../gap-web-boundary.test.ts` | 011 は action と同型の `requireRole` |
-| 1 | T-NET-012〜014 | `apps/web/.../nav-policy.test.ts` | `lib/nav-policy.ts` 単一正本 |
-| 2 | T-PAT-001〜006 | `pbx-core/.../patients-validate.test.ts` | |
-| 2 | T-PAT-007〜012 | `pbx-db/.../gap-patients-network.test.ts` | |
-| 2 | T-PAT-013〜020 | `apps/web/.../gap-web-boundary.test.ts` | |
-| 2 | T-PAT-021〜023 | E2E + 手動 | ページ DOM は L4 / manual |
-| 2 | T-PAT-024 | `nav-policy.test.ts` | |
-| 3 | T-TRIAGE-001〜007 | `pbx-core/.../triage-domain.test.ts`, `openpbx-gap.test.ts` | |
-| 3 | T-TRIAGE-008〜009 | 手動 / E2E 拡張可 | `?patient=` 案内は page 実装済み |
-| 3 | T-TRIAGE-010 | `gap-web-boundary.test.ts` | API `kind=triage` |
-| 3 | T-TRIAGE-011〜012 | manual-only | copy/print は client UI |
-| 3 | T-TRIAGE-013 | `nav-policy.test.ts` | |
-| 4 | T-SOFT-* | `gap-phase4-5.test.ts`, E2E, softphone adapter tests | |
-| 5 | T-CHX-* | `gap-phase4-5.test.ts`, `originate-bearer.test.ts` | |
-| 6 | T-GAP-DOC/SEC | `SECURITY-MAP.md`, `check-denwa-static.mjs` | |
+| Phase | ID 範囲 | 主なテストファイル | L5 |
+|-------|---------|-------------------|-----|
+| 0 | T-GAP-INV, T-GAP-GM | `openpbx-gap-inventory.test.ts` | legacy clone 任意 |
+| 1 | T-NET-001〜014 | `network-validate`, `gap-patients-network`, `gap-web-boundary`, `nav-policy` | G1 手動 |
+| 2 | T-PAT-001〜020 | `patients-validate`, `gap-patients-network`, `gap-web-boundary` | — |
+| 2 | T-PAT-008 | `patients-group.test.ts` | — |
+| 2 | T-PAT-021〜023 | `e2e/gap-authenticated.spec.ts` | G2 一部自動 |
+| 2 | T-PAT-024 | `nav-policy.test.ts` | — |
+| 3 | T-TRIAGE-001〜007 | `triage-domain`, `openpbx-gap`, `triage-ui-state` | — |
+| 3 | T-TRIAGE-004 | `triage-ui-state.test.ts`（snapshot 戻る） | — |
+| 3 | T-TRIAGE-008〜010 | `e2e/gap-authenticated`, `gap-web-boundary` | G3 一部自動 |
+| 3 | T-TRIAGE-011 | `triage/__tests__/triage-copy.test.tsx` | — |
+| 3 | T-TRIAGE-012 | print UI（手動可） | — |
+| 3 | T-TRIAGE-013 | `nav-policy.test.ts` | — |
+| 4 | T-SOFT-001〜015 | `gap-phase4-5`, `softphone-panel.test.tsx` | G4 手動 |
+| 4 | T-SOFT-016 | `softphone-dev-stack`, `gap-l5-runtime`, `softphone-panel` | G4b 実機のみ |
+| 5 | T-CHX-* | `gap-l5-runtime`, `build:chrome-ext`, `chrome-extension-bundle` | G5b 実ブラウザのみ |
+| 6 | T-GAP-DOC-001〜005 | `openpbx-gap-doc.test.ts` | — |
+| 6 | T-GAP-SEC-* | `openpbx-gap-chrome`, static, prod-check | — |
 
-## manual-only（L5）
+## L5 手動 smoke（§13）
 
-| 項目 | 手順 |
-|------|------|
-| Docker + SIP + 録音 inbox | [`ROADMAP-MANUAL.md`](ROADMAP-MANUAL.md) |
-| §13 手動 smoke 表 | 同上 + gap 計画 §13 |
-| host-tts | [`host-tts/README.md`](../host-tts/README.md) |
+チェックリスト: [`OPENPBX-GAP-SMOKE-CHECKLIST.md`](OPENPBX-GAP-SMOKE-CHECKLIST.md)（G1〜G5）。  
+詳細: [`ROADMAP-MANUAL.md`](ROADMAP-MANUAL.md)。
+
+## OpenPBX legacy parity B（別トラック）
+
+手順: `.cursor/skills/denwa/steps-denwa.md` 付録 D。CDR・課金・同時通話等。
 
 ## SOC ルール（維持）
 
-- domain → `@openpbx/core`（client は subpath のみ: `T-CLIENT-CORE-001`）
+- domain → `@openpbx/core`
 - 永続化 → `@openpbx/db/repos/*`
 - 変化 + reload → `services/*` → `actions/*` → `page.tsx`
-- E2E は契約の重複実装をしない（L3 で固めた境界の smoke）
+- E2E は契約の重複実装をしない

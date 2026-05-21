@@ -1,7 +1,12 @@
 import type Database from 'better-sqlite3';
 import fs from 'node:fs/promises';
-import { advanceCdrIngestOffset, resolveIngestOffset, upsertCdrRecord } from '@openpbx/db';
-import { cdrParsedRowFromCsvLine } from '@openpbx/core';
+import {
+  advanceCdrIngestOffset,
+  reconcileCdrIngestOffset,
+  resolveIngestOffset,
+  upsertCdrRecord,
+} from '@openpbx/db';
+import { cdrParsedRowFromCsvLine, cdrRecordUpsertFromParsed } from '@openpbx/core';
 
 export type CdrIngestResult = Readonly<{
   ingested: number;
@@ -45,14 +50,7 @@ export function ingestCdrChunk(
         parseErrors++;
         continue;
       }
-      upsertCdrRecord(db, {
-        uniqueid: row.uniqueid,
-        src: row.src,
-        dst: row.dst,
-        disposition: row.disposition,
-        duration: row.durationSec,
-        billsec: row.billsecSec,
-      });
+      upsertCdrRecord(db, cdrRecordUpsertFromParsed(row));
       ingested++;
     }
   });
@@ -85,6 +83,7 @@ export async function ingestCdrFile(
     return { ingested: 0, offset: 0, skipped: true, parseErrors: 0, remainder: previousRemainder };
   }
 
+  reconcileCdrIngestOffset(db, csvPath, st.ino, st.size);
   const offset = resolveIngestOffset(db, csvPath, st.ino, st.size);
   if (offset >= st.size) {
     return { ingested: 0, offset, skipped: false, parseErrors: 0, remainder: previousRemainder };

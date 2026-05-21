@@ -8,6 +8,8 @@ import {
   type Invitation,
   type Session,
 } from 'sip.js';
+import { classifySipRegisterFailure } from '@openpbx/core/softphone/register-error';
+import { buildWssTransportUrl } from '@openpbx/core/softphone/wss';
 import type { SipAdapter, SipAdapterCallbacks, SipAdapterConfig } from './types';
 
 function attachRemoteAudio(session: Session, audio: HTMLAudioElement | null): void {
@@ -38,7 +40,7 @@ export function createSipJsAdapter(audioEl: HTMLAudioElement | null): SipAdapter
       }
       ua = new UserAgent({
         uri,
-        transportOptions: { server: `wss://${cfg.host}:8089/ws` },
+        transportOptions: { server: buildWssTransportUrl(cfg.host) },
         authorizationUsername: cfg.extension,
         authorizationPassword: cfg.secret,
         delegate: {
@@ -56,7 +58,8 @@ export function createSipJsAdapter(audioEl: HTMLAudioElement | null): SipAdapter
         await registerer.register();
         cb.onRegistered();
       } catch (e) {
-        cb.onRegisterFailed(e instanceof Error ? e.message : String(e));
+        const raw = e instanceof Error ? e.message : String(e);
+        cb.onRegisterFailed(classifySipRegisterFailure(raw).userMessage);
       }
     },
     async unregister() {

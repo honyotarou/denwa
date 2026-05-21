@@ -457,7 +457,108 @@ const POST_API_CSRF_ROUTES = [
   "apps/web/src/app/api/originate/route.ts",
   "apps/web/src/app/api/guidances/route.ts",
   "apps/web/src/app/api/cdr/ingest/route.ts",
+  "apps/web/src/app/api/patients/records/route.ts",
 ];
+
+function checkAllPostApiCsrf(root, failures) {
+  const apiRoot = path.join(root, "apps/web/src/app/api");
+  if (!fs.existsSync(apiRoot)) return;
+  function walk(dir) {
+    for (const name of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, name.name);
+      if (name.isDirectory()) walk(p);
+      else if (name.name === "route.ts") {
+        const rel = path.relative(root, p).replace(/\\/g, "/");
+        const text = readSafe(p);
+        if (/export\s+async\s+function\s+POST/.test(text) && !rel.includes("health/")) {
+          if (!/rejectDisallowedPostOrigin/.test(text)) {
+            fail(failures, "T-SEC-CSRF-003", rel, "POST route must call rejectDisallowedPostOrigin");
+          }
+        }
+      }
+    }
+  }
+  walk(apiRoot);
+  checkPostApiCsrf(root, failures);
+}
+
+/** Keep in sync with packages/pbx-core/src/docker/from-pin.ts */
+function collectDockerfileFromPinFailures(text) {
+  const pinnedStages = new Set();
+  const out = [];
+  const digestFrom = /^FROM\s+.+\@sha256:[a-f0-9]{64}(\s+AS\s+(\S+))?/i;
+  const stageFrom = /^FROM\s+(\S+)\s+AS\s+(\S+)/i;
+  const isExternal = (name) => name.includes(":") || name.includes("/");
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    if (!/^FROM\s+/i.test(line)) continue;
+    const digest = digestFrom.exec(line);
+    if (digest) {
+      if (digest[2]) pinnedStages.add(digest[2].toLowerCase());
+      continue;
+    }
+    const stage = stageFrom.exec(line);
+    if (stage && !isExternal(stage[1]) && pinnedStages.has(stage[1].toLowerCase())) {
+      pinnedStages.add(stage[2].toLowerCase());
+      continue;
+    }
+    out.push(line);
+  }
+  return out;
+}
+
+function checkDockerfileDigestPin(root, failures) {
+  for (const rel of ["asterisk/Dockerfile", "apps/web/Dockerfile"]) {
+    const text = readSafe(path.join(root, rel));
+    if (!text) continue;
+    for (const line of collectDockerfileFromPinFailures(text)) {
+      fail(failures, "T-SEC-IMG-002", rel, `FROM must pin digest: ${line}`);
+    }
+  }
+}
+
+function checkGithubActionsShaPin(root, failures) {
+  const rel = ".github/workflows/ci.yml";
+  const text = readSafe(path.join(root, rel));
+  if (!text) return;
+  for (const line of text.split("\n")) {
+    const m = line.match(/uses:\s*([\w-]+\/[\w-]+)@([^\s#]+)/);
+    if (!m) continue;
+    const ref = m[2];
+    if (!/^[a-f0-9]{40}$/.test(ref)) {
+      fail(failures, "T-SEC-CI-001", rel, `uses must be SHA pin, got ${m[1]}@${ref}`);
+    }
+  }
+}
+
+function checkChromeExtensionManifestGate(root, failures) {
+  const rel = "chrome-extension/manifest.json";
+  const text = readSafe(path.join(root, rel));
+  if (!text) return;
+  let manifest;
+  try {
+    manifest = JSON.parse(text);
+  } catch {
+    fail(failures, "T-SEC-EXT-001", rel, "invalid JSON");
+    return;
+  }
+  if (JSON.stringify(manifest.host_permissions ?? []).includes("*/*")) {
+    fail(failures, "T-SEC-EXT-001", rel, "host_permissions must not use wildcard */*");
+  }
+  for (const cs of manifest.content_scripts ?? []) {
+    for (const match of cs.matches ?? []) {
+      if (/\*\/\*/.test(match)) {
+        fail(failures, "T-SEC-EXT-001", rel, `content_scripts.matches wildcard forbidden: ${match}`);
+      }
+    }
+  }
+  for (const relJs of ["chrome-extension/background.js", "chrome-extension/options.js"]) {
+    const js = readSafe(path.join(root, relJs));
+    if (/chrome\.storage\.sync/.test(js)) {
+      fail(failures, "T-SEC-EXT-002", relJs, "must use chrome.storage.local");
+    }
+  }
+}
 
 function checkPostApiCsrf(root, failures) {
   for (const rel of POST_API_CSRF_ROUTES) {
@@ -757,7 +858,7 @@ export function runArchitectureGate(root, opts = {}) {
   checkApiPbxWriteRole(root, failures);
   checkSensitiveApiAudit(root, failures);
   checkSecurityHeadersSource(root, failures);
-  checkPostApiCsrf(root, failures);
+  checkAllPostApiCsrf(root, failures);
   checkCdrExportPipeline(root, failures);
   checkSessionRotateService(root, failures);
   checkOriginateAmiFields(root, failures);
@@ -769,5 +870,8 @@ export function runArchitectureGate(root, opts = {}) {
   checkPjsipInternalSrtp(root, failures);
   checkAsteriskHttpLoopback(root, failures);
   checkAsteriskImagePin(root, failures);
+  checkDockerfileDigestPin(root, failures);
+  checkGithubActionsShaPin(root, failures);
+  checkChromeExtensionManifestGate(root, failures);
   return failures;
 }

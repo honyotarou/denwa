@@ -62,8 +62,8 @@ TDD 計画には書けないが Red 1 本目より前に決め切る項目。各
 | `patients` | ✅ あり（§schema-sql 215） | 変更なし。golden で確認 |
 | `patient_records` | ✅ あり | `kind` 制約に `triage / call / note` を維持 |
 | `network_settings` | ✅ あり（id=1 seed 済み） | 変更なし |
-| `click_to_call_tokens` | ❌ なし | **新規**: `id`, `account_id`, `name`, `hash`, `from_extension`, `created_at`, `revoked_at` |
-| `account_extension_grants` | ❌ なし（D2 採用時） | **新規**: `account_id`, `extension_number`, `granted_at` |
+| `click_to_call_tokens` | ✅ 実装済み | `repos/click-to-call-tokens.ts`、Bearer originate |
+| `account_extension_grants` | ✅ 実装済み（D2） | softphone grant、`/accounts` UI |
 
 事後作業:
 1. `packages/pbx-db/src/repos/` 配下に対応 repo を追加（TDD で書く）

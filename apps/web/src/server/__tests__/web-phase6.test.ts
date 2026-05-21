@@ -104,9 +104,10 @@ describe('Phase 6 — middleware & API', () => {
   });
 
   describe('T-API-017: health', () => {
-    it('Given health When GET Then 200', async () => {
+    it('Given health When GET Then 200 and db', async () => {
       const r = await handleHealthGet();
       expect(r.status).toBe(200);
+      expect(r.body).toMatchObject({ ok: true, db: true });
     });
   });
 

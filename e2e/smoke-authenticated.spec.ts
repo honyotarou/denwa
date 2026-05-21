@@ -15,7 +15,7 @@ test.describe('L4 E2E — authenticated', () => {
     await expect(page.getByRole('heading', { name: 'PBX 概要' })).toBeVisible({ timeout: 30_000 });
   });
 
-  test('T-E2E-002: extensions lists seeded 1001/1002', async ({ page }) => {
+  test('T-E2E-002: extensions lists seeded 1001/1002/1003', async ({ page }) => {
     await gotoExtensions(page);
     await expectSeededExtensions(page);
   });
@@ -26,7 +26,7 @@ test.describe('L4 E2E — authenticated', () => {
     await gotoExtensions(page);
     await createExtension(page, { number, secret, displayName: 'E2E Ext' });
     await expectFlashOk(page, '内線を追加しました');
-    await expect(page.getByRole('heading', { name: '登録済み (3)' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '登録済み (4)' })).toBeVisible();
     const conf = fs.readFileSync(e2ePjsipExtensionsConf(), 'utf8');
     expect(conf).toContain(number);
   });

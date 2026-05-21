@@ -25,3 +25,6 @@ export * from './concurrency/record-from-devices.js';
 export * from './inbox/list-entries.js';
 export * from './fs/inbox-media.js';
 export * from './fs/upgrade-signal.js';
+export * from './media/sync-recordings.js';
+export * from './media/sync-inbox.js';
+export * from './media/device-snapshot.js';

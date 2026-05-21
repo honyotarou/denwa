@@ -11,6 +11,7 @@ import type { AppContext } from '../../context';
 import type { JsonHandlerResult } from '../types';
 import { withAuth } from '../with-auth';
 import { executeOriginateCall } from '../../services/originate-call';
+import { rejectIfAppRateLimited } from '../../services/app-rate-limit';
 
 function parseOriginateBody(body: Record<string, unknown>): OriginateRequest {
   return {
@@ -28,6 +29,9 @@ async function handleOriginateBearer(
 ): Promise<JsonHandlerResult> {
   const plain = ctx.bearerToken?.trim();
   if (!plain) return { status: 401, body: { error: 'unauthorized' } };
+
+  const limited = rejectIfAppRateLimited(ctx, 'originate-bearer', `${ctx.meta.ip}:${plain.slice(0, 8)}`);
+  if (limited) return limited;
 
   const req = parseOriginateBody(body);
   const errs = validateOriginateRequest(req);

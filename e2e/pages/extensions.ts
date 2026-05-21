@@ -7,10 +7,11 @@ export async function gotoExtensions(page: Page): Promise<void> {
 
 /** Seed rows render as input values, not plain text (T-E2E-002). */
 export async function expectSeededExtensions(page: Page): Promise<void> {
-  await expect(page.getByRole('heading', { name: '登録済み (2)' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '登録済み (3)' })).toBeVisible();
   const numbers = page.locator('section').filter({ hasText: '登録済み' }).getByRole('textbox', { name: '内線番号' });
   await expect(numbers.nth(0)).toHaveValue('1001');
   await expect(numbers.nth(1)).toHaveValue('1002');
+  await expect(numbers.nth(2)).toHaveValue('1003');
 }
 
 /** Server Action redirect contract (`_flash.ts`); client FlashBanner is best-effort. */

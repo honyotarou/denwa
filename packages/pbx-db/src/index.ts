@@ -28,3 +28,7 @@ export * from './repos/patient-records.js';
 export * from './repos/account-extension-grants.js';
 export * from './repos/click-to-call-tokens.js';
 export { runProdCheckDatabase } from './prod-check.js';
+export * from './ping.js';
+export * from './repos/recording-files.js';
+export * from './repos/inbox-events.js';
+export * from './repos/device-snapshots.js';

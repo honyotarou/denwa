@@ -6,11 +6,15 @@ import type { AppContext } from '../../context';
 import type { JsonHandlerResult } from '../types';
 import { audit } from '../../audit';
 import { withAuth } from '../with-auth';
+import { rejectIfAppRateLimited } from '../../services/app-rate-limit';
 
 export async function handleRecordingGet(
   ctx: AppContext,
   file: string,
 ): Promise<JsonHandlerResult> {
+  const limited = rejectIfAppRateLimited(ctx, 'recording', ctx.meta.ip);
+  if (limited) return limited;
+
   return withAuth(
     ctx,
     (me) => {
