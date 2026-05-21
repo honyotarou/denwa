@@ -12,6 +12,7 @@
     "./softphone/state": "./src/softphone/state.ts",
     "./softphone/register-error": "./src/softphone/register-error.ts",
     "./softphone/wss": "./src/softphone/wss.ts",
+    "./softphone/wss-readiness": "./src/softphone/wss-readiness.ts",
     "./triage/flow-graph": "./src/triage/flow-graph.ts",
     "./triage/ui-state": "./src/triage/ui-state.ts"
   },

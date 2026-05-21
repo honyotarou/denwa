@@ -57,6 +57,17 @@
     return res.json();
   }
 
+  // packages/pbx-core/src/click2call/extension-message.ts
+  var CLICK2CALL_MSG_ORIGINATE = "originate";
+  function parseOriginateContentMessage(msg) {
+    if (!msg || typeof msg !== "object") return null;
+    const m = msg;
+    if (m.type !== CLICK2CALL_MSG_ORIGINATE) return null;
+    const to = String(m.to ?? "").trim();
+    if (!to) return null;
+    return { type: CLICK2CALL_MSG_ORIGINATE, to };
+  }
+
   // packages/pbx-core/src/click2call/content-scan.ts
   function normalizeContextMenuSelection(text) {
     const num = (text ?? "").replace(/[^0-9*#+-]/g, "");
@@ -81,8 +92,9 @@
     );
   }
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-    if (msg?.type === "originate") {
-      originateCall(msg.to).then((r) => sendResponse({ ok: true, result: r })).catch((e) => sendResponse({ ok: false, error: String(e) }));
+    const parsed = parseOriginateContentMessage(msg);
+    if (parsed) {
+      originateCall(parsed.to).then((r) => sendResponse({ ok: true, result: r })).catch((e) => sendResponse({ ok: false, error: String(e) }));
       return true;
     }
   });

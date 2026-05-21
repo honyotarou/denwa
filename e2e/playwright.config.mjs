@@ -41,5 +41,10 @@ export default defineConfig({
       dependencies: ['setup'],
       use: { storageState: ADMIN_STORAGE },
     },
+    {
+      name: 'chrome-ext',
+      testMatch: /gap-chrome-ext\.spec\.ts/,
+      dependencies: ['setup'],
+    },
   ],
 });

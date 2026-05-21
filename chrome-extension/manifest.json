@@ -4,11 +4,11 @@
   "version": "0.1.0",
   "description": "denwa PBX へ Bearer token で originate する（開発用 unpacked）",
   "permissions": ["storage", "contextMenus", "scripting"],
-  "host_permissions": ["http://localhost:3000/*"],
+  "host_permissions": ["http://localhost:3000/*", "http://127.0.0.1:3010/*"],
   "background": { "service_worker": "background.js" },
   "content_scripts": [
     {
-      "matches": ["http://localhost:3000/*"],
+      "matches": ["http://localhost:3000/*", "http://127.0.0.1:3010/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

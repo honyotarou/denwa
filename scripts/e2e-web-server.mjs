@@ -5,7 +5,7 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { e2eWebProcessEnv } from './e2e-paths.mjs';
+import { e2eDbPath, e2eWebProcessEnv } from './e2e-paths.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WEB = path.join(ROOT, 'apps/web');
@@ -16,6 +16,14 @@ function run(cmd, args, opts = {}) {
 }
 
 run(process.execPath, [path.join(ROOT, 'scripts/e2e-prepare.mjs')]);
+
+run('npx', ['tsx', path.join(ROOT, 'scripts/e2e-seed-click2call-token.ts')], {
+  env: {
+    ...process.env,
+    DATABASE_PATH: e2eDbPath(),
+    E2E_PORT: process.env.E2E_PORT ?? '3010',
+  },
+});
 
 const port = process.env.E2E_PORT ?? '3010';
 const env = { ...process.env, ...e2eWebProcessEnv(), PORT: port };
