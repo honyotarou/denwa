@@ -9,7 +9,7 @@ import {
   type Session,
 } from 'sip.js';
 import { classifySipRegisterFailure } from '@openpbx/core/softphone/register-error';
-import { buildWssTransportUrl } from '@openpbx/core/softphone/wss';
+import { buildSipJsTransportOptions } from '@openpbx/core/softphone/wss';
 import type { SipAdapter, SipAdapterCallbacks, SipAdapterConfig } from './types';
 
 function attachRemoteAudio(session: Session, audio: HTMLAudioElement | null): void {
@@ -40,7 +40,7 @@ export function createSipJsAdapter(audioEl: HTMLAudioElement | null): SipAdapter
       }
       ua = new UserAgent({
         uri,
-        transportOptions: { server: buildWssTransportUrl(cfg.host) },
+        transportOptions: buildSipJsTransportOptions(cfg.host),
         authorizationUsername: cfg.extension,
         authorizationPassword: cfg.secret,
         delegate: {

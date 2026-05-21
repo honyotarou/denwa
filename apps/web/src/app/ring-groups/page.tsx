@@ -35,6 +35,14 @@ export default async function RingGroupsPage() {
             <input name="ringSeconds" type="number" defaultValue={30} className="mt-1 w-full rounded border px-2 py-1" />
           </label>
           <label className="text-xs text-slate-600 sm:col-span-2">
+            フォールバック内線 (無応答時)
+            <input
+              name="fallbackExtension"
+              placeholder="例: 1001"
+              className="mt-1 w-full rounded border px-2 py-1 font-mono text-sm"
+            />
+          </label>
+          <label className="text-xs text-slate-600 sm:col-span-2">
             メンバー (カンマ区切り)
             <input name="members" defaultValue={extNums} className="mt-1 w-full rounded border px-2 py-1 font-mono text-sm" />
           </label>
@@ -53,21 +61,52 @@ export default async function RingGroupsPage() {
             <li key={g.number} className="space-y-2 py-3">
               <div className="font-mono">
                 {g.number} {g.name} — {g.strategy} {g.ringSeconds}s
+                {g.fallbackExtension ? (
+                  <span className="ml-2 text-slate-500">fallback: {g.fallbackExtension}</span>
+                ) : null}
               </div>
               <div className="text-slate-500">
                 メンバー: {g.members.map((m) => m.number).join(', ') || '—'}
               </div>
-              <form action={updateRingGroupAction} className="flex flex-wrap items-end gap-2">
+              <form action={updateRingGroupAction} className="grid gap-2 sm:grid-cols-2">
                 <input type="hidden" name="number" value={g.number} />
                 <label className="text-xs">
+                  名前
+                  <input name="name" defaultValue={g.name ?? ''} className="mt-1 w-full rounded border px-2 py-1" />
+                </label>
+                <label className="text-xs">
+                  戦略
+                  <select name="strategy" defaultValue={g.strategy} className="mt-1 w-full rounded border px-2 py-1">
+                    <option value="ringall">ringall</option>
+                    <option value="linear">linear</option>
+                  </select>
+                </label>
+                <label className="text-xs">
+                  呼出秒
+                  <input
+                    name="ringSeconds"
+                    type="number"
+                    defaultValue={g.ringSeconds}
+                    className="mt-1 w-full rounded border px-2 py-1"
+                  />
+                </label>
+                <label className="text-xs">
+                  フォールバック内線
+                  <input
+                    name="fallbackExtension"
+                    defaultValue={g.fallbackExtension ?? ''}
+                    className="mt-1 w-full rounded border px-2 py-1 font-mono"
+                  />
+                </label>
+                <label className="text-xs sm:col-span-2">
                   メンバー
                   <input
                     name="members"
                     defaultValue={g.members.map((m) => m.number).join(',')}
-                    className="rounded border px-2 py-1 font-mono"
+                    className="mt-1 w-full rounded border px-2 py-1 font-mono"
                   />
                 </label>
-                <button type="submit" className="rounded border px-2 py-1 text-sm">
+                <button type="submit" className="rounded border px-2 py-1 text-sm sm:col-span-2">
                   保存
                 </button>
               </form>

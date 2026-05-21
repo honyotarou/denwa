@@ -229,8 +229,23 @@ describe('Phase 6.5 — Server Actions (T-ACT-001〜040)', () => {
 
   it('T-ACT-037: upsertTrunk reload', async () => {
     const ctx = await authedCtx();
-    await upsertTrunkActionImpl(ctx, fd({ name: 'tr1', host: 'sip.example.com' }));
-    await fs.access(path.join(ctx.infraDirs.pjsipDir, 'trunks.conf'));
+    await upsertTrunkActionImpl(
+      ctx,
+      fd({
+        name: 'tr1',
+        host: 'sip.example.com',
+        port: '5060',
+        username: 'user',
+        secret: 'pass',
+        registration: 'on',
+        didInbound: '0312345678',
+        outboundPrefix: '0',
+      }),
+    );
+    const pjsip = await fs.readFile(path.join(ctx.infraDirs.pjsipDir, 'trunks.conf'), 'utf8');
+    const dial = await fs.readFile(path.join(ctx.infraDirs.dialplanDir, 'trunks.conf'), 'utf8');
+    expect(pjsip).toContain('type=registration');
+    expect(dial).toContain('0312345678');
   });
 
   it('T-ACT-039: scheduleUpgrade UTC', async () => {

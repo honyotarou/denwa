@@ -8,6 +8,11 @@ import {
   updateRingGroupWithSync,
 } from '../services/ring-groups';
 
+function fallbackFromForm(formData: FormData): string | null {
+  const v = s(formData.get('fallbackExtension'));
+  return v || null;
+}
+
 export async function createRingGroupActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireUser(ctx);
   await createRingGroupWithSync(ctx, me, {
@@ -15,18 +20,24 @@ export async function createRingGroupActionImpl(ctx: AppContext, formData: FormD
     name: s(formData.get('name')) || null,
     strategy: (s(formData.get('strategy')) || 'ringall') as RingStrategy,
     ringSeconds: Number(s(formData.get('ringSeconds')) || '30'),
+    fallbackExtension: fallbackFromForm(formData),
     members: parseCommaSeparatedExtensions(s(formData.get('members'))),
   });
 }
 
 export async function updateRingGroupActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
   const me = requireUser(ctx);
-  await updateRingGroupWithSync(
-    ctx,
-    me,
-    s(formData.get('number')),
-    parseCommaSeparatedExtensions(s(formData.get('members'))),
-  );
+  const number = s(formData.get('number'));
+  const membersRaw = s(formData.get('members'));
+  await updateRingGroupWithSync(ctx, me, number, {
+    members: membersRaw ? parseCommaSeparatedExtensions(membersRaw) : undefined,
+    name: formData.has('name') ? s(formData.get('name')) || null : undefined,
+    strategy: formData.has('strategy')
+      ? ((s(formData.get('strategy')) || 'ringall') as RingStrategy)
+      : undefined,
+    ringSeconds: formData.has('ringSeconds') ? Number(s(formData.get('ringSeconds')) || '30') : undefined,
+    fallbackExtension: formData.has('fallbackExtension') ? fallbackFromForm(formData) : undefined,
+  });
 }
 
 export async function deleteRingGroupActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
