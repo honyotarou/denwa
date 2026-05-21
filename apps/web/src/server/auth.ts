@@ -125,10 +125,10 @@ export function createAuthService(db: Database.Database) {
       const p = getPasswordPolicy(db);
       return validatePasswordAgainstPolicy(plain, {
         minLength: p.minLength,
-        requireLowercase: true,
-        requireUppercase: false,
+        requireLowercase: p.requireLowercase,
+        requireUppercase: p.requireUppercase,
         requireDigit: p.requireDigit,
-        requireSymbol: false,
+        requireSymbol: p.requireSymbol,
       });
     },
     getPasswordPolicy: () => getPasswordPolicy(db),
