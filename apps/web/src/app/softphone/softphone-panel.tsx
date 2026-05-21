@@ -160,7 +160,7 @@ export function SoftphonePanel({
           onChange={(e) => setHost(e.target.value)}
         />
       </label>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-500" data-testid="softphone-status">
         状態: {status}
         {incomingFrom ? ` / 着信 ${incomingFrom}` : ''}
       </p>

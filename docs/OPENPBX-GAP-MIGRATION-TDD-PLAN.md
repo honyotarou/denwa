@@ -11,11 +11,11 @@
 
 | 領域 | OpenPBX | denwa 現状 | 残り |
 |------|---------|------------|------|
-| ブラウザソフトフォン | sip.js + WSS | **`SoftphonePanel` + npm sip.js**、grant 制限（T-SOFT） | 実 Asterisk WSS・証明書は **§13 G4** |
+| ブラウザソフトフォン | sip.js + WSS | **`SoftphonePanel` + npm sip.js**、grant 制限（T-SOFT） | G4b 実 REGISTER は `E2E_WSS_PROBE=1` または手動 |
 | `/network` | NAT / Tailscale | **page + transport 同期**（T-NET） | Tailscale 越し実話は **§13 G1** |
 | `/triage` | 問診 UI + 保存 | **`TriageFlow` + core flow**、snapshot 戻る（T-TRIAGE） | print は手動確認 |
 | `/patients` | CRUD + 記録 | **pages + API + 日付グループ**（T-PAT） | 実運用データは **§13 G2** |
-| Chrome 拡張 | cookie 発信 | **`chrome-extension/` + Bearer token**（T-CHX） | 実ブラウザ **§13 G5** |
+| Chrome 拡張 | cookie 発信 | **`chrome-extension/` + Bearer token**（T-CHX） | G5b は E2E `gap-chrome-ext` で自動 |
 | コード構成 | web lib 集中 | **packages 分離**（維持） | — |
 | 既定 secret | README 平文 | **prod-check / gate** | ローテーション運用 |
 | セキュリティ gate | 手動 | **harness + SECURITY-MAP** | 継続追加 |

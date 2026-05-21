@@ -30,8 +30,8 @@
 | 3 | T-TRIAGE-012 | print UI（手動可） | — |
 | 3 | T-TRIAGE-013 | `nav-policy.test.ts` | — |
 | 4 | T-SOFT-001〜015 | `gap-phase4-5`, `softphone-panel.test.tsx` | G4 手動 |
-| 4 | T-SOFT-016 | `softphone-dev-stack`, `gap-l5-runtime`, `softphone-panel` | G4b 実機のみ |
-| 5 | T-CHX-* | `gap-l5-runtime`, `build:chrome-ext`, `chrome-extension-bundle` | G5b 実ブラウザのみ |
+| 4 | T-SOFT-016 | `softphone-dev-stack`, `gap-l5-runtime`, `wss-readiness`, E2E `gap-softphone` | G4b optional `E2E_WSS_PROBE=1` |
+| 5 | T-CHX-* | `extension-message`, `build:chrome-ext`, E2E `gap-chrome-ext` | G5b Playwright unpacked ext |
 | 6 | T-GAP-DOC-001〜005 | `openpbx-gap-doc.test.ts` | — |
 | 6 | T-GAP-SEC-* | `openpbx-gap-chrome`, static, prod-check | — |
 

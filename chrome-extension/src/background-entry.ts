@@ -2,6 +2,7 @@
  * Bundled to background.js — logic lives in @openpbx/core (T-CHX-008).
  */
 import { originateViaBearer } from '../../packages/pbx-core/src/click2call/originate-client.ts';
+import { parseOriginateContentMessage } from '../../packages/pbx-core/src/click2call/extension-message.ts';
 import { normalizeContextMenuSelection } from '../../packages/pbx-core/src/click2call/content-scan.ts';
 
 async function originateCall(toNumber: string) {
@@ -20,8 +21,9 @@ async function originateCall(toNumber: string) {
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg?.type === 'originate') {
-    originateCall(msg.to)
+  const parsed = parseOriginateContentMessage(msg);
+  if (parsed) {
+    originateCall(parsed.to)
       .then((r) => sendResponse({ ok: true, result: r }))
       .catch((e) => sendResponse({ ok: false, error: String(e) }));
     return true;
