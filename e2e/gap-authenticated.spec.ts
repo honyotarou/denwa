@@ -21,7 +21,7 @@ test.describe('L4 E2E — OpenPBX gap UI smoke', () => {
     await page.getByPlaceholder('氏名').fill('Gap E2E');
     await page.getByRole('button', { name: '保存' }).first().click();
     await page.goto(`/patients/${id}`, { waitUntil: 'load' });
-    await expect(page.getByRole('link', { name: '問診フロー' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator(`a[href="/triage?patient=${id}"]`)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('heading', { name: /記録.*日付ごと/ })).toBeVisible();
   });
 });

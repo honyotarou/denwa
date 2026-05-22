@@ -26,9 +26,16 @@ interface TriageProps {
   extension?: string;
   /** /triage ページは外側 header があるため false */
   showHeading?: boolean;
+  /** wide=/triage 単体（2列） narrow=/softphone 右カラム（1列スタック） */
+  layout?: 'wide' | 'narrow';
 }
 
-export function TriageFlow({ patientId, extension, showHeading = true }: TriageProps = {}) {
+export function TriageFlow({
+  patientId,
+  extension,
+  showHeading = true,
+  layout = 'wide',
+}: TriageProps = {}) {
   const [currentId, setCurrentId] = useState<string>('start');
   const [history, setHistory] = useState<Step[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -112,7 +119,13 @@ export function TriageFlow({ patientId, extension, showHeading = true }: TriageP
   }, [history, endText, recommendations, memo]);
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
+    <div
+      className={
+        layout === 'narrow'
+          ? 'grid grid-cols-1 gap-4'
+          : 'grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]'
+      }
+    >
       {/* 左: 現在の質問 / フロー */}
       <section className="space-y-3">
         <header className="flex items-center gap-2">

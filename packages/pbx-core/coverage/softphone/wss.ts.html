@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for home/device-summary.ts</title>
+    <title>Code coverage report for softphone/wss.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../index.html">All files</a> / <a href="index.html">home</a> device-summary.ts</h1>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">softphone</a> wss.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">87.5% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>7/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
@@ -81,8 +81,11 @@
 <a name='L16'></a><a href='#L16'>16</a>
 <a name='L17'></a><a href='#L17'>17</a>
 <a name='L18'></a><a href='#L18'>18</a>
-<a name='L19'></a><a href='#L19'>19</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -90,32 +93,41 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/** 端末オンライン集計（T-HOME-DEV-001） */
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/** WSS エンドポイント（T-SOFT / sip.js 正本） */
 &nbsp;
-export type DeviceReachability = Readonly&lt;{
-  extension: string | null;
-  reachable: boolean | null;
-  state: string;
+export type SipJsTransportOptions = Readonly&lt;{
+  server: string;
+  connectionTimeout: number;
 }&gt;;
 &nbsp;
-export function summarizeDeviceOnline(
-  devices: readonly DeviceReachability[],
-): { online: number; total: number } {
-  const pjsip = devices.filter((d) =&gt; d.extension);
-  const total = pjsip.length;
-  const online = pjsip.filter(
-    (d) =&gt; d.reachable === true || d.state === 'not_inuse' || d.state === 'inuse',
-  ).length;
-  return { online, total };
+export function buildWssTransportUrl(host: string, port = 8089): string {
+  const h = (<span class="branch-0 cbranch-no" title="branch not covered" >host ?? '').t</span>rim() || 'localhost';
+  return `wss://${h}:${port}/ws`;
+}
+&nbsp;
+/** sip.js UserAgent transportOptions（connectionTimeout 秒） */
+export function buildSipJsTransportOptions(
+  host: string,
+  opts?: { port?: number; connectionTimeoutSec?: number },
+): SipJsTransportOptions {
+  return {
+    server: buildWssTransportUrl(host, opts?.port ?? 8089),
+    connectionTimeout: opts?.connectionTimeoutSec ?? 5,
+  };
 }
 &nbsp;</pre></td></tr></table></pre>
 

@@ -1,7 +1,10 @@
 import { guardPage } from '@/lib/auth';
+import { formatJst } from '@/lib/datetime';
 import { getAmiDeviceSession } from '@/server/ports/ami-devices';
 import { listDeviceSnapshotsForUi } from '@/server/page-data';
-import { formatJst } from '@/lib/datetime';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
+import { DataTableShell } from '@/components/DataTableShell';
 import { DeviceList } from './device-list';
 
 export const dynamic = 'force-dynamic';
@@ -14,35 +17,40 @@ export default async function DevicesPage() {
   const history = listDeviceSnapshotsForUi(12);
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold">端末状態 (AMI SSE)</h2>
-        <p className="text-xs text-slate-500">
-          内線の登録状態をリアルタイム表示。1 分ごとに SQLite へスナップショット保存（AMI 接続時）。
-        </p>
-      </header>
+      <PageHeader
+        title="端末ライブ状態"
+        description="内線の登録状態をリアルタイム表示。1 分ごとに SQLite へスナップショット保存（AMI 接続時）。"
+      />
       <DeviceList initialDevices={[...devices]} initialConnected={session.isConnected()} />
       {history.length > 0 && (
-        <section className="rounded border bg-white p-4 text-sm">
-          <h3 className="mb-2 text-sm font-semibold text-slate-700">スナップショット履歴</h3>
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-slate-500">
-                <th>時刻</th>
-                <th>オンライン</th>
-                <th>端末数</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((h) => (
-                <tr key={h.id} className="border-t">
-                  <td>{formatJst(h.snapshotAt)}</td>
-                  <td className="tabular-nums">{h.onlineCount}</td>
-                  <td className="tabular-nums">{h.deviceCount}</td>
+        <PageSection title="スナップショット履歴">
+          <DataTableShell>
+            <table className="min-w-full text-xs">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-2 py-1 text-left" scope="col">
+                    時刻
+                  </th>
+                  <th className="px-2 py-1 text-left" scope="col">
+                    オンライン
+                  </th>
+                  <th className="px-2 py-1 text-left" scope="col">
+                    端末数
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {history.map((h) => (
+                  <tr key={h.id}>
+                    <td className="px-2 py-1 font-mono">{formatJst(h.snapshotAt)}</td>
+                    <td className="px-2 py-1 tabular-nums">{h.onlineCount}</td>
+                    <td className="px-2 py-1 tabular-nums">{h.deviceCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </DataTableShell>
+        </PageSection>
       )}
     </div>
   );

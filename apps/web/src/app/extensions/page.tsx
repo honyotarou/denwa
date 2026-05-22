@@ -6,6 +6,8 @@ import {
   deleteExtensionAction,
 } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -20,22 +22,18 @@ export default async function ExtensionsPage() {
   }));
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold">内線端末管理</h2>
-        <p className="text-xs text-slate-500">
-          追加・編集・削除した内線は Asterisk に自動 reload されます。Groundwire 等の SIP クライアントから「Server: Mac の IP」「Username/Auth Username: 内線番号」「Password: secret」で登録してください。
-        </p>
-      </header>
+      <PageHeader
+        title="内線端末管理"
+        description="追加・編集・削除した内線は Asterisk に自動 reload されます。Groundwire 等の SIP クライアントから「Server: Mac の IP」「Username/Auth Username: 内線番号」「Password: secret」で登録してください。"
+      />
 
       {canWrite && (
-        <section className="rounded-lg border border-slate-200 bg-white p-4">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700">新規追加</h3>
+        <PageSection title="新規追加">
           <ExtensionForm action={createExtensionAction} submitLabel="追加" canViewSecret={canViewSecret} />
-        </section>
+        </PageSection>
       )}
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">登録済み ({items.length})</h3>
+      <PageSection title={`登録済み (${items.length})`}>
         {items.length === 0 ? (
           <p className="text-sm text-slate-500">まだ内線が登録されていません。</p>
         ) : (
@@ -54,7 +52,7 @@ export default async function ExtensionsPage() {
             ))}
           </ul>
         )}
-      </section>
+      </PageSection>
     </div>
   );
 }

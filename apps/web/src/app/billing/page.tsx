@@ -3,6 +3,9 @@ import { formatJst } from '@/lib/datetime';
 import { getBillingRates, getBillingDetailForUi } from '@/server/page-data';
 import { upsertRateAction, deleteRateAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
+import { DataTableShell } from '@/components/DataTableShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,15 +15,12 @@ export default async function BillingPage() {
   const { rows: detail, total } = getBillingDetailForUi();
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold">課金明細</h2>
-        <p className="text-xs text-slate-500">
-          発信先 prefix ごとのレートを設定し、CDR と組み合わせて通話コストを算出。直近 1000 件まで。
-        </p>
-      </header>
+      <PageHeader
+        title="課金明細"
+        description="発信先 prefix ごとのレートを設定し、CDR と組み合わせて通話コストを算出。直近 1000 件まで。"
+      />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">レート表 ({rates.length})</h3>
+      <PageSection title={`レート表 (${rates.length})`}>
         <form
           action={upsertRateAction}
           className="mb-3 grid grid-cols-[100px_1fr_120px_120px_auto] gap-2"
@@ -53,7 +53,7 @@ export default async function BillingPage() {
             placeholder="接続料"
             className="rounded border border-slate-300 px-2 py-1 font-mono text-sm"
           />
-          <button type="submit" className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
+          <button type="submit" className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700">
             追加/更新
           </button>
         </form>
@@ -80,50 +80,53 @@ export default async function BillingPage() {
             ))}
           </ul>
         )}
-      </section>
+      </PageSection>
 
-      <section className="space-y-2">
-        <div className="flex items-baseline justify-between">
-          <h3 className="text-sm font-semibold text-slate-700">CDR 明細（最大 1000 件）</h3>
-          <p className="text-sm tabular-nums">
-            合計: <span className="font-bold">¥{total.toFixed(2)}</span>
-          </p>
-        </div>
-        <div className="overflow-x-auto rounded border bg-white">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-slate-500">
-                <th>開始</th>
-                <th>src</th>
-                <th>dst</th>
-                <th>秒</th>
-                <th>prefix</th>
-                <th>料金</th>
+      <PageSection
+        title={
+          <span className="flex w-full items-baseline justify-between">
+            <span>CDR 明細（最大 1000 件）</span>
+            <span className="text-sm font-normal tabular-nums text-slate-600">
+              合計: <span className="font-bold text-slate-900">¥{total.toFixed(2)}</span>
+            </span>
+          </span>
+        }
+      >
+        <DataTableShell>
+          <table className="min-w-full text-xs">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-2 py-1 text-left" scope="col">開始</th>
+                <th className="px-2 py-1 text-left" scope="col">src</th>
+                <th className="px-2 py-1 text-left" scope="col">dst</th>
+                <th className="px-2 py-1 text-left" scope="col">秒</th>
+                <th className="px-2 py-1 text-left" scope="col">prefix</th>
+                <th className="px-2 py-1 text-left" scope="col">料金</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-200">
               {detail.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-4 text-slate-500">
+                  <td colSpan={6} className="px-2 py-4 text-slate-500">
                     CDR がありません。/cdr で取り込み後に表示されます。
                   </td>
                 </tr>
               ) : (
                 detail.map((r) => (
-                  <tr key={r.uniqueid} className="border-t">
-                    <td>{r.startAt ? formatJst(r.startAt) : '—'}</td>
-                    <td className="font-mono">{r.src ?? '—'}</td>
-                    <td className="font-mono">{r.dst ?? '—'}</td>
-                    <td className="tabular-nums">{r.billsec}</td>
-                    <td className="font-mono text-xs">{r.ratePrefix ?? '—'}</td>
-                    <td className="tabular-nums">{r.cost > 0 ? `¥${r.cost.toFixed(2)}` : '—'}</td>
+                  <tr key={r.uniqueid}>
+                    <td className="px-2 py-1">{r.startAt ? formatJst(r.startAt) : '—'}</td>
+                    <td className="px-2 py-1 font-mono">{r.src ?? '—'}</td>
+                    <td className="px-2 py-1 font-mono">{r.dst ?? '—'}</td>
+                    <td className="px-2 py-1 tabular-nums">{r.billsec}</td>
+                    <td className="px-2 py-1 font-mono">{r.ratePrefix ?? '—'}</td>
+                    <td className="px-2 py-1 tabular-nums">{r.cost > 0 ? `¥${r.cost.toFixed(2)}` : '—'}</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
-      </section>
+        </DataTableShell>
+      </PageSection>
     </div>
   );
 }

@@ -10,6 +10,8 @@ import {
   revokeExtensionGrantAction,
 } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,16 +23,12 @@ export default async function AccountsPage() {
   const webrtcExts = getExtensions().filter((e) => e.webrtc).map((e) => e.number);
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold">アカウント管理</h2>
-        <p className="text-xs text-slate-500">
-          ログインユーザーの追加・編集・削除。ロール: user / supervisor / admin。自分自身の削除・最後の admin
-          降格はブロックされます。
-        </p>
-      </header>
+      <PageHeader
+        title="アカウント管理"
+        description="ログインユーザーの追加・編集・削除。ロール: user / supervisor / admin。自分自身の削除・最後の admin 降格はブロックされます。"
+      />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">新規追加</h3>
+      <PageSection title="新規追加">
         <form action={createAccountAction} className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_1fr_140px_auto]">
           <input
             name="username"
@@ -57,10 +55,9 @@ export default async function AccountsPage() {
             追加
           </button>
         </form>
-      </section>
+      </PageSection>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">一覧 ({accounts.length})</h3>
+      <PageSection title={`一覧 (${accounts.length})`}>
         <ul className="divide-y divide-slate-200">
           {accounts.map((a) => (
             <AccountRow
@@ -72,7 +69,7 @@ export default async function AccountsPage() {
             />
           ))}
         </ul>
-      </section>
+      </PageSection>
     </div>
   );
 }

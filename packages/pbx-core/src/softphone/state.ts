@@ -44,3 +44,21 @@ export function validateDialTarget(target: string): string | null {
   if (!/^\d{2,6}$/.test(t)) return '発信先は 2〜6 桁の数字';
   return null;
 }
+
+/** UI 表示用（OpenPBX 互換ラベル） */
+export function softphoneStatusLabel(state: SoftphoneUiState): string {
+  switch (state) {
+    case 'disconnected':
+      return '未接続';
+    case 'registering':
+      return '接続中…';
+    case 'registered':
+      return '登録完了';
+    case 'incoming':
+      return '着信中';
+    case 'inCall':
+      return '通話中';
+    case 'error':
+      return 'エラー';
+  }
+}

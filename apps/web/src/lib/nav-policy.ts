@@ -5,7 +5,7 @@ import {
   RECORDING_READ_MIN_ROLE,
   roleMeetsMin,
   type PbxRole,
-} from '@openpbx/core';
+} from '@openpbx/core/auth/pbx-api-policy';
 
 export type NavRole = PbxRole;
 

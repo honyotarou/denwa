@@ -12,6 +12,8 @@ import {
   upsertPatientAction,
 } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,17 +33,21 @@ export default async function PatientDetailPage({
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center gap-3">
-        <Link href="/patients" className="text-sm text-blue-600 hover:underline">
-          ← 一覧
-        </Link>
-        <h2 className="text-lg font-semibold">患者 {patient.id}</h2>
-        <Link href={`/triage?patient=${patient.id}`} className="ml-auto text-sm text-blue-600 hover:underline">
-          問診フロー
-        </Link>
-      </header>
+      <PageHeader
+        title={`患者 ${patient.id}`}
+        description={
+          <>
+            <Link href="/patients" className="text-blue-600 hover:underline">
+              ← 一覧
+            </Link>
+            <Link href={`/triage?patient=${patient.id}`} className="ml-4 text-blue-600 hover:underline">
+              問診フロー
+            </Link>
+          </>
+        }
+      />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
+      <PageSection title="基本情報">
         <form action={upsertPatientAction} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <input type="hidden" name="id" value={patient.id} />
           <input name="name" defaultValue={patient.name ?? ''} placeholder="氏名" className="rounded border px-2 py-1 text-sm" />
@@ -61,10 +67,9 @@ export default async function PatientDetailPage({
             </ConfirmButton>
           </form>
         )}
-      </section>
+      </PageSection>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">記録を追加</h3>
+      <PageSection title="記録を追加">
         <form action={savePatientRecordAction} className="space-y-2">
           <input type="hidden" name="patientId" value={patient.id} />
           <select name="kind" className="rounded border px-2 py-1 text-sm">
@@ -79,10 +84,9 @@ export default async function PatientDetailPage({
             記録を保存
           </button>
         </form>
-      </section>
+      </PageSection>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">記録 ({records.length}) — 日付ごと</h3>
+      <PageSection title={`記録 (${records.length}) — 日付ごと`}>
         {grouped.length === 0 ? (
           <p className="text-sm text-slate-500">記録がありません。</p>
         ) : (
@@ -146,7 +150,7 @@ export default async function PatientDetailPage({
             ))}
           </div>
         )}
-      </section>
+      </PageSection>
     </div>
   );
 }

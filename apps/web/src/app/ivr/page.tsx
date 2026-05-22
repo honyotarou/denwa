@@ -2,6 +2,8 @@ import { guardPage } from '@/lib/auth';
 import { listIvrMenus } from '@/server/page-data';
 import { upsertIvrAction, deleteIvrAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,22 +14,16 @@ export default async function IvrPage() {
   const menus = listIvrMenus();
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold">IVR (自動音声応答)</h2>
-        <p className="text-xs text-slate-500">
-          IVR メニューを編集すると、Asterisk の <code className="rounded bg-slate-100 px-1">[ivr-&lt;番号&gt;]</code>{' '}
-          コンテキストが自動生成されます。ガイダンスは <code className="rounded bg-slate-100 px-1">custom/ivr-welcome</code>{' '}
-          のようなパスで指定 (sounds/custom/ にある wav を参照)。
-        </p>
-      </header>
+      <PageHeader
+        title="IVR (自動音声応答)"
+        description="IVR メニューを編集すると、Asterisk の [ivr-<番号>] コンテキストが自動生成されます。ガイダンスは custom/ivr-welcome のようなパスで指定 (sounds/custom/ にある wav を参照)。"
+      />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">新規 / 更新</h3>
+      <PageSection title="新規 / 更新">
         <IvrForm action={upsertIvrAction} submitLabel="保存" />
-      </section>
+      </PageSection>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">登録済み ({menus.length})</h3>
+      <PageSection title={`登録済み (${menus.length})`}>
         {menus.length === 0 ? (
           <p className="text-sm text-slate-500">まだ IVR がありません。</p>
         ) : (
@@ -44,7 +40,7 @@ export default async function IvrPage() {
             ))}
           </ul>
         )}
-      </section>
+      </PageSection>
     </div>
   );
 }

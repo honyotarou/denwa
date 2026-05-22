@@ -3,20 +3,11 @@ import { canStreamDevices } from '@openpbx/core';
 import { guardPage } from '@/lib/auth';
 import { formatJst } from '@/lib/datetime';
 import { getHomeSummary } from '@/server/page-data';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
+import { StatCard } from '@/components/StatCard';
 
 export const dynamic = 'force-dynamic';
-
-function Card({ label, value, href, hint }: { label: string; value: string; href?: string; hint?: string }) {
-  const inner = (
-    <>
-      <div className="text-xs text-slate-500">{label}</div>
-      <div className="text-2xl font-bold tabular-nums">{value}</div>
-      {hint && <div className="text-[10px] text-slate-400">{hint}</div>}
-    </>
-  );
-  const cls = 'block rounded border border-slate-200 bg-white p-3 shadow-sm hover:bg-slate-50';
-  return href ? <Link href={href} className={cls}>{inner}</Link> : <div className={cls}>{inner}</div>;
-}
 
 export default async function HomePage() {
   const me = await guardPage('user');
@@ -30,36 +21,54 @@ export default async function HomePage() {
   const mtimeHint = extensionsMtime ? `PJSIP 更新 ${formatJst(extensionsMtime)}` : 'extensions.conf 未取得';
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold">PBX 概要</h2>
-        <p className="text-xs text-slate-500">Asterisk ベース PBX の状態と設定への入り口。</p>
-      </header>
+      <PageHeader
+        title="PBX 概要"
+        description="Asterisk ベース PBX の状態と設定への入り口。文字起こし・要約などの AI 処理は別システムが data/inbox/ を監視して処理します。"
+      />
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="サマリー">
-        <Card label="登録済み内線" value={String(extensionCount)} href="/extensions" hint={mtimeHint} />
-        <Card
+        <StatCard label="登録済み内線" value={String(extensionCount)} href="/extensions" hint={mtimeHint} />
+        <StatCard
           label="オンライン端末"
           value={onlineLabel}
           href={showDevices ? '/devices' : undefined}
-          hint={showDevices ? 'PJSIP / AMI' : undefined}
+          hint={showDevices ? (deviceSummary.amiReady ? 'AMI 接続中' : 'AMI 未接続') : undefined}
         />
-        <Card label="Inbox wav" value={inbox.wav < 0 ? '—' : String(inbox.wav)} href="/inbox" hint="待機" />
-        <Card label="Inbox meta" value={inbox.meta < 0 ? '—' : String(inbox.meta)} href="/inbox" hint="event JSON" />
+        <StatCard
+          label="Inbox wav"
+          value={inbox.wav < 0 ? '—' : String(inbox.wav)}
+          href="/inbox"
+          hint="未受領 / 待機"
+        />
+        <StatCard
+          label="Inbox meta"
+          value={inbox.meta < 0 ? '—' : String(inbox.meta)}
+          href="/inbox"
+          hint="event JSON"
+        />
       </section>
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-2 text-sm font-semibold text-slate-700">登録済み内線 ({extensionCount})</h3>
+      <PageSection title={`登録済み内線 (${extensionCount})`}>
         {extensions.length === 0 ? (
-          <p className="text-sm text-slate-500">内線がまだ登録されていません。<Link className="text-blue-600 hover:underline" href="/extensions">内線を追加</Link></p>
+          <p className="text-sm text-slate-500">内線がまだ登録されていません。</p>
         ) : (
-          <ul className="divide-y divide-slate-200 text-sm">
-            {extensions.slice(0, 12).map((e) => (
-              <li key={e.number} className="flex justify-between py-2">
-                <span className="font-mono tabular-nums">{e.number}</span>
-                <span className="text-slate-600">{e.displayName ?? '—'}</span>
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {extensions.map((e) => (
+              <li
+                key={e.number}
+                className="flex items-baseline gap-3 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
+              >
+                <span className="font-mono text-base font-semibold">{e.number}</span>
+                <span className="truncate text-slate-700">{e.displayName ?? '—'}</span>
+                {e.note ? <span className="ml-auto text-xs text-slate-500">{e.note}</span> : null}
               </li>
             ))}
           </ul>
         )}
-      </section>
+        <p className="mt-3 text-xs">
+          <Link className="text-blue-600 hover:underline" href="/extensions">
+            → 端末を追加・編集する
+          </Link>
+        </p>
+      </PageSection>
     </div>
   );
 }
