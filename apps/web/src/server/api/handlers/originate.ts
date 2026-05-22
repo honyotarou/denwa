@@ -3,6 +3,7 @@ import {
   hashClickToCallToken,
   verifyClickToCallTokenPlain,
   clickToCallFromMatchesToken,
+  rateLimitKeyForBearerToken,
   type OriginateRequest,
 } from '@openpbx/core';
 import { findActiveClickToCallTokenByHash } from '@openpbx/db/repos/click-to-call-tokens';
@@ -30,7 +31,11 @@ async function handleOriginateBearer(
   const plain = ctx.bearerToken?.trim();
   if (!plain) return { status: 401, body: { error: 'unauthorized' } };
 
-  const limited = rejectIfAppRateLimited(ctx, 'originate-bearer', `${ctx.meta.ip}:${plain.slice(0, 8)}`);
+  const limited = rejectIfAppRateLimited(
+    ctx,
+    'originate-bearer',
+    rateLimitKeyForBearerToken(plain, hashClickToCallToken),
+  );
   if (limited) return limited;
 
   const req = parseOriginateBody(body);

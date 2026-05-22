@@ -6,7 +6,7 @@ import { formatBytes } from '@/lib/format';
 export const dynamic = 'force-dynamic';
 
 export default async function RecordingsPage() {
-  await guardPage('user');
+  await guardPage('supervisor');
   const files = await listRecordingsForUi();
   return (
     <div className="space-y-6">

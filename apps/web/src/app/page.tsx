@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { canStreamDevices } from '@openpbx/core';
 import { guardPage } from '@/lib/auth';
 import { formatJst } from '@/lib/datetime';
 import { getHomeSummary } from '@/server/page-data';
@@ -18,12 +19,14 @@ function Card({ label, value, href, hint }: { label: string; value: string; href
 }
 
 export default async function HomePage() {
-  await guardPage('user');
+  const me = await guardPage('user');
   const { extensionCount, extensions, inbox, deviceSummary, extensionsMtime } = await getHomeSummary();
-  const onlineLabel =
-    !deviceSummary.amiReady || deviceSummary.online === null
+  const showDevices = canStreamDevices(me.role);
+  const onlineLabel = showDevices
+    ? !deviceSummary.amiReady || deviceSummary.online === null
       ? '—'
-      : `${deviceSummary.online} / ${deviceSummary.total ?? 0}`;
+      : `${deviceSummary.online} / ${deviceSummary.total ?? 0}`
+    : '—';
   const mtimeHint = extensionsMtime ? `PJSIP 更新 ${formatJst(extensionsMtime)}` : 'extensions.conf 未取得';
   return (
     <div className="space-y-6">
@@ -33,7 +36,12 @@ export default async function HomePage() {
       </header>
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="サマリー">
         <Card label="登録済み内線" value={String(extensionCount)} href="/extensions" hint={mtimeHint} />
-        <Card label="オンライン端末" value={onlineLabel} href="/devices" hint="PJSIP / AMI" />
+        <Card
+          label="オンライン端末"
+          value={onlineLabel}
+          href={showDevices ? '/devices' : undefined}
+          hint={showDevices ? 'PJSIP / AMI' : undefined}
+        />
         <Card label="Inbox wav" value={inbox.wav < 0 ? '—' : String(inbox.wav)} href="/inbox" hint="待機" />
         <Card label="Inbox meta" value={inbox.meta < 0 ? '—' : String(inbox.meta)} href="/inbox" hint="event JSON" />
       </section>

@@ -1,6 +1,6 @@
 import { parseIvrOptionsText, type IvrMenuDraftInput, type IvrOptionDraft } from '@openpbx/core';
 import type { AppContext } from '../context.js';
-import { requireUser, s } from './shared.js';
+import { requirePbxConfigWrite, s } from './shared.js';
 import { deleteIvrWithSync, upsertIvrWithSync } from '../services/ivr';
 
 function parseIvrOptions(formData: FormData): readonly IvrOptionDraft[] {
@@ -34,11 +34,11 @@ function buildIvrDraftFromForm(formData: FormData): IvrMenuDraftInput {
 
 // T-ACT-018〜019 IVR
 export async function upsertIvrActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await upsertIvrWithSync(ctx, me, buildIvrDraftFromForm(formData));
 }
 
 export async function deleteIvrActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await deleteIvrWithSync(ctx, me, s(formData.get('number')));
 }

@@ -1,5 +1,5 @@
 import type { AppContext } from '../context.js';
-import { requireUser, s } from './shared.js';
+import { requirePbxConfigWrite, s } from './shared.js';
 import {
   createTimeRuleWithSync,
   deleteHolidayWithSync,
@@ -9,17 +9,17 @@ import {
 } from '../services/business-hours';
 
 export async function upsertHolidayActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await upsertHolidayWithSync(ctx, me, s(formData.get('date')), s(formData.get('name')));
 }
 
 export async function deleteHolidayActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await deleteHolidayWithSync(ctx, me, s(formData.get('date')));
 }
 
 export async function createTimeRuleActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await createTimeRuleWithSync(ctx, me, {
     name: s(formData.get('name')),
     days: s(formData.get('days')) || 'mon-fri',
@@ -29,7 +29,7 @@ export async function createTimeRuleActionImpl(ctx: AppContext, formData: FormDa
 }
 
 export async function updateTimeRuleActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await updateTimeRuleWithSync(ctx, me, Number(s(formData.get('id'))), {
     name: s(formData.get('name')),
     days: s(formData.get('days')),
@@ -39,6 +39,6 @@ export async function updateTimeRuleActionImpl(ctx: AppContext, formData: FormDa
 }
 
 export async function deleteTimeRuleActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await deleteTimeRuleWithSync(ctx, me, Number(s(formData.get('id'))));
 }

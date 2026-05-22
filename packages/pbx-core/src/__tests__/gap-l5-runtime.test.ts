@@ -10,6 +10,8 @@ import {
   extractTelDigitsFromHref,
   replacePhoneTextWithTelLinks,
   shouldStopContentScan,
+  shouldDecoratePhoneText,
+  splitTextIntoPhoneSegments,
 } from '../click2call/content-scan.js';
 import { classifySipRegisterFailure } from '../softphone/register-error.js';
 import { buildSipJsTransportOptions, buildWssTransportUrl } from '../softphone/wss.js';
@@ -28,9 +30,27 @@ describe('T-CHX L5 contracts', () => {
     expect(out).toContain('href="tel:0312345678"');
   });
 
+  it('T-CHX-004b: HTML in text is escaped', () => {
+    const out = replacePhoneTextWithTelLinks('<img src=x onerror=alert(1)>');
+    expect(out).not.toContain('<img');
+    expect(out).toContain('&lt;img');
+  });
+
+  it('T-CHX-004c: splitTextIntoPhoneSegments preserves literal HTML', () => {
+    const segs = splitTextIntoPhoneSegments('note <b>x</b> 03-1234-5678');
+    expect(segs.some((s) => s.kind === 'text' && s.value.includes('<b>'))).toBe(true);
+    expect(segs.some((s) => s.kind === 'phone')).toBe(true);
+  });
+
   it('T-CHX-005: scan limit', () => {
     expect(shouldStopContentScan(CONTENT_SCAN_MAX_TEXT_NODES)).toBe(false);
     expect(shouldStopContentScan(CONTENT_SCAN_MAX_TEXT_NODES + 1)).toBe(true);
+  });
+
+  it('T-CHX-005b: skip tel link innards', () => {
+    expect(shouldDecoratePhoneText(true, 'A')).toBe(false);
+    expect(shouldDecoratePhoneText(false, 'P')).toBe(true);
+    expect(shouldDecoratePhoneText(false, 'SCRIPT')).toBe(false);
   });
 
   it('T-CHX-007: options storage', () => {

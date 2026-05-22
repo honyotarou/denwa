@@ -1,7 +1,8 @@
-import { validateCreatePatientRecordInput } from '@openpbx/core';
+import { validateCreatePatientRecordInput, rateLimitKeyForSessionToken } from '@openpbx/core';
 import type { AppContext } from '../../context';
 import type { JsonHandlerResult } from '../types';
 import { createPatientRecordWithAudit } from '../../services/patients';
+import { rejectIfAppRateLimited } from '../../services/app-rate-limit';
 
 export async function handlePatientRecordsPost(
   ctx: AppContext,
@@ -13,6 +14,12 @@ export async function handlePatientRecordsPost(
   } catch {
     return { status: 401, body: { error: 'unauthorized' } };
   }
+  const limited = rejectIfAppRateLimited(
+    ctx,
+    'patient-records',
+    rateLimitKeyForSessionToken(ctx.sessionToken),
+  );
+  if (limited) return limited;
   const input = {
     patientId: String(body.patientId ?? ''),
     extension: body.extension != null ? String(body.extension) : null,

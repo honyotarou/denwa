@@ -8,7 +8,3 @@ export function formatBytes(n: number): string {
 export function formatYen(n: number): string {
   return `¥${Math.round(n).toLocaleString('ja-JP')}`;
 }
-
-export function maskSecret(role: string, secret: string): string {
-  return role === 'admin' ? secret : '••••';
-}
