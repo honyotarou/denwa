@@ -23,10 +23,30 @@ export function recordAudit(
   );
 }
 
-export function listAudit(db: Database.Database, limit = 50): Array<{ action: string; created_at: string }> {
+export function listAudit(
+  db: Database.Database,
+  limit = 50,
+): Array<{
+  action: string;
+  created_at: string;
+  actor: string | null;
+  target: string | null;
+  ip: string | null;
+  details: string | null;
+}> {
   return db
-    .prepare('SELECT action, created_at FROM audit_log ORDER BY id DESC LIMIT ?')
-    .all(limit) as Array<{ action: string; created_at: string }>;
+    .prepare(
+      `SELECT action, created_at, actor, target, ip, details
+       FROM audit_log ORDER BY id DESC LIMIT ?`,
+    )
+    .all(limit) as Array<{
+    action: string;
+    created_at: string;
+    actor: string | null;
+    target: string | null;
+    ip: string | null;
+    details: string | null;
+  }>;
 }
 
 export function recordLoginAttempt(
@@ -46,8 +66,23 @@ export function recordLoginAttempt(
 export function listLoginHistory(
   db: Database.Database,
   limit = 50,
-): Array<{ username: string; success: number; created_at: string }> {
+): Array<{
+  username: string;
+  success: number;
+  created_at: string;
+  ip: string | null;
+  user_agent: string | null;
+}> {
   return db
-    .prepare('SELECT username, success, created_at FROM login_history ORDER BY id DESC LIMIT ?')
-    .all(limit) as Array<{ username: string; success: number; created_at: string }>;
+    .prepare(
+      `SELECT username, success, created_at, ip, user_agent
+       FROM login_history ORDER BY id DESC LIMIT ?`,
+    )
+    .all(limit) as Array<{
+    username: string;
+    success: number;
+    created_at: string;
+    ip: string | null;
+    user_agent: string | null;
+  }>;
 }

@@ -8,6 +8,7 @@
     "./auth/policy": "./src/auth/policy.ts",
     "./auth/middleware-ip-policy": "./src/auth/middleware-ip-policy.ts",
     "./auth/access": "./src/auth/access.ts",
+    "./auth/pbx-api-policy": "./src/auth/pbx-api-policy.ts",
     "./auth/rate-limit": "./src/auth/rate-limit.ts",
     "./softphone/state": "./src/softphone/state.ts",
     "./softphone/register-error": "./src/softphone/register-error.ts",
@@ -21,6 +22,7 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "bench": "vitest bench",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

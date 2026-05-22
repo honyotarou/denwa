@@ -31,5 +31,39 @@ describe('T-SOFT-016 G4 readiness', () => {
 
   it('buildWssEndpointLabel', () => {
     expect(buildWssEndpointLabel('pbx.local')).toBe('wss://pbx.local:8089/ws');
+    expect(buildWssEndpointLabel('pbx.local', 9090)).toBe('wss://pbx.local:9090/ws');
+  });
+
+  it('Given no profiles When assess Then blocker', () => {
+    expect(
+      collectSoftphoneRegisterBlockers({
+        profilesWithSecret: 0,
+        devStackErrors: [],
+        wssPortOpen: true,
+        host: 'localhost',
+      }),
+    ).toEqual(['WebRTC 内線が未割当']);
+  });
+
+  it('Given dev stack errors When assess Then propagated', () => {
+    expect(
+      collectSoftphoneRegisterBlockers({
+        profilesWithSecret: 1,
+        devStackErrors: ['8089 not published'],
+        wssPortOpen: null,
+        host: 'localhost',
+      }),
+    ).toEqual(['8089 not published']);
+  });
+
+  it('Given wssPortOpen null When assess Then skip port check', () => {
+    expect(
+      collectSoftphoneRegisterBlockers({
+        profilesWithSecret: 1,
+        devStackErrors: [],
+        wssPortOpen: null,
+        host: 'localhost',
+      }),
+    ).toEqual([]);
   });
 });

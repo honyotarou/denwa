@@ -2,6 +2,8 @@ import { requireRole } from '@/lib/auth';
 import { getPasswordPolicyForUi, listIpAllowRows } from '@/server/page-data';
 import { updatePolicyAction, upsertIpAllowAction, deleteIpAllowAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,15 +13,12 @@ export default async function SecurityPage() {
   const ips = listIpAllowRows();
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold">セキュリティ</h2>
-        <p className="text-xs text-slate-500">
-          パスワードポリシー / IP アクセス制御 / 2FA 設定。リバプロを使う場合は X-Forwarded-For が必要。
-        </p>
-      </header>
+      <PageHeader
+        title="セキュリティ"
+        description="パスワードポリシー / IP アクセス制御 / 2FA 設定。リバプロを使う場合は X-Forwarded-For が必要。"
+      />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">パスワードポリシー</h3>
+      <PageSection title="パスワードポリシー">
         <form action={updatePolicyAction} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <label className="text-xs text-slate-600">
             最小文字数
@@ -74,10 +73,9 @@ export default async function SecurityPage() {
             </button>
           </div>
         </form>
-      </section>
+      </PageSection>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">IP アクセス制御 ({ips.length})</h3>
+      <PageSection title={`IP アクセス制御 (${ips.length})`}>
         <p className="mb-3 text-xs text-slate-500">
           1 件も登録されていなければ全 IP を許可します。登録すると、リスト外の IP からはログイン拒否。
         </p>
@@ -114,7 +112,7 @@ export default async function SecurityPage() {
             ))}
           </ul>
         )}
-      </section>
+      </PageSection>
     </div>
   );
 }

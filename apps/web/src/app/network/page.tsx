@@ -2,6 +2,8 @@ import os from 'node:os';
 import { requireRole } from '@/lib/auth';
 import { getNetworkSettingsForUi } from '@/server/page-data';
 import { updateNetworkAction } from '@/app/actions';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,15 +29,12 @@ export default async function NetworkPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold">ネットワーク / 外線アドレス</h2>
-        <p className="text-xs text-slate-500">
-          Tailscale / WAN 越しの SIP・RTP 用。保存すると <code className="rounded bg-slate-100 px-1">data/pbx-out/pjsip.d/transports.conf</code> に反映されます。
-        </p>
-      </header>
+      <PageHeader
+        title="ネットワーク / 外線アドレス"
+        description="Tailscale / WAN 越しの SIP・RTP 用。保存すると data/pbx-out/pjsip.d/transports.conf に反映されます。"
+      />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-2 text-sm font-semibold text-slate-700">このホストから見える IPv4</h3>
+      <PageSection title="このホストから見える IPv4">
         {ips.length === 0 ? (
           <p className="text-sm text-slate-500">IPv4 が見つかりません。</p>
         ) : (
@@ -53,10 +52,9 @@ export default async function NetworkPage() {
             Tailscale 候補: {tailscaleCandidates.map((i) => i.address).join(', ')}
           </p>
         )}
-      </section>
+      </PageSection>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">外部アドレス設定</h3>
+      <PageSection title="外部アドレス設定">
         <form action={updateNetworkAction} className="space-y-3">
           <label className="block text-xs text-slate-600">
             External Media Address (RTP)
@@ -92,7 +90,7 @@ export default async function NetworkPage() {
         <p className="mt-3 text-[11px] text-slate-500">
           最終更新: <span className="font-mono">{net.updatedAt || '—'}</span>
         </p>
-      </section>
+      </PageSection>
     </div>
   );
 }

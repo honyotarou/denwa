@@ -2,6 +2,7 @@ import { guardPage } from '@/lib/auth';
 import { listPickupGroups, getExtensions } from '@/server/page-data';
 import { createPickupGroupAction, updatePickupGroupAction, deletePickupGroupAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { PageHeader } from '@/components/PageHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,10 @@ export default async function PickupGroupsPage() {
   const def = getExtensions().map((e) => e.number).join(',');
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold">ピックアップグループ</h2>
+      <PageHeader
+        title="ピックアップグループ"
+        description="同一グループ内の着信を *8 でピックアップします。"
+      />
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <form action={createPickupGroupAction} className="flex flex-wrap items-end gap-2">
           <label className="text-xs">

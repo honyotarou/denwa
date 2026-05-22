@@ -14,6 +14,11 @@ export default defineConfig({
         'src/runtime/poll-intervals.ts',
         'src/concurrency/chart.ts',
         'src/home/device-summary.ts',
+        'src/softphone/state.ts',
+        'src/softphone/policy.ts',
+        'src/softphone/register-error.ts',
+        'src/softphone/wss.ts',
+        'src/softphone/wss-readiness.ts',
       ],
       thresholds: {
         branches: 90,

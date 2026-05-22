@@ -10,6 +10,8 @@ import {
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { ClickToCallSection } from './click-to-call-section';
 import { listClickToCallTokensForAccount, getExtensions } from '@/server/page-data';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,13 +22,10 @@ export default async function MePage() {
   const tokens = listClickToCallTokensForAccount(me.id);
   const extensionNumbers = getExtensions().map((e) => e.number);
   return (
-    <div className="mx-auto max-w-md space-y-4">
-      <header>
-        <h2 className="text-lg font-semibold">マイアカウント</h2>
-        <p className="text-xs text-slate-500">ログイン中のアカウント情報。</p>
-      </header>
+    <div className="mx-auto max-w-md space-y-6">
+      <PageHeader title="マイアカウント" description="ログイン中のアカウント情報。" />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
+      <PageSection>
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
           <dt className="text-slate-500">username</dt>
           <dd className="font-mono">{me.username}</dd>
@@ -37,10 +36,9 @@ export default async function MePage() {
           <dt className="text-slate-500">2FA</dt>
           <dd>{me.totpEnabled ? '有効' : '未設定'}</dd>
         </dl>
-      </section>
+      </PageSection>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-2 text-sm font-semibold text-slate-700">表示名を変更</h3>
+      <PageSection title="表示名を変更">
         <form action={updateMyDisplayNameAction} className="space-y-2">
           <input
             name="displayName"
@@ -52,10 +50,9 @@ export default async function MePage() {
             変更
           </button>
         </form>
-      </section>
+      </PageSection>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-2 text-sm font-semibold text-slate-700">パスワード変更</h3>
+      <PageSection title="パスワード変更">
         <form action={updateMyPasswordAction} className="space-y-2">
           <input
             name="password"
@@ -69,10 +66,9 @@ export default async function MePage() {
             変更
           </button>
         </form>
-      </section>
+      </PageSection>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-2 text-sm font-semibold text-slate-700">2 段階認証 (TOTP)</h3>
+      <PageSection title="2 段階認証 (TOTP)">
         {!me.totpEnabled ? (
           <form action={setupTotpAction}>
             <p className="mb-2 text-xs text-slate-500">
@@ -105,7 +101,7 @@ export default async function MePage() {
             </form>
           </div>
         )}
-      </section>
+      </PageSection>
 
       <ClickToCallSection tokens={tokens} extensionNumbers={extensionNumbers} />
 
