@@ -7,7 +7,7 @@ import { DeviceList } from './device-list';
 export const dynamic = 'force-dynamic';
 
 export default async function DevicesPage() {
-  await guardPage('user');
+  await guardPage('supervisor');
   const session = getAmiDeviceSession();
   session.start();
   const devices = session.getDevices();

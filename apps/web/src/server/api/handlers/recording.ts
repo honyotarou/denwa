@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { RECORDING_READ_MIN_ROLE } from '@openpbx/core';
+import { RECORDING_READ_MIN_ROLE, rateLimitKeyForSessionToken } from '@openpbx/core';
 import { openRecordingReadStream, resolveRecordingPath } from '@openpbx/infra/fs/recording';
 import type { AppContext } from '../../context';
 import type { JsonHandlerResult } from '../types';
@@ -12,12 +12,15 @@ export async function handleRecordingGet(
   ctx: AppContext,
   file: string,
 ): Promise<JsonHandlerResult> {
-  const limited = rejectIfAppRateLimited(ctx, 'recording', ctx.meta.ip);
-  if (limited) return limited;
-
   return withAuth(
     ctx,
     (me) => {
+      const limited = rejectIfAppRateLimited(
+        ctx,
+        'recording',
+        rateLimitKeyForSessionToken(ctx.sessionToken),
+      );
+      if (limited) return limited;
       try {
         resolveRecordingPath(ctx.infraDirs.recordingsDir, file);
         audit(ctx, me, 'recording.read', file);

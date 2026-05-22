@@ -26,6 +26,9 @@ export const RATE_LIMIT_POLICIES = {
   login: { windowMs: 60_000, maxHits: 30 },
   'originate-bearer': { windowMs: 60_000, maxHits: 40 },
   recording: { windowMs: 60_000, maxHits: 120 },
+  'phonebook-lookup': { windowMs: 60_000, maxHits: 60 },
+  'cdr-export': { windowMs: 60_000, maxHits: 10 },
+  'patient-records': { windowMs: 60_000, maxHits: 30 },
 } as const satisfies Record<string, RateLimitPolicy>;
 
 export type RateLimitScope = keyof typeof RATE_LIMIT_POLICIES;

@@ -1,8 +1,10 @@
 import { getCdrRecord } from '@openpbx/db/repos/cdr';
+import { rateLimitKeyForSessionToken } from '@openpbx/core';
 import type { AppContext } from '../../context';
 import { buildCdrExportCsv } from '../../services/cdr-export.js';
 import { ingestCdrNowWithAudit } from '../../services/cdr-ingest.js';
 import type { JsonHandlerResult } from '../types';
+import { rejectIfAppRateLimited } from '../../services/app-rate-limit';
 import { withAuth } from '../with-auth';
 
 export async function handleCdrIngestPost(ctx: AppContext): Promise<JsonHandlerResult> {
@@ -24,6 +26,12 @@ export async function handleCdrExportGet(ctx: AppContext): Promise<JsonHandlerRe
   return withAuth(
     ctx,
     (me) => {
+      const limited = rejectIfAppRateLimited(
+        ctx,
+        'cdr-export',
+        rateLimitKeyForSessionToken(ctx.sessionToken),
+      );
+      if (limited) return limited;
       ctx.auth.recordAudit({
         actor: me.username,
         action: 'cdr.export',

@@ -28,6 +28,12 @@ describe('T-CHX-006 chrome-extension', () => {
     expect(validateExtensionUsesLocalStorage(opts)).toEqual([]);
   });
 
+  it('T-SEC-EXT-003: content.js does not use innerHTML', () => {
+    const content = fs.readFileSync(path.join(ROOT, 'chrome-extension/content.js'), 'utf8');
+    expect(content).not.toMatch(/\.innerHTML\s*=/);
+    expect(content).toMatch(/createTextNode|textContent/);
+  });
+
   it('T-GAP-SEC-003: no CDN sip.js in apps/web', () => {
     const webSrc = path.join(ROOT, 'apps/web/src');
     const bad: string[] = [];

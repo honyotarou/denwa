@@ -2,8 +2,26 @@
 
 export type PbxRole = 'user' | 'supervisor' | 'admin';
 
+const ROLE_RANK: Record<PbxRole, number> = { user: 0, supervisor: 1, admin: 2 };
+
+export function roleMeetsMin(role: PbxRole, min: PbxRole): boolean {
+  return ROLE_RANK[role] >= ROLE_RANK[min];
+}
+
 /** 内線・IVR 音声など Asterisk 設定書込 */
 export const PBX_CONFIG_WRITE_MIN_ROLE: PbxRole = 'supervisor';
+
+export function canWritePbxConfig(role: PbxRole): boolean {
+  return roleMeetsMin(role, PBX_CONFIG_WRITE_MIN_ROLE);
+}
+
+export function canReadRecordings(role: PbxRole): boolean {
+  return roleMeetsMin(role, RECORDING_READ_MIN_ROLE);
+}
+
+export function canStreamDevices(role: PbxRole): boolean {
+  return roleMeetsMin(role, DEVICE_STREAM_MIN_ROLE);
+}
 
 /** 通話録音 DL（A01: user ロール全件取得を禁止） */
 export const RECORDING_READ_MIN_ROLE: PbxRole = 'supervisor';

@@ -97,7 +97,7 @@ describe('T-API-EXT-NUM: /api/extensions/[number]', () => {
     expect(r.status).toBe(400);
   });
 
-  it('Given user When GET Then secret masked', async () => {
+  it('Given user When GET Then secret omitted', async () => {
     const ctx = await mkTmpCtx();
     const user = createAccount(ctx.db, {
       username: 'extview',
@@ -106,7 +106,7 @@ describe('T-API-EXT-NUM: /api/extensions/[number]', () => {
     });
     ctx.sessionToken = ctx.auth.createSession(user.id, ctx.meta);
     const r = await handleExtensionByNumberGet(ctx, '1001');
-    const body = r.body as { extension: { secret: string } };
-    expect(body.extension.secret).toBe('••••');
+    const body = r.body as { extension: { secret?: string } };
+    expect(body.extension.secret).toBeUndefined();
   });
 });

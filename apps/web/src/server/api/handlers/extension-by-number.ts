@@ -1,6 +1,5 @@
-import { PBX_CONFIG_WRITE_MIN_ROLE } from '@openpbx/core';
+import { extensionForRole, PBX_CONFIG_WRITE_MIN_ROLE } from '@openpbx/core';
 import { getExtension } from '@openpbx/db/repos/extensions';
-import { maskSecret } from '@/lib/format';
 import type { AppContext } from '../../context';
 import type { JsonHandlerResult } from '../types';
 import { withAuth } from '../with-auth';
@@ -19,7 +18,7 @@ export async function handleExtensionByNumberGet(
     return {
       status: 200,
       body: {
-        extension: { ...ext, secret: maskSecret(me.role, ext.secret) },
+        extension: extensionForRole(ext, me.role),
       },
     };
   });

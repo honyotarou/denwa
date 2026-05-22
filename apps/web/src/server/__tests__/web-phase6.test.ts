@@ -211,7 +211,7 @@ describe('Phase 6 — middleware & API', () => {
   });
 
   describe('T-API-005/006: extensions mask', () => {
-    it('Given user When list Then secret masked', async () => {
+    it('Given user When list Then secret omitted', async () => {
       const ctx = await mkTmpCtx();
       const user = createAccount(ctx.db, {
         username: 'usr2',
@@ -221,8 +221,8 @@ describe('Phase 6 — middleware & API', () => {
       ctx.sessionToken = ctx.auth.createSession(user.id, ctx.meta);
       const r = await handleExtensionsGet(ctx);
       expect(r.status).toBe(200);
-      const body = r.body as { extensions: Array<{ secret: string }> };
-      expect(body.extensions[0]!.secret).toBe('••••');
+      const body = r.body as { extensions: Array<{ secret?: string }> };
+      expect(body.extensions[0]!.secret).toBeUndefined();
     });
 
     it('Given admin When list Then secret visible', async () => {
