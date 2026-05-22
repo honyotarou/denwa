@@ -9,6 +9,7 @@ import {
   nextStateOnDialClick,
   nextStateOnHangup,
   nextStateOnUnregister,
+  softphoneStatusLabel,
   validateDialTarget,
   type SoftphoneUiState,
 } from '@openpbx/core/softphone/state';
@@ -18,6 +19,13 @@ import { createSipJsAdapter } from '@/client/softphone/sip-js-adapter';
 import type { SipAdapter } from '@/client/softphone/types';
 
 export type SoftphoneProfile = Readonly<{ number: string; secret?: string }>;
+
+const DTMF_ROWS = [
+  ['1', '2', '3'],
+  ['4', '5', '6'],
+  ['7', '8', '9'],
+  ['*', '0', '#'],
+] as const;
 
 export function SoftphonePanel({
   profiles,
@@ -39,6 +47,11 @@ export function SoftphonePanel({
   const adapterRef = useRef<SipAdapter | null>(null);
 
   const profile = profiles.find((p) => p.number === selected);
+  const wssUrl = buildWssTransportUrl(host);
+  const isRegistered =
+    status === 'registered' || status === 'incoming' || status === 'inCall';
+  const canAnswer = status === 'incoming';
+  const canHangup = status === 'inCall' || status === 'incoming';
 
   const ensureAdapter = useCallback(() => {
     if (!adapterRef.current) {
@@ -156,86 +169,134 @@ export function SoftphonePanel({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
-      <label className="block text-xs text-slate-600">
-        内線
-        <select
-          className="mt-1 w-full rounded border px-2 py-1 text-sm"
-          value={selected}
-          onChange={(e) => setSelected(e.target.value)}
-        >
-          {profiles.map((p) => (
-            <option key={p.number} value={p.number}>
-              {p.number}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block text-xs text-slate-600">
-        WSS ホスト（Asterisk / mkcert）
+    <section className="min-w-0 space-y-3 rounded-lg border border-slate-200 bg-white p-4">
+      <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+        <label className="block text-xs text-slate-600">
+          内線
+          <select
+            className="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+          >
+            {profiles.map((p) => (
+              <option key={p.number} value={p.number}>
+                {p.number}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-xs text-slate-600">
+          Asterisk ホスト
+          <input
+            className="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 font-mono text-sm"
+            value={host}
+            onChange={(e) => setHost(e.target.value)}
+            placeholder="localhost"
+          />
+        </label>
+        <div className="flex items-end gap-2">
+          <button
+            type="button"
+            onClick={register}
+            disabled={status === 'registering'}
+            className="rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            登録
+          </button>
+          <button
+            type="button"
+            onClick={unregister}
+            disabled={!isRegistered && status !== 'registering'}
+            className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 disabled:opacity-50"
+          >
+            切断
+          </button>
+        </div>
+      </div>
+
+      <div
+        className="text-xs text-slate-600"
+        data-testid="softphone-status"
+        data-state={status}
+      >
+        状態: {softphoneStatusLabel(status)}
+        {incomingFrom ? ` — 着信 ${incomingFrom}` : ''}
+      </div>
+      {error ? (
+        <p className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2">
         <input
-          className="mt-1 w-full rounded border px-2 py-1 font-mono text-sm"
-          value={host}
-          onChange={(e) => setHost(e.target.value)}
-        />
-      </label>
-      <p className="text-xs text-slate-500" data-testid="softphone-status">
-        状態: {status}
-        {incomingFrom ? ` / 着信 ${incomingFrom}` : ''}
-      </p>
-      {error && <p className="text-xs text-red-700">{error}</p>}
-      <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={register} className="rounded bg-blue-600 px-3 py-1 text-xs text-white">
-          SIP 登録
-        </button>
-        <button type="button" onClick={unregister} className="rounded border px-3 py-1 text-xs">
-          登録解除
-        </button>
-        <input
-          className="rounded border px-2 py-1 font-mono text-sm"
-          placeholder="発信先"
+          className="min-w-0 rounded border border-slate-300 px-2 py-1.5 font-mono text-sm"
+          placeholder="発信先 (例: 1002)"
           value={target}
           onChange={(e) => setTarget(e.target.value)}
+          disabled={status !== 'registered'}
         />
-        <button type="button" onClick={dial} className="rounded bg-emerald-600 px-3 py-1 text-xs text-white">
+        <button
+          type="button"
+          onClick={dial}
+          disabled={status !== 'registered'}
+          className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+        >
           発信
         </button>
-        <button type="button" onClick={answer} className="rounded bg-blue-600 px-3 py-1 text-xs text-white">
+        <button
+          type="button"
+          onClick={answer}
+          disabled={!canAnswer}
+          className="rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+        >
           応答
         </button>
-        <button type="button" onClick={hangup} className="rounded bg-red-600 px-3 py-1 text-xs text-white">
-          切断
-        </button>
-        <button type="button" onClick={toggleMute} className="rounded border px-3 py-1 text-xs">
-          {muted ? 'ミュート解除' : 'ミュート'}
-        </button>
-      </div>
-      <div className="flex gap-1">
-        {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '#'].map((d) => (
-          <button
-            key={d}
-            type="button"
-            onClick={() => dtmf(d)}
-            className="rounded border px-2 py-0.5 font-mono text-xs"
-          >
-            {d}
-          </button>
-        ))}
-      </div>
-      <audio ref={audioRef} autoPlay playsInline />
-      <p className="text-xs text-slate-400">
-        WSS: {buildWssTransportUrl(host)} — 初回は{' '}
-        <a
-          href={`https://${host}:8089/`}
-          target="_blank"
-          rel="noreferrer"
-          className="text-blue-600 underline"
+        <button
+          type="button"
+          onClick={hangup}
+          disabled={!canHangup}
+          className="rounded bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
         >
-          https://{host}:8089/
-        </a>{' '}
-        を開いて証明書を承認（またはターミナルで <code className="rounded bg-slate-100 px-1">mkcert -install</code>
-        ）してから「SIP 登録」
+          切る
+        </button>
+      </div>
+
+      <div className="border-t border-slate-100 pt-3">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-slate-600">通話中操作</span>
+          <button
+            type="button"
+            onClick={toggleMute}
+            disabled={!isRegistered}
+            className="rounded border border-slate-300 px-2 py-1 text-xs disabled:opacity-50"
+          >
+            {muted ? 'ミュート解除' : 'ミュート'}
+          </button>
+        </div>
+        <div className="grid w-fit max-w-full grid-cols-3 gap-1">
+          {DTMF_ROWS.flat().map((digit) => (
+            <button
+              key={digit}
+              type="button"
+              onClick={() => dtmf(digit)}
+              disabled={!isRegistered}
+              className="h-9 w-11 rounded border border-slate-300 bg-slate-50 font-mono text-sm font-medium disabled:opacity-40"
+            >
+              {digit}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-xs text-slate-400">
+        WSS: <code className="rounded bg-slate-100 px-1">{wssUrl}</code>
+        {' — '}
+        <code className="rounded bg-slate-100 px-1">npm run gen-dev-asterisk-certs</code>
+        {' → softphone-dev overlay で asterisk 起動'}
       </p>
-    </div>
+
+      <audio ref={audioRef} autoPlay playsInline className="hidden" />
+    </section>
   );
 }

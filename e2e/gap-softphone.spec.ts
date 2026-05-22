@@ -13,6 +13,27 @@ test.describe('L4 E2E — softphone dev contract', () => {
     await expect(page.getByTestId('softphone-status')).toBeVisible();
   });
 
+  test('T-SOFT-019: OpenPBX layout — register row + dial row', async ({ page }) => {
+    await page.goto('/softphone', { waitUntil: 'load' });
+    await expect(page.getByRole('button', { name: '登録' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('button', { name: '切断' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '発信' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '応答' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '切る' })).toBeVisible();
+    await expect(page.getByPlaceholder(/発信先/)).toBeVisible();
+    await expect(page.getByText(/Asterisk ホスト/)).toBeVisible();
+    await expect(page.getByText(/状態: 未接続/)).toBeVisible();
+  });
+
+  test('T-SOFT-020: DTMF keypad 3x4 grid', async ({ page }) => {
+    await page.goto('/softphone', { waitUntil: 'load' });
+    for (const d of ['1', '5', '9', '*', '#']) {
+      await expect(page.getByRole('button', { name: d, exact: true })).toBeVisible({
+        timeout: 30_000,
+      });
+    }
+  });
+
   test('G4b: WSS 8089 reachable when dev stack up', async () => {
     test.skip(process.env.E2E_WSS_PROBE !== '1', 'set E2E_WSS_PROBE=1 with asterisk dev overlay');
     const ok = await new Promise<boolean>((resolve) => {

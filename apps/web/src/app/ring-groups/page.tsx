@@ -2,6 +2,7 @@ import { guardPage } from '@/lib/auth';
 import { listRingGroups, getExtensions } from '@/server/page-data';
 import { createRingGroupAction, updateRingGroupAction, deleteRingGroupAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { PageHeader } from '@/components/PageHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,10 @@ export default async function RingGroupsPage() {
   const extNums = getExtensions().map((e) => e.number).join(',');
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold">着信グループ</h2>
+      <PageHeader
+        title="着信グループ"
+        description="複数の内線を同時または順次呼び出すグループ。6XXX 帯の番号を割り当てて Asterisk dialplan に自動反映します。"
+      />
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h3 className="mb-3 text-sm font-semibold text-slate-700">新規追加</h3>
         <form action={createRingGroupAction} className="grid gap-3 sm:grid-cols-2">

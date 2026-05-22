@@ -5,6 +5,7 @@ import { buildTriageSummary } from '../triage/summary.js';
 import {
   nextStateOnRegisterClick,
   nextStateOnRegisterOk,
+  softphoneStatusLabel,
   validateDialTarget,
 } from '../softphone/state.js';
 import { validatePatientId } from '../patients/validate.js';
@@ -35,6 +36,11 @@ describe('OpenPBX gap — core contracts', () => {
   it('T-SOFT-004: dial target', () => {
     expect(validateDialTarget('1002')).toBeNull();
     expect(validateDialTarget('x')).not.toBeNull();
+  });
+
+  it('T-SOFT-004b: status label (OpenPBX 互換)', () => {
+    expect(softphoneStatusLabel('registered')).toBe('登録完了');
+    expect(softphoneStatusLabel('inCall')).toBe('通話中');
   });
 
   it('T-PAT-001: patient id', () => {

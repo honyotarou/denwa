@@ -7,7 +7,7 @@ import { NavBar } from '@/components/NavBar';
 
 export const metadata: Metadata = {
   title: 'Command Room PBX',
-  description: 'Asterisk ベース PBX の設定ダッシュボード',
+  description: 'Asterisk ベース PBX (内線・IVR・録音) の設定ダッシュボード',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -15,19 +15,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="ja">
       <body className="min-h-screen antialiased">
-        {me && (
-          <header className="sticky top-0 z-10 border-b border-slate-200 bg-white">
-            <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-              <a
-                href="/"
-                className="rounded text-lg font-semibold tracking-tight hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Command Room PBX
-              </a>
-              <NavBar me={me} />
-            </div>
-          </header>
-        )}
+        <header className="sticky top-0 z-10 border-b border-slate-200 bg-white">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+            <a
+              href="/"
+              className="rounded text-lg font-semibold tracking-tight hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              Command Room PBX
+            </a>
+            {me ? <NavBar me={me} /> : null}
+          </div>
+        </header>
         <Suspense fallback={null}>
           <FlashBanner />
         </Suspense>

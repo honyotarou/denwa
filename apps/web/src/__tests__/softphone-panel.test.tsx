@@ -35,6 +35,11 @@ function fakeAdapter(opts?: { failRegister?: boolean; incomingFrom?: string }): 
   };
 }
 
+function expectState(status: string) {
+  const el = screen.getByTestId('softphone-status');
+  expect(el.getAttribute('data-state')).toBe(status);
+}
+
 describe('SoftphonePanel T-SOFT UI', () => {
   afterEach(() => cleanup());
 
@@ -53,8 +58,9 @@ describe('SoftphonePanel T-SOFT UI', () => {
         adapterFactory={(_a) => fakeAdapter()}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'SIP 登録' }));
-    await waitFor(() => expect(screen.getByText(/状態: registered/)).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: '登録' }));
+    await waitFor(() => expectState('registered'));
+    expect(screen.getByText(/登録完了/)).toBeTruthy();
   });
 
   it('T-SOFT-008: dial moves to inCall', async () => {
@@ -65,10 +71,10 @@ describe('SoftphonePanel T-SOFT UI', () => {
         adapterFactory={(_a) => fakeAdapter()}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'SIP 登録' }));
-    fireEvent.change(screen.getByPlaceholderText('発信先'), { target: { value: '1002' } });
+    fireEvent.click(screen.getByRole('button', { name: '登録' }));
+    fireEvent.change(screen.getByPlaceholderText(/発信先/), { target: { value: '1002' } });
     fireEvent.click(screen.getByRole('button', { name: '発信' }));
-    await waitFor(() => expect(screen.getByText(/状態: inCall/)).toBeTruthy());
+    await waitFor(() => expectState('inCall'));
   });
 
   it('T-SOFT-007: register fail shows classified cert hint', async () => {
@@ -84,7 +90,7 @@ describe('SoftphonePanel T-SOFT UI', () => {
         })}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'SIP 登録' }));
+    fireEvent.click(screen.getByRole('button', { name: '登録' }));
     await waitFor(() => expect(screen.getByText(/TLS 証明書/)).toBeTruthy());
   });
 
@@ -96,7 +102,7 @@ describe('SoftphonePanel T-SOFT UI', () => {
         adapterFactory={(_a) => fakeAdapter({ failRegister: true })}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'SIP 登録' }));
+    fireEvent.click(screen.getByRole('button', { name: '登録' }));
     await waitFor(() => expect(screen.getByText(/TLS 証明書/)).toBeTruthy());
   });
 
@@ -108,7 +114,7 @@ describe('SoftphonePanel T-SOFT UI', () => {
         adapterFactory={(_a) => fakeAdapter({ incomingFrom: '1002' })}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'SIP 登録' }));
+    fireEvent.click(screen.getByRole('button', { name: '登録' }));
     await waitFor(() => expect(screen.getByText(/着信 1002/)).toBeTruthy());
   });
 
@@ -120,12 +126,12 @@ describe('SoftphonePanel T-SOFT UI', () => {
         adapterFactory={(_a) => fakeAdapter({ incomingFrom: '1002' })}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'SIP 登録' }));
+    fireEvent.click(screen.getByRole('button', { name: '登録' }));
     await waitFor(() => expect(screen.getByText(/着信/)).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: '応答' }));
-    await waitFor(() => expect(screen.getByText(/状態: inCall/)).toBeTruthy());
-    fireEvent.click(screen.getByRole('button', { name: '切断' }));
-    await waitFor(() => expect(screen.getByText(/状態: registered/)).toBeTruthy());
+    await waitFor(() => expectState('inCall'));
+    fireEvent.click(screen.getByRole('button', { name: '切る' }));
+    await waitFor(() => expectState('registered'));
   });
 
   it('T-SOFT-012/013: mute and DTMF call adapter', async () => {
@@ -139,8 +145,8 @@ describe('SoftphonePanel T-SOFT UI', () => {
         adapterFactory={(_a) => adapter}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'SIP 登録' }));
-    await waitFor(() => expect(screen.getByText(/状態: registered/)).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: '登録' }));
+    await waitFor(() => expectState('registered'));
     fireEvent.click(screen.getByRole('button', { name: 'ミュート' }));
     expect(setMuted).toHaveBeenCalledWith(true);
     fireEvent.click(screen.getByRole('button', { name: '5' }));

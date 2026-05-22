@@ -2,6 +2,7 @@ import { guardPage } from '@/lib/auth';
 import { listPhonebook } from '@/server/page-data';
 import { createPhonebookAction, updatePhonebookAction, deletePhonebookAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { PageHeader } from '@/components/PageHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export default async function PhonebookPage({ searchParams }: { searchParams: Pr
   const items = listPhonebook(q);
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold">電話帳</h2>
+      <PageHeader title="共通電話帳" description="内線・外線の短縮ダイヤル用エントリ。" />
       <form method="get" className="flex gap-2">
         <input name="q" defaultValue={q} className="rounded border px-2 py-1 text-sm" placeholder="検索" />
         <button className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">

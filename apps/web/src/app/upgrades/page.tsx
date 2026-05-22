@@ -3,6 +3,8 @@ import { getUpgradesForUi } from '@/server/page-data';
 import { scheduleUpgradeAction, deleteUpgradeAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { formatJst } from '@/lib/datetime';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,15 +13,12 @@ export default async function UpgradesPage() {
   const { scheduled, due } = getUpgradesForUi();
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold">バージョンアップ予約</h2>
-        <p className="text-xs text-slate-500">
-          Asterisk / Web イメージの基底タグ切替予定を記録します。実際の docker compose pull / up はホスト側で実行する必要があります。
-        </p>
-      </header>
+      <PageHeader
+        title="バージョンアップ予約"
+        description="Asterisk / Web イメージの基底タグ切替予定を記録します。実際の docker compose pull / up はホスト側で実行する必要があります。"
+      />
       {due.length > 0 && (
-        <section className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm">
-          <h3 className="font-semibold text-amber-900">実行時期を過ぎた予約 ({due.length})</h3>
+        <PageSection title={`実行時期を過ぎた予約 (${due.length})`} className="border-amber-300 bg-amber-50">
           <p className="mt-1 text-amber-800">
             <code className="rounded bg-amber-100 px-1">ALLOW_UPGRADE_EXEC=1</code> と docker.sock があれば Web が自動実行します。
             それ以外は <code className="rounded bg-amber-100 px-1">scripts/upgrade-watcher.sh</code> または以下を手動実行してください。
@@ -38,10 +37,9 @@ export default async function UpgradesPage() {
               </li>
             ))}
           </ul>
-        </section>
+        </PageSection>
       )}
-      <section className="rounded-lg border bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">新規予約</h3>
+      <PageSection title="新規予約">
         <form action={scheduleUpgradeAction} className="grid grid-cols-1 gap-3 sm:grid-cols-[200px_1fr_1fr_1fr_auto]">
           <label className="text-xs text-slate-600">
             予定日時 (UTC)
@@ -75,12 +73,13 @@ export default async function UpgradesPage() {
             メモ
             <input name="note" className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm" />
           </label>
-          <button type="submit" className="self-end rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white">
+          <button type="submit" className="self-end rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
             予約
           </button>
         </form>
-      </section>
-      <ul className="divide-y rounded border bg-white text-sm">
+      </PageSection>
+      <PageSection title={`予約一覧 (${scheduled.length})`}>
+        <ul className="divide-y divide-slate-200 text-sm">
         {scheduled.map((u) => (
           <li key={u.id} className="flex justify-between p-3">
             <span>
@@ -99,7 +98,8 @@ export default async function UpgradesPage() {
             </form>
           </li>
         ))}
-      </ul>
+        </ul>
+      </PageSection>
     </div>
   );
 }

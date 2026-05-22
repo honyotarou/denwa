@@ -13,6 +13,8 @@
     "test:watch": "npm run test:watch -w @openpbx/core",
     "test:gate": "npm run build:chrome-ext && npm run test -w @openpbx/core && npm run test -w @openpbx/ops && npm run test -w @openpbx/db && npm run test -w @openpbx/infra && npm run test -w command-room-web",
     "test:coverage:parity-b": "npm run test -w @openpbx/core -- --coverage",
+    "test:coverage:softphone": "npm run test -w @openpbx/core -- --coverage src/__tests__/softphone-state.test.ts src/__tests__/openpbx-gap.test.ts src/__tests__/gap-phase4-5.test.ts src/__tests__/gap-l5-runtime.test.ts src/__tests__/wss-readiness.test.ts",
+    "bench:softphone": "npm run bench -w @openpbx/core -- src/__bench__/softphone-state.bench.ts",
     "test:roadmap": "npm run test -w @openpbx/core -- --reporter=verbose",
     "harness": "bash scripts/harness-check.sh",
     "harness:fast": "bash scripts/harness-fast.sh",

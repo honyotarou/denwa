@@ -8,6 +8,7 @@ import {
   deleteTimeRuleAction,
 } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { PageHeader } from '@/components/PageHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export default async function BusinessHoursPage() {
   const rules = listTimeRules();
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold">営業時間</h2>
+      <PageHeader title="営業時間 / 祝日" description="時間帯ルールと祝日カレンダー。IVR / 着信振分に反映されます。" />
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h3 className="mb-2 text-sm font-semibold text-slate-700">祝日</h3>
         <form action={upsertHolidayAction} className="mb-3 flex flex-wrap gap-2">

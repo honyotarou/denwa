@@ -2,6 +2,8 @@ import { requireRole } from '@/lib/auth';
 import { listSipTrunks } from '@/server/page-data';
 import { upsertTrunkAction, deleteTrunkAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { PageHeader } from '@/components/PageHeader';
+import { PageSection } from '@/components/PageSection';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -13,24 +15,16 @@ export default async function TrunksPage() {
   const trunks = listSipTrunks();
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold">SIP trunk (外線)</h2>
-        <p className="text-xs text-slate-500">
-          外線プロバイダ（050 / 0ABJ、各種 SIP プロバイダ等）との接続を管理します。
-          <span className="font-mono"> outbound_prefix</span> を設定すると、その prefix
-          で始まる発信を trunk へ。
-          <span className="font-mono"> did_inbound</span> を設定すると、その番号宛の着信を
-          internal context の同番号にルーティングします。保存すると PJSIP / dialplan を同期します。
-        </p>
-      </header>
+      <PageHeader
+        title="外線 (SIP trunk)"
+        description="外線プロバイダ（050 / 0ABJ、各種 SIP プロバイダ等）との接続を管理します。 outbound_prefix を設定すると、その prefix で始まる発信を trunk へ。 did_inbound を設定すると、その番号宛の着信を internal context の同番号にルーティングします。保存すると PJSIP / dialplan を同期します。"
+      />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">新規追加</h3>
+      <PageSection title="新規追加">
         <TrunkForm action={upsertTrunkAction} submitLabel="追加" />
-      </section>
+      </PageSection>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">登録済み ({trunks.length})</h3>
+      <PageSection title={`登録済み (${trunks.length})`}>
         {trunks.length === 0 ? (
           <p className="text-sm text-slate-500">まだ trunk がありません。</p>
         ) : (
@@ -54,7 +48,7 @@ export default async function TrunksPage() {
             ))}
           </ul>
         )}
-      </section>
+      </PageSection>
     </div>
   );
 }
