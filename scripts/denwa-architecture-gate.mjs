@@ -560,6 +560,46 @@ function checkChromeExtensionManifestGate(root, failures) {
   }
 }
 
+function checkChromeExtensionNoInnerHtml(root, failures) {
+  for (const rel of ["chrome-extension/content.js", "chrome-extension/src/content-entry.ts"]) {
+    const text = readSafe(path.join(root, rel));
+    if (/\.innerHTML\s*=/.test(text)) {
+      fail(failures, "T-SEC-EXT-003", rel, "content script must not assign innerHTML");
+    }
+  }
+}
+
+const SENSITIVE_API_RATE_LIMIT = {
+  "phonebook.ts": ["phonebook-lookup", "rejectIfAppRateLimited"],
+  "cdr.ts": ["cdr-export", "rejectIfAppRateLimited"],
+  "patient-records.ts": ["patient-records", "rejectIfAppRateLimited"],
+};
+
+function checkSensitiveApiRateLimit(root, failures) {
+  const dir = path.join(root, "apps/web/src/server/api/handlers");
+  for (const [name, [scope, fn]] of Object.entries(SENSITIVE_API_RATE_LIMIT)) {
+    const rel = `apps/web/src/server/api/handlers/${name}`;
+    const text = readSafe(path.join(dir, name));
+    if (!text.includes(fn)) {
+      fail(failures, "T-SEC-RATE-002", rel, `must call ${fn}`);
+    }
+    if (!text.includes(scope)) {
+      fail(failures, "T-SEC-RATE-002", rel, `must rate-limit scope ${scope}`);
+    }
+  }
+}
+
+function checkCspBuilderStrict(root, failures) {
+  const rel = "packages/pbx-core/src/prod/content-security-policy.ts";
+  const text = readSafe(path.join(root, rel));
+  if (!/frame-ancestors/.test(text) || !/base-uri/.test(text) || !/form-action/.test(text)) {
+    fail(failures, "T-SEC-CSP-001", rel, "must include frame-ancestors, base-uri, form-action");
+  }
+  if (/unsafe-inline/.test(text)) {
+    fail(failures, "T-SEC-CSP-001", rel, "must not hardcode unsafe-inline in builder");
+  }
+}
+
 function checkPostApiCsrf(root, failures) {
   for (const rel of POST_API_CSRF_ROUTES) {
     const text = readSafe(path.join(root, rel));
@@ -873,5 +913,8 @@ export function runArchitectureGate(root, opts = {}) {
   checkDockerfileDigestPin(root, failures);
   checkGithubActionsShaPin(root, failures);
   checkChromeExtensionManifestGate(root, failures);
+  checkChromeExtensionNoInnerHtml(root, failures);
+  checkSensitiveApiRateLimit(root, failures);
+  checkCspBuilderStrict(root, failures);
   return failures;
 }

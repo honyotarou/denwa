@@ -49,8 +49,8 @@ describe('Phase 6: HTTP API', () => {
     ctx.sessionToken = ctx.auth.createSession(user.id, ctx.meta);
     const r = await handleExtensionsGet(ctx);
     expect(r.status).toBe(200);
-    const body = r.body as { extensions: Array<{ secret: string }> };
-    expect(body.extensions.every((e) => e.secret === '••••')).toBe(true);
+    const body = r.body as { extensions: Array<{ secret?: string }> };
+    expect(body.extensions.every((e) => e.secret === undefined)).toBe(true);
   });
 
   it('Given supervisor When CDR ingest Then 200', async () => {

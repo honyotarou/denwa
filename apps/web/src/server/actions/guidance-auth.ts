@@ -1,11 +1,11 @@
 import type { ActionContext, AppContext } from '../context.js';
-import { audit, requireUser, s } from './shared.js';
+import { audit, requirePbxConfigWrite, s } from './shared.js';
 import { authenticateLogin } from '../services/auth-login';
 import { deleteGuidanceWithAudit } from '../services/guidance';
 
 // T-ACT-020 guidance
 export async function deleteGuidanceActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await deleteGuidanceWithAudit(ctx, me, s(formData.get('name')));
 }
 

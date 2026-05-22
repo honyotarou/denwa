@@ -28,5 +28,8 @@ describe('T-SEC-RATE-001: rate limit', () => {
     expect(RATE_LIMIT_POLICIES.login.maxHits).toBeGreaterThan(0);
     expect(RATE_LIMIT_POLICIES['originate-bearer'].maxHits).toBeGreaterThan(0);
     expect(RATE_LIMIT_POLICIES.recording.maxHits).toBeGreaterThan(0);
+    expect(RATE_LIMIT_POLICIES['phonebook-lookup'].maxHits).toBeGreaterThan(0);
+    expect(RATE_LIMIT_POLICIES['cdr-export'].maxHits).toBeGreaterThan(0);
+    expect(RATE_LIMIT_POLICIES['patient-records'].maxHits).toBeGreaterThan(0);
   });
 });

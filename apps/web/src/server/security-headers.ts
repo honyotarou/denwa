@@ -1,15 +1,20 @@
-/** Next.js セキュリティヘッダ単一正本（T-SEC-HEADERS-001） */
+/** Next.js セキュリティヘッダ単一正本（T-SEC-HEADERS-001 / T-SEC-CSP-001） */
 
-import { buildContentSecurityPolicy } from '@openpbx/core/prod/content-security-policy';
+import {
+  buildContentSecurityPolicy,
+  type ContentSecurityPolicyOptions,
+} from '@openpbx/core/prod/content-security-policy';
 
 export { buildContentSecurityPolicy };
 
-export function buildSecurityHeaders(isProduction: boolean): Readonly<Record<string, string>> {
+export function buildSecurityHeaders(
+  isProduction: boolean,
+  cspOptions?: ContentSecurityPolicyOptions,
+): Readonly<Record<string, string>> {
   const headers: Record<string, string> = {
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    // Next.js App Router は RSC ブートストラップに inline script が必要（nonce 未導入）
-    'Content-Security-Policy': buildContentSecurityPolicy(),
+    'Content-Security-Policy': buildContentSecurityPolicy(cspOptions),
     'X-Content-Type-Options': 'nosniff',
   };
   if (isProduction) {

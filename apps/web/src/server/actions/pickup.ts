@@ -1,5 +1,5 @@
 import type { AppContext } from '../context.js';
-import { requireUser, s } from './shared.js';
+import { requirePbxConfigWrite, s } from './shared.js';
 import { parseCommaSeparatedExtensions } from '../services/form-helpers';
 import {
   createPickupGroupWithSync,
@@ -8,7 +8,7 @@ import {
 } from '../services/pickup';
 
 export async function createPickupGroupActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await createPickupGroupWithSync(
     ctx,
     me,
@@ -18,7 +18,7 @@ export async function createPickupGroupActionImpl(ctx: AppContext, formData: For
 }
 
 export async function updatePickupGroupActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await updatePickupGroupWithSync(
     ctx,
     me,
@@ -28,6 +28,6 @@ export async function updatePickupGroupActionImpl(ctx: AppContext, formData: For
 }
 
 export async function deletePickupGroupActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await deletePickupGroupWithSync(ctx, me, s(formData.get('name')));
 }

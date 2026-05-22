@@ -1,6 +1,6 @@
 import type { RingStrategy } from '@openpbx/core';
 import type { AppContext } from '../context.js';
-import { requireUser, s } from './shared.js';
+import { requirePbxConfigWrite, s } from './shared.js';
 import { parseCommaSeparatedExtensions } from '../services/form-helpers';
 import {
   createRingGroupWithSync,
@@ -14,7 +14,7 @@ function fallbackFromForm(formData: FormData): string | null {
 }
 
 export async function createRingGroupActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await createRingGroupWithSync(ctx, me, {
     number: s(formData.get('number')),
     name: s(formData.get('name')) || null,
@@ -26,7 +26,7 @@ export async function createRingGroupActionImpl(ctx: AppContext, formData: FormD
 }
 
 export async function updateRingGroupActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   const number = s(formData.get('number'));
   const membersRaw = s(formData.get('members'));
   await updateRingGroupWithSync(ctx, me, number, {
@@ -41,6 +41,6 @@ export async function updateRingGroupActionImpl(ctx: AppContext, formData: FormD
 }
 
 export async function deleteRingGroupActionImpl(ctx: AppContext, formData: FormData): Promise<void> {
-  const me = requireUser(ctx);
+  const me = requirePbxConfigWrite(ctx);
   await deleteRingGroupWithSync(ctx, me, s(formData.get('number')));
 }

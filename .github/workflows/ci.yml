@@ -13,6 +13,10 @@ jobs:
     name: harness (full — same as pre-push)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      attestations: write
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
@@ -32,3 +36,11 @@ jobs:
 
       - name: harness
         run: xvfb-run -a npm run harness
+
+      - name: SBOM (CycloneDX)
+        run: npx --yes @cyclonedx/cyclonedx-npm@1.19.3 --output-file sbom.json --output-format json
+
+      - name: Attest SBOM provenance
+        uses: actions/attest-build-provenance@49df96e17e918a15956db358890b08e61c704919 # v1.2.0
+        with:
+          subject-path: sbom.json

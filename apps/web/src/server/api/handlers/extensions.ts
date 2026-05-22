@@ -1,7 +1,6 @@
 import { isDuplicateError } from '@openpbx/db/errors';
-import { PBX_CONFIG_WRITE_MIN_ROLE } from '@openpbx/core';
+import { extensionForRole, PBX_CONFIG_WRITE_MIN_ROLE } from '@openpbx/core';
 import { listExtensions } from '@openpbx/db/repos/extensions';
-import { maskSecret } from '@/lib/format';
 import type { AppContext } from '../../context';
 import type { JsonHandlerResult } from '../types';
 import { withAuth } from '../with-auth';
@@ -9,10 +8,7 @@ import { createExtensionWithSync } from '../../services/extensions';
 
 export async function handleExtensionsGet(ctx: AppContext): Promise<JsonHandlerResult> {
   return withAuth(ctx, (me) => {
-    const extensions = listExtensions(ctx.db).map((e) => ({
-      ...e,
-      secret: maskSecret(me.role, e.secret),
-    }));
+    const extensions = listExtensions(ctx.db).map((e) => extensionForRole(e, me.role));
     return { status: 200, body: { extensions } };
   });
 }

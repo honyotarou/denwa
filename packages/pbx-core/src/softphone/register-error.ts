@@ -24,7 +24,7 @@ export function classifySipRegisterFailure(raw: string): SipRegisterFailure {
     return {
       kind: 'wss',
       userMessage:
-        'WSS が Content-Security-Policy でブロックされています。connect-src に wss: が含まれる buildSecurityHeaders をデプロイしてください。',
+        'WSS が Content-Security-Policy でブロックされています。connect-src に wss://<host>:8089 が含まれる buildSecurityHeaders をデプロイしてください。',
     };
   }
   if (/websocket|wss|econnrefused|failed to connect|network|timeout|8089/i.test(m)) {
