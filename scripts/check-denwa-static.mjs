@@ -179,7 +179,7 @@ try {
   ).trim();
   if (trackedSqlite) {
     failures.push(
-      `tracked sqlite files forbidden: ${trackedSqlite.split("\n").join(", ")}`,
+      `tracked sqlite files forbidden (git rm --cached + filter-repo): ${trackedSqlite.split("\n").join(", ")}`,
     );
   }
 } catch {

@@ -3,6 +3,7 @@ import Database from 'better-sqlite3';
 import path from 'node:path';
 import { applySchema } from '@openpbx/db';
 import { createAuthService } from './auth';
+import { resolveDatabaseFile } from './database-path';
 import { createInfraSync, type InfraDirs } from './infra-sync';
 import { createAmiOriginatePort } from './ports/ami-originate';
 import type { AppContext } from './context';
@@ -11,7 +12,7 @@ let dbSingleton: Database.Database | null = null;
 
 export function getAppDb(): Database.Database {
   if (!dbSingleton) {
-    const file = process.env.DATABASE_PATH ?? path.join(process.cwd(), 'data/db/command-room.sqlite');
+    const file = resolveDatabaseFile(process.cwd());
     if (file !== ':memory:') {
       fs.mkdirSync(path.dirname(file), { recursive: true });
     }
