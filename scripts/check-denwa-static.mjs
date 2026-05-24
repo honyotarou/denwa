@@ -172,6 +172,20 @@ function shouldSkipStagedSecretContentScan(rel) {
   return false;
 }
 
+try {
+  const trackedSqlite = execSync(
+    "git ls-files '*.sqlite' '*.sqlite-shm' '*.sqlite-wal' '*.sqlite.broken' '*.sqlite.corrupt-*'",
+    { cwd: ROOT, encoding: "utf8" },
+  ).trim();
+  if (trackedSqlite) {
+    failures.push(
+      `tracked sqlite files forbidden: ${trackedSqlite.split("\n").join(", ")}`,
+    );
+  }
+} catch {
+  /* not a git repo */
+}
+
 for (const rel of stagedFiles()) {
   if (SECRET_PATH_BLOCK.some((re) => re.test(rel))) {
     failures.push(`staged: ${rel} must not be committed (secrets/env)`);
