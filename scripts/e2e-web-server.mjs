@@ -8,8 +8,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { e2eDbPath, e2eWebProcessEnv } from './e2e-paths.mjs';
 
+// Must be set before any `next` subprocess loads next.config.ts
+process.env.E2E_BUILD = '1';
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WEB = path.join(ROOT, 'apps/web');
+const E2E_DIST = path.join(WEB, '.next-e2e');
 
 function ensurePortFree(port) {
   const r = spawnSync('lsof', ['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-t'], { encoding: 'utf8' });
@@ -27,6 +31,22 @@ function run(cmd, args, opts = {}) {
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
 
+function cleanE2eDist() {
+  fs.rmSync(E2E_DIST, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+}
+
+function buildWeb(env, attempt = 1) {
+  cleanE2eDist();
+  const r = spawnSync('npx', ['next', 'build'], { cwd: WEB, env, stdio: 'inherit' });
+  if (r.status !== 0) {
+    if (attempt < 2) {
+      console.error('[e2e] next build failed; retrying after clean .next-e2e');
+      return buildWeb(env, attempt + 1);
+    }
+    process.exit(r.status ?? 1);
+  }
+}
+
 run(process.execPath, [path.join(ROOT, 'scripts/e2e-prepare.mjs')]);
 
 run('npx', ['tsx', path.join(ROOT, 'scripts/e2e-seed-click2call-token.ts')], {
@@ -41,10 +61,7 @@ const port = process.env.E2E_PORT ?? '3010';
 ensurePortFree(port);
 const env = { ...process.env, ...e2eWebProcessEnv(), PORT: port };
 
-// Stale dev-server .next chunks (e.g. ./8819.js) break production next build.
-fs.rmSync(path.join(WEB, '.next'), { recursive: true, force: true });
-
-run('npm', ['run', 'build', '-w', 'command-room-web'], { env });
+buildWeb(env);
 
 const child = spawnSync('npx', ['next', 'start', '-p', port], {
   cwd: WEB,

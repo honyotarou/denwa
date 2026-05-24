@@ -4,6 +4,7 @@
 
 node_modules/
 .next/
+.next-e2e/
 .DS_Store
 .env
 .env.local

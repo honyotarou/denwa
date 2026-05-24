@@ -31,6 +31,7 @@ export function e2eWebProcessEnv() {
     IP_ALLOW_CIDRS: '127.0.0.0/8,::1/128',
     TRUSTED_PROXY_COUNT: '1',
     COOKIE_SECURE: '0',
+    E2E_BUILD: '1',
     DATABASE_PATH: path.relative(path.join(ROOT, 'apps/web'), e2eDbPath()),
     PJSIP_OUT_DIR: path.relative(path.join(ROOT, 'apps/web'), e2ePjsipDir()),
     DIALPLAN_OUT_DIR: path.relative(path.join(ROOT, 'apps/web'), e2eDialplanDir()),
