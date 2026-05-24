@@ -11,6 +11,17 @@ import { e2eDbPath, e2eWebProcessEnv } from './e2e-paths.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WEB = path.join(ROOT, 'apps/web');
 
+function ensurePortFree(port) {
+  const r = spawnSync('lsof', ['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-t'], { encoding: 'utf8' });
+  const pid = r.stdout?.trim();
+  if (!pid) return;
+  console.error(
+    `[e2e] port ${port} is already in use (pid ${pid}). ` +
+      `Stop the other server first: kill $(lsof -ti :${port})`,
+  );
+  process.exit(1);
+}
+
 function run(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { cwd: ROOT, stdio: 'inherit', ...opts });
   if (r.status !== 0) process.exit(r.status ?? 1);
@@ -27,6 +38,7 @@ run('npx', ['tsx', path.join(ROOT, 'scripts/e2e-seed-click2call-token.ts')], {
 });
 
 const port = process.env.E2E_PORT ?? '3010';
+ensurePortFree(port);
 const env = { ...process.env, ...e2eWebProcessEnv(), PORT: port };
 
 // Stale dev-server .next chunks (e.g. ./8819.js) break production next build.
