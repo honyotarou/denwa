@@ -20,6 +20,7 @@ Step 9  … commit / push（pre-commit harness:fast → pre-push harness）
 | メニュー 0〜9 | 本ファイル §N |
 | parity B（レガシー PBX 画面） | **付録 D**（gap Phase 0〜6 とは別） |
 | ペネトレ | 付録 C |
+| **SQLite 漏洩 / P0 秘密** | **付録 E** |
 | 層違反の直し方 | 付録 B |
 
 **完了定義**: 0→9 を各1回やっただけでは計画完了にならない。各 Step で `docs/TDD-REBUILD-PLAN.md` §7 の `T-XXX-000` を **Red→Green し尽くす**（§1.4）。
@@ -366,8 +367,23 @@ npx tsx scripts/prod-check.ts
 
 ```bash
 npx tsx scripts/bootstrap-dev-admin.ts
-cd apps/web && DATABASE_PATH=../../data/db/command-room.sqlite npm run dev
+cd apps/web && npm run dev -- -p 3001   # 正本: resolveDatabaseFile → ../../data/db/
 docker compose up            # 9001/9002 inbox 等
+```
+
+**DB 正本（T-SEC-DB-003）**
+
+| 項目 | 正本 |
+|------|------|
+| ファイル | repo root `data/db/command-room.sqlite` |
+| 解決 | `apps/web/src/server/database-path.ts` `resolveDatabaseFile` |
+| **禁止** | `apps/web/data/db/`（cwd 副作用で生成されやすい） |
+| dev ポート | **3001**（E2E は **3010** + `.next-e2e` standalone） |
+| 同時実行 | `next dev` 中に **harness / e2e 不可**（`.next` 競合） |
+
+```bash
+# 明示する場合のみ
+DATABASE_PATH=../../data/db/command-room.sqlite npm run dev -- -p 3001
 ```
 
 ### README / 秘密
@@ -404,6 +420,9 @@ docker compose up            # 9001/9002 inbox 等
 - [ ] `npm run check:static` 緑（T-ARCH / T-SOC / T-PKG 含む）
 - [ ] `import-boundaries.test.ts` 緑（Vitest 二重門番）
 - [ ] secret / SQLite / 録音を commit していない
+- [ ] `git ls-files '*.sqlite*'` が空（T-SEC-DB-001）
+- [ ] `git log --branches --oneline -- '*.sqlite*'` が空、または付録 E の purge 済み + force push 予定（T-SEC-DB-002）
+- [ ] GitHub Desktop で `.sqlite` / `apps/web/data/` が Changes に **無い**こと
 - [ ] FRONTEND 変更時、FormData key は `actions/forms/*` と page で一致
 - [ ] 新規 mutation は `server/services/*`（`app/actions.ts` に実装を書いていない）
 - [ ] 新 domain なら `denwa-architecture-gate.mjs` のリスト更新済み
@@ -445,6 +464,9 @@ docker compose up            # 9001/9002 inbox 等
 | `scripts/harness-fast.sh` | postToolUse / pre-commit / 手動 |
 | `scripts/harness-check.sh` | stop / pre-push / **CI**（`npm run harness` = prod-check + SCA 含む） |
 | `scripts/prod-check.ts` | `pbx-ops` の prod/check を CLI 実行 |
+| `scripts/purge-sqlite-from-git-history.sh` | git filter-repo で sqlite を履歴から除去（付録 E） |
+| `scripts/rotate-exposed-secrets.ts` | session 全消去・admin/内線 secret ローテーション（`npm run rotate:exposed-secrets`） |
+| `scripts/e2e-web-server.mjs` | E2E: `.next-e2e` + standalone `server.js`（`next start` は使わない） |
 
 | Cursor フック | イベント |
 |---------------|----------|
@@ -491,6 +513,91 @@ docker compose up            # 9001/9002 inbox 等
 | `T-SEC-TOTP-001` Red | `verifyTotpConsuming` + `totp_last_counter` migrate |
 | `T-SEC-INBOX-001` Red | `inbox/validate-meta.ts`（core） |
 | gate: `checkPostApiCsrf` 等 Red | `denwa-architecture-gate.mjs` と実装を同時更新（緩めない） |
+| staged / tracked `.sqlite*` | **commit しない** → `git rm --cached` + `.gitignore` + 付録 E |
+| GitHub Desktop「Newer Commits」 | filter-repo **後**は Fetch 禁止・**force-with-lease**。通常分岐は Fetch→Pull→Push（付録 E） |
+| E2E `EADDRINUSE :3010` | `kill $(lsof -ti :3010)`。dev は 3001 を使う |
+| E2E `production build in .next-e2e` | `E2E_BUILD=1` + standalone 起動。`next dev` と harness 同時禁止 |
+
+---
+
+## 付録 E: SQLite / 秘密漏洩（P0）
+
+**キーワード**: sqlite leak, filter-repo, force push, rotate secrets, session 漏洩, GitHub Desktop 9 files。
+
+### なぜ起きたか（2026-05 インシデント RCA）
+
+1. **DB パスの二重化**  
+   OpenPBX legacy も `apps/web` 配下に DB を置く構成。**denwa** は repo root の `data/db/` が正本だが、`process.cwd()` が `apps/web` のとき SQLite が **`apps/web/data/db/command-room.sqlite`** に生成された。
+
+2. **gitignore の穴**  
+   当初 `data/db/*.sqlite` のみ。`apps/web/data/` と `*.sqlite.broken` / `*.sqlite.corrupt-*` が対象外 → GitHub Desktop が **9 ファイル commit 候補**と表示。
+
+3. **HEAD と履歴の混同**  
+   `git rm --cached` で **現在の tree** からは消えても、過去 commit にバイナリが残る → `git log -- '*.sqlite*'` で復元可能。**filter-repo が必要**。
+
+4. **OpenPBX との混同（起きていない）**  
+   `../OpenPBX` は **別リポ**（`tanimurahifukka/OpenPBX`）。履歴に sqlite **0 件**。漏れたのは **denwa 開発 DB**（平文 `sessions` テーブル含む）のみ。
+
+5. **エージェント/PR の分割**  
+   gitignore 強化が PR #27 と手元 commit で分岐し、マージ前に Desktop から commit しそうになった。
+
+### 正本（再発防止）
+
+| 項目 | 正本 |
+|------|------|
+| DB ファイル | `data/db/command-room.sqlite` |
+| パス解決 | `apps/web/src/server/database-path.ts` |
+| ignore | `.gitignore`: `apps/web/data/`, `data/db/*.sqlite*`, `**/*.sqlite.broken*` |
+| static gate | `check-denwa-static.mjs`: tracked + **branch 履歴** |
+| 漏洩後ローテ | `npm run rotate:exposed-secrets` |
+| 履歴清掃 | `scripts/purge-sqlite-from-git-history.sh` |
+
+### P0 クローズ手順（漏洩疑い時）
+
+```bash
+# 1. 手元 DB の secret / session をローテ（出力はパスワードマネージャへ。chat に貼らない）
+npm run rotate:exposed-secrets
+# 本番/共有: ROTATE_ADMIN_PASSWORD=... DATABASE_PATH=... npm run rotate:exposed-secrets
+
+# 2. 作業ツリーを stash または commit してから
+bash scripts/purge-sqlite-from-git-history.sh
+git log --branches --oneline -- '*.sqlite*'   # 空であること
+
+# 3. リモート反映（必須。これをしないと GitHub に sqlite 残る）
+git push --force-with-lease origin main
+# 他 branch も push 済みなら: git push --force-with-lease origin --all
+git fetch --prune origin
+git log --all --oneline -- '*.sqlite*'        # 空であること
+
+# 4. 本番: AMI secret / .env / click-to-call も別途ローテ
+```
+
+### Git / Desktop で迷ったとき
+
+| 画面 | 意味 | やること |
+|------|------|----------|
+| Changes に `.sqlite` 9 件 | **commit するな** | チェック外す / `.gitignore` 確認 |
+|「Newer Commits on Remote」**filter-repo 後** | 履歴が別物 | **Fetch しない** → `--force-with-lease` push |
+| 同メッセージ **通常 PR マージ後** | 普通の分岐 | Fetch → Pull → Push |
+| Publish branch が gray | upstream 未設定 or 分岐 | 上表で判断 |
+
+### 開発時（エージェント必須）
+
+- [ ] `.sqlite` を `git add` しない（Desktop の一括 commit も禁止）
+- [ ] `apps/web/data/` を作らない（あれば ignore のみ・commit しない）
+- [ ] dev **`3001`** / E2E **`3010`** を混ぜない
+- [ ] `next dev` 実行中に **harness / e2e を走らせない**
+- [ ] OpenPBX リポの filter-repo は **不要**（denwa のみ）
+
+### テスト ID
+
+| ID | 内容 | 場所 |
+|----|------|------|
+| T-SEC-DB-001 | tracked sqlite 禁止 | `check-denwa-static.mjs` |
+| T-SEC-DB-002 | branch 履歴 sqlite 禁止 | 同上 |
+| T-SEC-DB-003 | `resolveDatabaseFile` | `database-path.test.ts` |
+| T-SEC-SESSION-002 | `destroyAllSessions` | `sessions-rotate.test.ts` |
+| T-SEC-C2C-001 | click-to-call 一括失効 | `click-to-call-revoke-all.test.ts` |
 
 ---
 

@@ -4,7 +4,8 @@ description: >-
   OpenPBX TDD 再構築（/denwa）。0→9。legacy parity B（CDR検索・課金明細・同時通話等）は steps 付録 D。
   SOC/カプセル化/T-TS(§5.4.1)/T-SEC(ペネトレ)は denwa-architecture-gate + Vitest + prod-check で強制。
   層: core / ops / db / infra / web(services→actions→pages)。pre static / post harness:fast / push harness。test:coverage:parity-b。
-  Use when: /denwa, denwa, parity B, pentest, OWASP, ITIL, T-ARCH, T-SOC, T-SEC, T-TS, harness, legacy OpenPBX, SECURITY-MAP.
+  Use when: /denwa, denwa, parity B, pentest, OWASP, ITIL, T-ARCH, T-SOC, T-SEC, T-TS, harness, legacy OpenPBX, SECURITY-MAP,
+  sqlite leak, filter-repo, rotate secrets, git history purge, P0 security.
   正本 .cursor/skills/denwa。手順 steps-denwa.md。地図 docs/SECURITY-MAP.md。
 ---
 
@@ -104,6 +105,10 @@ description: >-
 | T-SEC-CSRF-002 | Origin 無し POST は `Sec-Fetch-Site` 必須（core `csrf.ts`） | — | ✓ (sec-csrf) |
 | T-SEC-CSV-001 | CDR export は `renderCdrExportCsv` 経由のみ | ✓ | ✓ (cdr-export) |
 | T-SEC-SESSION-001 | ロール変更で `destroySessionsForAccount` + 自己 cookie | ✓ | ✓ |
+| T-SEC-SESSION-002 | 漏洩後 `destroyAllSessions` + `rotate-exposed-secrets.ts` | — | ✓ |
+| T-SEC-DB-001 | tracked `*.sqlite*` 禁止（`git ls-files`） | ✓ | — |
+| T-SEC-DB-002 | branch 履歴に sqlite 禁止（`git log --branches`） | ✓ | — |
+| T-SEC-DB-003 | DB 正本 `data/db/` + `resolveDatabaseFile`（`apps/web/data/` 禁止） | — | ✓ |
 | T-SEC-AMI-001 | originate は `validateOriginateRequest`（callerId/context） | ✓ | ✓ |
 | T-SEC-AMI-002 | originate `context` は `ORIGINATE_ALLOWED_CONTEXTS` のみ | — | ✓ (originate-ami) |
 | T-SEC-A03-001 | guidances は core `validateGuidanceName` / `validateWavHeader` | ✓ | — |
@@ -320,13 +325,28 @@ domain mutation は **T-ARCH-004**（core `validate*`）。`auth-login` / `guida
 - `renderCdrExportCsv` を web/lib で再実装（T-SEC-CSV-001 / T-SOC-002）
 - dialplan の `System(..., "${CALLERID(name)}", ...)`（T-SEC-SHELL-001）
 - compose に `8088:8088` / `8089:8089` ホスト公開（T-SEC-A05-001）
+- **SQLite / 録音 / `.env` の commit**（T-SEC-DB-001）— GitHub Desktop の「新規 9 ファイル」も **必ず確認**
+- **`apps/web/data/db/` に DB を置く**（T-SEC-DB-003）— 正本は repo root の `data/db/`
+- filter-repo 後に **Fetch→merge で古い sqlite 履歴を取り込む**（付録 E 参照）
 
 ---
 
 ## 7. legacy
 
-- 位置: **`../OpenPBX`**（`docs/LEGACY.md`）
+- 位置: **`../OpenPBX`**（`docs/LEGACY.md`）— **denwa とは別 Git リポ**。OpenPBX 本体は sqlite 履歴なし（2026-05 確認）
 - 読取専用・一括コピー禁止
+- **漏れたのは denwa 手元の `command-room.sqlite`**（平文 session 含む）。OpenPBX の履歴清掃は不要
+
+### SQLite 漏洩（P0）— なぜ起きたか（要約）
+
+| 原因 | 詳細 |
+|------|------|
+| **二重 DB パス** | `next dev` の cwd が `apps/web` のとき DB が `apps/web/data/db/` にでき、`.gitignore` が `data/db/` だけだった |
+| **Desktop の罠** | 未 ignore の DB が「Commit N files」と見える。**絶対 commit しない** |
+| **HEAD ≠ 履歴** | index から消しても `git log -- '*.sqlite*'` に残る → **filter-repo + force-with-lease** が必要 |
+| **OpenPBX 混同** | パスが似ているが **OpenPBX リポは無関係** |
+
+**手順正本**: `steps-denwa.md` **付録 E** / `scripts/purge-sqlite-from-git-history.sh` / `npm run rotate:exposed-secrets`
 
 ---
 

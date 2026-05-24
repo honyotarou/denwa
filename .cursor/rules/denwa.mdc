@@ -6,7 +6,7 @@ alwaysApply: true
 # denwa（毎セッション）
 
 契約: `docs/TDD-REBUILD-PLAN.md`。セキュリティ地図: `docs/SECURITY-MAP.md`。legacy: `docs/LEGACY.md` → `../OpenPBX`。  
-手順: `.cursor/skills/denwa/SKILL.md` / `steps-denwa.md`（ペネトレ → 付録 C、**レガシー画面 parity B → 付録 D**）。
+手順: `.cursor/skills/denwa/SKILL.md` / `steps-denwa.md`（ペネトレ → 付録 C、**レガシー画面 parity B → 付録 D**、**SQLite 漏洩 P0 → 付録 E**）。
 
 ## メニュー 0→9
 
@@ -57,6 +57,18 @@ API: `server/api/handlers/*` + `withAuth`（barrel: `api-handlers.ts`）。
 3. mutation → **services**（audit は `server/audit.ts`）
 4. 新 domain → gate の `MUTATION_SERVICES` / `ACTIONS_SERVICE_ROUTED` 更新
 5. legacy 一括コピー禁止
+6. **`.sqlite*` / `apps/web/data/` を commit しない**（OpenPBX 別リポは無関係。DB 正本 `data/db/` — 付録 E）
+
+## SQLite P0（要約）
+
+| やるな | やる |
+|--------|------|
+| Desktop「Commit 9 sqlite files」 | チェック外す / `.gitignore` |
+| `apps/web/data/db/` に DB | `data/db/` + `database-path.ts` |
+| filter-repo 後に Fetch→merge | `--force-with-lease` push |
+| OpenPBX の filter-repo | denwa のみ `purge-sqlite-from-git-history.sh` |
+
+漏洩疑い: `npm run rotate:exposed-secrets` → purge script → force push。
 
 ## 指示例
 
