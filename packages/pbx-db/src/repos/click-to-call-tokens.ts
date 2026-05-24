@@ -82,6 +82,15 @@ export function revokeClickToCallToken(db: Database.Database, id: number, accoun
   if (r.changes === 0) throw notFoundError('token not found or already revoked');
 }
 
+/** 漏洩対応: 未失効の click-to-call トークンを一括失効 */
+export function revokeAllActiveClickToCallTokens(db: Database.Database): number {
+  return db
+    .prepare(
+      `UPDATE click_to_call_tokens SET revoked_at = datetime('now') WHERE revoked_at IS NULL`,
+    )
+    .run().changes;
+}
+
 export type ClickToCallTokenAuthRow = Readonly<{
   id: number;
   accountId: number;

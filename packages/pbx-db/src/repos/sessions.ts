@@ -56,6 +56,11 @@ export function destroySessionsForAccount(db: Database.Database, accountId: numb
   db.prepare('DELETE FROM sessions WHERE account_id = ?').run(accountId);
 }
 
+/** 漏洩対応: 全 session を無効化 */
+export function destroyAllSessions(db: Database.Database): number {
+  return db.prepare('DELETE FROM sessions').run().changes;
+}
+
 export function countSessionsForAccount(db: Database.Database, accountId: number): number {
   const row = db
     .prepare('SELECT COUNT(*) AS c FROM sessions WHERE account_id = ?')
