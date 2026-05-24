@@ -23,6 +23,7 @@
     "test:e2e": "playwright test -c e2e/playwright.config.mjs",
     "test:e2e:install": "playwright install chromium",
     "prod-check": "npx tsx scripts/prod-check.ts",
+    "rotate:exposed-secrets": "npx tsx scripts/rotate-exposed-secrets.ts",
     "prepare": "lefthook install || true"
   },
   "devDependencies": {

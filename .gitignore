@@ -11,6 +11,10 @@ node_modules/
 data/db/*.sqlite
 data/db/*.sqlite-shm
 data/db/*.sqlite-wal
+data/db/*.sqlite.*
+**/*.sqlite.corrupt-*
+**/*.sqlite.broken
+apps/web/data/
 data/recordings/*
 !data/recordings/.gitkeep
 data/inbox/*
