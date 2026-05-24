@@ -23,7 +23,7 @@ export function e2ePjsipExtensionsConf() {
   return path.join(e2ePjsipDir(), 'extensions.conf');
 }
 
-/** Env for `next start` when cwd is apps/web. */
+/** Env for E2E web server (absolute paths — standalone cwd differs from apps/web). */
 export function e2eWebProcessEnv() {
   return {
     /** next start は production。middleware IP と cookie secure を E2E 用に緩める */
@@ -32,12 +32,12 @@ export function e2eWebProcessEnv() {
     TRUSTED_PROXY_COUNT: '1',
     COOKIE_SECURE: '0',
     E2E_BUILD: '1',
-    DATABASE_PATH: path.relative(path.join(ROOT, 'apps/web'), e2eDbPath()),
-    PJSIP_OUT_DIR: path.relative(path.join(ROOT, 'apps/web'), e2ePjsipDir()),
-    DIALPLAN_OUT_DIR: path.relative(path.join(ROOT, 'apps/web'), e2eDialplanDir()),
-    ASTERISK_SIGNAL_DIR: path.relative(path.join(ROOT, 'apps/web'), path.join(E2E_RUN_ROOT, 'signals')),
-    RECORDINGS_DIR: path.relative(path.join(ROOT, 'apps/web'), path.join(E2E_RUN_ROOT, 'recordings')),
-    SOUNDS_DIR: path.relative(path.join(ROOT, 'apps/web'), path.join(ROOT, 'asterisk/sounds')),
+    DATABASE_PATH: e2eDbPath(),
+    PJSIP_OUT_DIR: e2ePjsipDir(),
+    DIALPLAN_OUT_DIR: e2eDialplanDir(),
+    ASTERISK_SIGNAL_DIR: path.join(E2E_RUN_ROOT, 'signals'),
+    RECORDINGS_DIR: path.join(E2E_RUN_ROOT, 'recordings'),
+    SOUNDS_DIR: path.join(ROOT, 'asterisk/sounds'),
   };
 }
 

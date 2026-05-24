@@ -43,5 +43,13 @@ if [[ -n "$ORIGIN_URL" ]]; then
   git remote add origin "$ORIGIN_URL" 2>/dev/null || git remote set-url origin "$ORIGIN_URL"
 fi
 
-echo "Done. Verify: git log --all -- '*.sqlite*'  (empty expected)"
-echo "If remote exists: git remote add origin <url> && git push --force-with-lease --all"
+HITS="$(git log --branches --oneline -- '*.sqlite*' | wc -l | tr -d ' ')"
+if [[ "$HITS" != "0" ]]; then
+  echo "ERROR: sqlite paths still in history ($HITS commits). Check PATHS in this script." >&2
+  exit 1
+fi
+
+echo "Done. git log --branches -- '*.sqlite*' is empty (local)."
+echo "Next (required for leak closure):"
+echo "  git push --force-with-lease origin main"
+echo "  git push --force-with-lease origin --all   # if other branches were ever pushed with DB"

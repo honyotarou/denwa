@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Playwright webServer: prepare isolated DB → next build → next start (port 3010).
+ * Playwright webServer: prepare isolated DB → next build → standalone server (port 3010).
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -14,6 +14,8 @@ process.env.E2E_BUILD = '1';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WEB = path.join(ROOT, 'apps/web');
 const E2E_DIST = path.join(WEB, '.next-e2e');
+const STANDALONE_SERVER = path.join(E2E_DIST, 'standalone/apps/web/server.js');
+const STANDALONE_CWD = path.join(E2E_DIST, 'standalone/apps/web');
 
 function ensurePortFree(port) {
   const r = spawnSync('lsof', ['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-t'], { encoding: 'utf8' });
@@ -35,6 +37,13 @@ function cleanE2eDist() {
   fs.rmSync(E2E_DIST, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 }
 
+function assertE2eBuildReady() {
+  const buildId = path.join(E2E_DIST, 'BUILD_ID');
+  if (fs.existsSync(buildId) && fs.existsSync(STANDALONE_SERVER)) return;
+  console.error('[e2e] production build missing in .next-e2e (BUILD_ID or standalone server.js)');
+  process.exit(1);
+}
+
 function buildWeb(env, attempt = 1) {
   cleanE2eDist();
   const r = spawnSync('npx', ['next', 'build'], { cwd: WEB, env, stdio: 'inherit' });
@@ -45,6 +54,7 @@ function buildWeb(env, attempt = 1) {
     }
     process.exit(r.status ?? 1);
   }
+  assertE2eBuildReady();
 }
 
 run(process.execPath, [path.join(ROOT, 'scripts/e2e-prepare.mjs')]);
@@ -59,12 +69,13 @@ run('npx', ['tsx', path.join(ROOT, 'scripts/e2e-seed-click2call-token.ts')], {
 
 const port = process.env.E2E_PORT ?? '3010';
 ensurePortFree(port);
-const env = { ...process.env, ...e2eWebProcessEnv(), PORT: port };
+const env = { ...process.env, ...e2eWebProcessEnv(), PORT: port, HOSTNAME: '127.0.0.1' };
 
 buildWeb(env);
 
-const child = spawnSync('npx', ['next', 'start', '-p', port], {
-  cwd: WEB,
+// output: standalone — next start is unreliable with custom distDir (.next-e2e)
+const child = spawnSync(process.execPath, [STANDALONE_SERVER], {
+  cwd: STANDALONE_CWD,
   env,
   stdio: 'inherit',
 });

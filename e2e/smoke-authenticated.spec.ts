@@ -21,7 +21,7 @@ test.describe('L4 E2E — authenticated', () => {
   });
 
   test('T-E2E-003: create extension shows flash and syncs pjsip', async ({ page }) => {
-    const number = `8${String(Date.now()).slice(-3)}`;
+    const number = String(900000 + Math.floor(Math.random() * 99999)).slice(0, 6);
     const secret = 'e2e-secret-12';
     await gotoExtensions(page);
     await createExtension(page, { number, secret, displayName: 'E2E Ext' });

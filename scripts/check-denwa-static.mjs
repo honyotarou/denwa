@@ -173,6 +173,20 @@ function shouldSkipStagedSecretContentScan(rel) {
 }
 
 try {
+  const historySqlite = execSync("git log --branches --oneline -- '*.sqlite*'", {
+    cwd: ROOT,
+    encoding: "utf8",
+  }).trim();
+  if (historySqlite) {
+    failures.push(
+      `sqlite in git history (${historySqlite.split("\n").length} commits) — run scripts/purge-sqlite-from-git-history.sh then force-with-lease push`,
+    );
+  }
+} catch {
+  /* not a git repo */
+}
+
+try {
   const trackedSqlite = execSync(
     "git ls-files '*.sqlite' '*.sqlite-shm' '*.sqlite-wal' '*.sqlite.broken' '*.sqlite.corrupt-*'",
     { cwd: ROOT, encoding: "utf8" },
